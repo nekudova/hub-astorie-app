@@ -36,6 +36,7 @@ def home():
 
 
 @router.get("/admin", response_class=HTMLResponse)
+@router.get("/admin/", response_class=HTMLResponse)
 def admin_dashboard(request: Request, db: Session = Depends(get_db)):
     counts = {
         "users": db.query(User).count(),

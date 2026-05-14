@@ -19,3 +19,16 @@ První administrační verze nového HUBu v Pythonu.
 
 Tato verze je první Admin Core. Uživatelský TIP workflow se zatím nepřepisuje.
 Cílem je začít nahrazovat administraci v Google Sheets.
+
+
+## v0.3.1 admin-route-fix
+
+Opravný balíček pro ověření, že Render skutečně nasadil Admin Core.
+
+Kontrolní URL:
+- `/version`
+- `/admin-test`
+- `/admin`
+- `/api/admin/summary`
+
+Pokud `/version` nevrací `0.3.1-admin-route-fix`, Render neběží z této verze.
