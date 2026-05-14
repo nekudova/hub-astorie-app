@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="page-title">Správa partnerů</h1>
+  <p class="page-subtitle">Základní náhrada importního listu partnerů. Kontakty, odkazy a produkty doplníme v další verzi.</p>
+
+  <section class="card">
+    <form method="post" action="/admin/partners" class="form-row three">
+      <div><label>Kód partnera</label><input name="partner_code" required placeholder="KOOP"></div>
+      <div><label>Název partnera</label><input name="name" required placeholder="Kooperativa pojišťovna, a.s."></div>
+      <div><label>Poznámka</label><input name="note" placeholder="Interní poznámka"></div>
+      <div><button class="btn orange" type="submit">Přidat partnera</button></div>
+    </form>
+  </section>
+
+  <section class="card table-card section-space">
+    <div class="table-head">Partneři</div>
+    <table>
+      <thead><tr><th>Kód</th><th>Název</th><th>Poznámka</th><th>Stav</th></tr></thead>
+      <tbody>
+      {% for p in partners %}
+        <tr>
+          <td>{{ p.partner_code }}</td>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.note }}</td>
+          <td>{% if p.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status off">Neaktivní</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">Zatím nejsou vloženi žádní partneři.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

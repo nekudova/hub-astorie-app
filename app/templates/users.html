@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="page-title">Správa poradců</h1>
+  <p class="page-subtitle">Náhrada listu Poradci. V první fázi základní evidence, role a aktivace.</p>
+
+  <section class="card">
+    <form method="post" action="/admin/users" class="form-row">
+      <div><label>ID poradce</label><input name="advisor_id" required placeholder="např. 501"></div>
+      <div><label>Jméno</label><input name="name" required placeholder="Jméno a příjmení"></div>
+      <div><label>E-mail</label><input name="email" required placeholder="email@astorieas.cz"></div>
+      <div><label>Telefon</label><input name="phone" placeholder="737 000 000"></div>
+      <div><label>Role</label><select name="role"><option>IF</option><option>SPECIALISTA</option><option>BO</option><option>VEDENI</option><option>ADMIN</option></select></div>
+      <div><label>Dočasné heslo</label><input name="password" value="1234"></div>
+      <div><button class="btn orange" type="submit">Přidat poradce</button></div>
+    </form>
+  </section>
+
+  <section class="card table-card section-space">
+    <div class="table-head">Uživatelé</div>
+    <table>
+      <thead><tr><th>ID</th><th>Jméno</th><th>E-mail</th><th>Role</th><th>Stav</th><th>Akce</th></tr></thead>
+      <tbody>
+      {% for u in users %}
+        <tr>
+          <td>{{ u.advisor_id }}</td>
+          <td><strong>{{ u.name }}</strong></td>
+          <td>{{ u.email }}</td>
+          <td><span class="badge">{{ u.role }}</span></td>
+          <td>{% if u.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status off">Neaktivní</span>{% endif %}</td>
+          <td>
+            <form method="post" action="/admin/users/{{ u.id }}/toggle">
+              <button class="btn soft" type="submit">{% if u.is_active %}Deaktivovat{% else %}Aktivovat{% endif %}</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Zatím nejsou vloženi žádní poradci.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

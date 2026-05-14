@@ -30,6 +30,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     phone = Column(String(80))
+    role = Column(String(120), default="IF", nullable=False)
     password_hash = Column(Text, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     must_change_password = Column(Boolean, default=True, nullable=False)

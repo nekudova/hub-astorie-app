@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="page-title">Admin Dashboard</h1>
+  <p class="page-subtitle">První administrační jádro HUBu. Cílem je nahradit správu dat v Google Sheets.</p>
+
+  <section class="grid cols-4">
+    <div class="stat"><div class="stat-label">Poradci / uživatelé</div><div class="stat-value">{{ counts.users }}</div></div>
+    <div class="stat"><div class="stat-label">Sekce</div><div class="stat-value">{{ counts.sections }}</div></div>
+    <div class="stat"><div class="stat-label">Podsekce</div><div class="stat-value">{{ counts.subsections }}</div></div>
+    <div class="stat"><div class="stat-label">Partneři</div><div class="stat-value">{{ counts.partners }}</div></div>
+  </section>
+
+  <section class="grid cols-2 section-space">
+    <div class="card">
+      <h2 style="margin-top:0;color:var(--petrol);">Stav fáze v0.3</h2>
+      <p><strong>Hotovo:</strong> databáze, základní modely, admin layout, CRUD základ.</p>
+      <p><strong>Další krok:</strong> import dat ze stávajících Google Sheets a rozšíření správy specialistů.</p>
+      <a class="btn orange" href="/admin/users">Otevřít správu poradců</a>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0;color:var(--petrol);">Bezpečný postup migrace</h2>
+      <p>Uživatelský HUB zatím neměníme. Správu dat přesouváme postupně do admin rozhraní.</p>
+      <a class="btn soft" href="/api/admin/summary">Ověřit databázi</a>
+    </div>
+  </section>
+
+  <section class="card table-card section-space">
+    <div class="table-head">Poslední auditní události</div>
+    <table>
+      <thead><tr><th>Datum</th><th>Uživatel</th><th>Akce</th><th>Entita</th></tr></thead>
+      <tbody>
+      {% for row in latest_audit %}
+        <tr><td>{{ row.created_at }}</td><td>{{ row.user_email }}</td><td>{{ row.action }}</td><td>{{ row.entity_type }}</td></tr>
+      {% else %}
+        <tr><td colspan="4">Zatím bez auditních událostí.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>{{ app_name }} ASTORIE – Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/hub.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo-block">
+        <div class="logo-mark">A</div>
+        <div>
+          <div class="logo-title">ASTORIE</div>
+          <div class="logo-subtitle">HUB Admin Core</div>
+        </div>
+      </div>
+
+      <div class="nav-section-title">Administrace</div>
+      <a class="nav-link {{ 'active' if active == 'dashboard' else '' }}" href="/admin">📊 Dashboard</a>
+      <a class="nav-link {{ 'active' if active == 'users' else '' }}" href="/admin/users">👥 Poradci</a>
+      <a class="nav-link {{ 'active' if active == 'sections' else '' }}" href="/admin/sections">🧭 Sekce / podsekce</a>
+      <a class="nav-link {{ 'active' if active == 'partners' else '' }}" href="/admin/partners">🏢 Partneři</a>
+      <a class="nav-link {{ 'active' if active == 'audit' else '' }}" href="/admin/audit">🧾 Audit</a>
+
+      <div class="nav-section-title">Systém</div>
+      <a class="nav-link" href="/docs">⚙️ API dokumentace</a>
+      <a class="nav-link" href="/health">✅ Health</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="user-line">
+          <span>Přihlášen:</span>
+          <span>{{ admin_name }}</span>
+          <span class="badge">Administrátor</span>
+          <span style="color:#637386;">{{ admin_email }}</span>
+        </div>
+        <div>
+          <span class="badge orange">{{ version }}</span>
+        </div>
+      </header>
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>
