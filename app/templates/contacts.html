@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Kontakty partnerů</h1>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Nový kontakt</h2>
+
+    <form method="post" action="/admin/contacts/create">
+      <label>Partner</label>
+      <select name="partner_code" required>
+        {% for p in partners %}
+          <option value="{{ p.partner_code }}">{{ p.name }} ({{ p.partner_code }})</option>
+        {% endfor %}
+      </select>
+
+      <label>Jméno</label>
+      <input type="text" name="full_name" required>
+
+      <label>Role</label>
+      <input type="text" name="role">
+
+      <label>E-mail</label>
+      <input type="email" name="email">
+
+      <label>Telefon</label>
+      <input type="text" name="phone">
+
+      <label>Specializace</label>
+      <input type="text" name="specialization">
+
+      <label>Poznámka</label>
+      <textarea name="note"></textarea>
+
+      <button class="btn orange" type="submit">Uložit kontakt</button>
+    </form>
+  </div>
+
+  <div class="card table-card">
+    <div class="table-head">Existující kontakty</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Partner</th>
+          <th>Jméno</th>
+          <th>Role</th>
+          <th>E-mail</th>
+          <th>Telefon</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in contacts %}
+        <tr>
+          <td>{{ item.partner_code }}</td>
+          <td>{{ item.full_name }}</td>
+          <td>{{ item.role }}</td>
+          <td>{{ item.email }}</td>
+          <td>{{ item.phone }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

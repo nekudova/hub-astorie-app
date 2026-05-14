@@ -1,3 +1,3 @@
-HUB ASTORIE APP v0.3.2-import-admin
-/version must return 0.3.2-import-admin
-/admin/import must exist
+HUB ASTORIE APP v0.3.3-contacts-links
+/admin/contacts must exist
+/admin/links must exist

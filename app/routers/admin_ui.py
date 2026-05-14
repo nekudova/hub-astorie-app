@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
+from app.models.contact_models import PartnerContact, PartnerLink
 from app.services.passwords import hash_password
 from app.services.importer import IMPORT_HANDLERS
 
@@ -187,3 +188,83 @@ async def import_csv(
         result = {"ok": False, "entity": entity, "errors": [str(exc)]}
 
     return render(request, "import.html", {"active": "import", "result": result})
+
+
+@router.get("/admin/contacts", response_class=HTMLResponse)
+def contacts_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    contacts = db.query(PartnerContact).order_by(PartnerContact.partner_code, PartnerContact.full_name).all()
+    partners = db.query(Partner).order_by(Partner.name).all()
+
+    return render(request, "contacts.html", {
+        "active": "contacts",
+        "contacts": contacts,
+        "partners": partners,
+    })
+
+
+@router.post("/admin/contacts/create")
+def create_contact(
+    request: Request,
+    partner_code: str = Form(...),
+    full_name: str = Form(...),
+    role: str = Form(""),
+    email: str = Form(""),
+    phone: str = Form(""),
+    specialization: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    db.add(PartnerContact(
+        partner_code=partner_code,
+        full_name=full_name,
+        role=role,
+        email=email,
+        phone=phone,
+        specialization=specialization,
+        note=note,
+        is_active=True,
+    ))
+    db.commit()
+
+    return RedirectResponse("/admin/contacts", status_code=303)
+
+
+@router.get("/admin/links", response_class=HTMLResponse)
+def links_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    links = db.query(PartnerLink).order_by(PartnerLink.partner_code, PartnerLink.title).all()
+    partners = db.query(Partner).order_by(Partner.name).all()
+
+    return render(request, "links.html", {
+        "active": "links",
+        "links": links,
+        "partners": partners,
+    })
+
+
+@router.post("/admin/links/create")
+def create_link(
+    request: Request,
+    partner_code: str = Form(...),
+    title: str = Form(...),
+    url: str = Form(...),
+    category: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    db.add(PartnerLink(
+        partner_code=partner_code,
+        title=title,
+        url=url,
+        category=category,
+        note=note,
+        is_active=True,
+    ))
+    db.commit()
+
+    return RedirectResponse("/admin/links", status_code=303)

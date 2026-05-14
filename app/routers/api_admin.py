@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.3.2-import-admin",
-        "message": "Admin Core + Import běží.",
+        "version": "0.3.3-contacts-links",
+        "message": "Admin Core + Contacts/Links běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

@@ -47,3 +47,16 @@ Nová URL:
 
 Kontrolní URL:
 - `/version`
+
+
+## v0.3.3 Contacts & Links
+
+Nové administrační moduly:
+- /admin/contacts
+- /admin/links
+
+Funkce:
+- správa kontaktů partnerů
+- správa odkazů partnerů
+- PostgreSQL persistence
+- připraveno pro napojení do poradenského HUBu
