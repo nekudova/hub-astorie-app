@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
-from app.models.contact_models import PartnerContact, PartnerLink
+from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
 from app.services.passwords import hash_password
 from app.services.importer import IMPORT_HANDLERS
 
@@ -268,3 +268,62 @@ def create_link(
     db.commit()
 
     return RedirectResponse("/admin/links", status_code=303)
+
+
+@router.get("/admin/products", response_class=HTMLResponse)
+def products_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    products = db.query(PartnerProduct).order_by(PartnerProduct.partner_code, PartnerProduct.area, PartnerProduct.product_name).all()
+    partners = db.query(Partner).order_by(Partner.name).all()
+
+    return render(request, "products.html", {
+        "active": "products",
+        "products": products,
+        "partners": partners,
+    })
+
+
+@router.post("/admin/products/create")
+def create_product(
+    request: Request,
+    partner_code: str = Form(...),
+    area: str = Form(""),
+    subarea: str = Form(""),
+    product_name: str = Form(...),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    db.add(PartnerProduct(
+        partner_code=partner_code,
+        area=area,
+        subarea=subarea,
+        product_name=product_name,
+        note=note,
+        is_active=True,
+    ))
+    db.commit()
+
+    return RedirectResponse("/admin/products", status_code=303)
+
+
+@router.get("/admin/partners/{partner_code}", response_class=HTMLResponse)
+def partner_detail(
+    request: Request,
+    partner_code: str,
+    db: Session = Depends(get_db),
+):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    contacts = db.query(PartnerContact).filter(PartnerContact.partner_code == partner_code.upper()).order_by(PartnerContact.full_name).all()
+    links = db.query(PartnerLink).filter(PartnerLink.partner_code == partner_code.upper()).order_by(PartnerLink.title).all()
+    products = db.query(PartnerProduct).filter(PartnerProduct.partner_code == partner_code.upper()).order_by(PartnerProduct.area, PartnerProduct.product_name).all()
+
+    return render(request, "partner_detail.html", {
+        "active": "partners",
+        "partner": partner,
+        "partner_code": partner_code.upper(),
+        "contacts": contacts,
+        "links": links,
+        "products": products,
+    })

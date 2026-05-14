@@ -5,7 +5,7 @@ from app.core.database import get_db
 
 router = APIRouter(prefix="/api/admin", tags=["admin-api"])
 
-TABLES = ["users", "roles", "app_settings", "sections", "subsections", "partners", "tips", "commission_rates", "audit_log"]
+TABLES = ["users", "roles", "app_settings", "sections", "subsections", "partners", "partner_contacts", "partner_links", "partner_products", "tips", "commission_rates", "audit_log"]
 
 
 def safe_count_table(db: Session, table_name: str):
@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.3.3-contacts-links",
-        "message": "Admin Core + Contacts/Links běží.",
+        "version": "0.3.4-partner-products",
+        "message": "Admin Core + Partner Detail běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

@@ -1,7 +1,7 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
-from app.db.base import Base
+from app.core.database import Base
 
 
 class PartnerContact(Base):
@@ -15,9 +15,7 @@ class PartnerContact(Base):
     phone = Column(String(100))
     specialization = Column(String(255))
     note = Column(Text)
-
     is_active = Column(Boolean, default=True)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -30,7 +28,18 @@ class PartnerLink(Base):
     url = Column(Text, nullable=False)
     category = Column(String(100))
     note = Column(Text)
-
     is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+
+class PartnerProduct(Base):
+    __tablename__ = "partner_products"
+
+    id = Column(Integer, primary_key=True)
+    partner_code = Column(String(50), nullable=False, index=True)
+    area = Column(String(255))
+    subarea = Column(String(255))
+    product_name = Column(String(255), nullable=False)
+    note = Column(Text)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Produkty partnerů</h1>
+<p class="page-subtitle">Náhrada importního listu produktů partnerů. Tato data budou sloužit pro detail partnera a později pro routing TIPů.</p>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Nový produkt</h2>
+
+    <form method="post" action="/admin/products/create">
+      <label>Partner</label>
+      <select name="partner_code" required>
+        {% for p in partners %}
+          <option value="{{ p.partner_code }}">{{ p.name }} ({{ p.partner_code }})</option>
+        {% endfor %}
+      </select>
+
+      <label>Oblast</label>
+      <input type="text" name="area" placeholder="např. Pojištění vozidel">
+
+      <label>Podoblast</label>
+      <input type="text" name="subarea" placeholder="např. Flotily">
+
+      <label>Název produktu</label>
+      <input type="text" name="product_name" required>
+
+      <label>Poznámka</label>
+      <textarea name="note"></textarea>
+
+      <button class="btn orange" type="submit">Uložit produkt</button>
+    </form>
+  </div>
+
+  <div class="card table-card">
+    <div class="table-head">Existující produkty</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Partner</th>
+          <th>Oblast</th>
+          <th>Podoblast</th>
+          <th>Produkt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in products %}
+        <tr>
+          <td>{{ item.partner_code }}</td>
+          <td>{{ item.area }}</td>
+          <td>{{ item.subarea }}</td>
+          <td><strong>{{ item.product_name }}</strong></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">Zatím nejsou vložené žádné produkty.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

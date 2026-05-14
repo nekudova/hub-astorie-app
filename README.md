@@ -60,3 +60,15 @@ Funkce:
 - správa odkazů partnerů
 - PostgreSQL persistence
 - připraveno pro napojení do poradenského HUBu
+
+
+## v0.3.4 Partner Products
+
+Oprava:
+- `contact_models.py` používá správně `app.core.database.Base`.
+
+Nové funkce:
+- `/admin/products`
+- detail partnera `/admin/partners/{partner_code}`
+- správa produktů partnerů
+- souhrn kontaktů, odkazů a produktů v detailu partnera

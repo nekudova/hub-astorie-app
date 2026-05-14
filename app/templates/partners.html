@@ -20,7 +20,7 @@
       {% for p in partners %}
         <tr>
           <td>{{ p.partner_code }}</td>
-          <td><strong>{{ p.name }}</strong></td>
+          <td><strong><a href="/admin/partners/{{ p.partner_code }}">{{ p.name }}</a></strong></td>
           <td>{{ p.note }}</td>
           <td>{% if p.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status off">Neaktivní</span>{% endif %}</td>
         </tr>
