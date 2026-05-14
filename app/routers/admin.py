@@ -1,24 +1,59 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.models.core_models import User, Role, Section, Subsection, Partner, Tip, CommissionRate, AuditLog
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
+TABLES = [
+    "users",
+    "roles",
+    "app_settings",
+    "sections",
+    "subsections",
+    "partners",
+    "tips",
+    "commission_rates",
+    "audit_log",
+]
+
+
+def safe_count_table(db: Session, table_name: str):
+    exists = db.execute(
+        text("SELECT to_regclass(:table_name)"),
+        {"table_name": f"public.{table_name}"},
+    ).scalar()
+
+    if not exists:
+        return {
+            "exists": False,
+            "count": 0,
+            "error": None,
+        }
+
+    try:
+        count = db.execute(text(f'SELECT COUNT(*) FROM "{table_name}"')).scalar()
+        return {
+            "exists": True,
+            "count": int(count or 0),
+            "error": None,
+        }
+    except Exception as exc:
+        return {
+            "exists": True,
+            "count": None,
+            "error": str(exc),
+        }
+
+
 @router.get("/summary")
 def admin_summary(db: Session = Depends(get_db)):
+    counts = {table: safe_count_table(db, table) for table in TABLES}
+
     return {
         "ok": True,
-        "version": "0.2.4-clean",
-        "counts": {
-            "users": db.query(User).count(),
-            "roles": db.query(Role).count(),
-            "sections": db.query(Section).count(),
-            "subsections": db.query(Subsection).count(),
-            "partners": db.query(Partner).count(),
-            "tips": db.query(Tip).count(),
-            "commission_rates": db.query(CommissionRate).count(),
-            "audit_log": db.query(AuditLog).count(),
-        },
+        "version": "0.2.5-summary-safe",
+        "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
+        "counts": counts,
     }

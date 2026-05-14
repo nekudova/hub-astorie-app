@@ -6,7 +6,7 @@ from app.routers.health import router as health_router
 from app.routers.admin import router as admin_router
 from app.services.bootstrap import seed_initial_data
 
-app = FastAPI(title="HUB ASTORIE APP", version="0.2.4-clean")
+app = FastAPI(title="HUB ASTORIE APP", version="0.2.5-summary-safe")
 
 
 @app.on_event("startup")
@@ -46,7 +46,7 @@ def index():
         <div class="wrap">
           <div class="card">
             <h1>{settings.app_name}</h1>
-            <div class="badge">v0.2.4 clean – spuštěno</div>
+            <div class="badge">v0.2.5 summary-safe – spuštěno</div>
             <p>Backend HUBu běží na Renderu a je napojený na Neon PostgreSQL.</p>
             <div class="grid">
               <div class="box"><b>Health</b><br><a href="/health">/health</a></div>
