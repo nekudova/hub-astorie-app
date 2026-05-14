@@ -6,7 +6,13 @@ from app.core.config import settings
 
 router = APIRouter(tags=["health"])
 
+
 @router.get("/health")
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"ok": True, "app": settings.app_name, "db": True, "version": "0.2.0"}
+    return {
+        "ok": True,
+        "app": settings.app_name,
+        "db": True,
+        "version": "0.2.4-clean",
+    }
