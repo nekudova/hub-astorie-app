@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.services.passwords import hash_password
+from app.services.importer import IMPORT_HANDLERS
 
 router = APIRouter(tags=["admin-ui"])
 
@@ -14,7 +15,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.3.0",
+        "version": "v0.3.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -158,3 +159,31 @@ def create_partner(
 def audit_page(request: Request, db: Session = Depends(get_db)):
     rows = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(100).all()
     return render(request, "audit.html", {"active": "audit", "rows": rows})
+
+
+@router.get("/admin/import", response_class=HTMLResponse)
+def import_page(request: Request):
+    return render(request, "import.html", {"active": "import", "result": None})
+
+
+@router.post("/admin/import", response_class=HTMLResponse)
+async def import_csv(
+    request: Request,
+    entity: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    handler = IMPORT_HANDLERS.get(entity)
+    if not handler:
+        return render(request, "import.html", {
+            "active": "import",
+            "result": {"ok": False, "entity": entity, "errors": ["Neznámý typ importu."]},
+        })
+
+    raw = await file.read()
+    try:
+        result = handler(db, raw).as_dict()
+    except Exception as exc:
+        result = {"ok": False, "entity": entity, "errors": [str(exc)]}
+
+    return render(request, "import.html", {"active": "import", "result": result})

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="page-title">Import dat ze stávajícího HUBu</h1>
+  <p class="page-subtitle">Bezpečný CSV import do PostgreSQL. Import provádí vytvoření nových záznamů nebo aktualizaci existujících podle ID/kódu.</p>
+
+  <section class="grid cols-2">
+    <div class="card">
+      <h2 style="margin-top:0;color:var(--petrol);">Nahrát CSV</h2>
+      <form method="post" action="/admin/import" enctype="multipart/form-data">
+        <div style="margin-bottom:14px;">
+          <label>Typ importu</label>
+          <select name="entity" required>
+            <option value="users">Poradci / uživatelé</option>
+            <option value="sections">Sekce</option>
+            <option value="subsections">Podsekce</option>
+            <option value="partners">Partneři</option>
+          </select>
+        </div>
+        <div style="margin-bottom:18px;">
+          <label>CSV soubor</label>
+          <input type="file" name="file" accept=".csv,text/csv" required>
+        </div>
+        <button class="btn orange" type="submit">Spustit import</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;color:var(--petrol);">Jak exportovat ze Sheets</h2>
+      <p>Ve stávajícím Google Sheetu otevři konkrétní list a použij:</p>
+      <p><strong>Soubor → Stáhnout → Hodnoty oddělené čárkami (.csv)</strong></p>
+      <p>Český export se středníkem je podporovaný také.</p>
+      <p><strong>Doporučení:</strong> importuj postupně: Sekce → Podsekce → Partneři → Poradci.</p>
+    </div>
+  </section>
+
+  {% if result %}
+  <section class="card section-space">
+    <h2 style="margin-top:0;color:var(--petrol);">Výsledek importu</h2>
+    <div class="grid cols-4">
+      <div class="stat"><div class="stat-label">Typ</div><div class="stat-value" style="font-size:26px;">{{ result.entity }}</div></div>
+      <div class="stat"><div class="stat-label">Celkem řádků</div><div class="stat-value">{{ result.total_rows or 0 }}</div></div>
+      <div class="stat"><div class="stat-label">Vytvořeno</div><div class="stat-value">{{ result.created or 0 }}</div></div>
+      <div class="stat"><div class="stat-label">Aktualizováno</div><div class="stat-value">{{ result.updated or 0 }}</div></div>
+    </div>
+
+    {% if result.errors %}
+      <div class="card section-space" style="border-color:#fecaca;background:#fff7f7;">
+        <h3 style="margin-top:0;color:#b91c1c;">Upozornění / přeskočené řádky</h3>
+        <ul>
+          {% for err in result.errors[:30] %}
+            <li>{{ err }}</li>
+          {% endfor %}
+        </ul>
+        {% if result.errors|length > 30 %}
+          <p>Zobrazeno prvních 30 chyb z {{ result.errors|length }}.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section class="card table-card section-space">
+    <div class="table-head">Podporované sloupce</div>
+    <table>
+      <thead><tr><th>Typ</th><th>Povinné / podporované sloupce</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Poradci</strong></td><td>ID_poradce, Jmeno, Email, Telefon, Role, Heslo/PIN, Aktivni</td></tr>
+        <tr><td><strong>Sekce</strong></td><td>Sekce_ID, Nazev, Ikona, Poradi, Aktivni</td></tr>
+        <tr><td><strong>Podsekce</strong></td><td>Podsekce_ID, Sekce_ID, Nazev, Poradi, Aktivni</td></tr>
+        <tr><td><strong>Partneři</strong></td><td>Partner_ID, Nazev, Poznamka, Aktivni</td></tr>
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

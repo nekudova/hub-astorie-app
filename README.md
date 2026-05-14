@@ -32,3 +32,18 @@ Kontrolní URL:
 - `/api/admin/summary`
 
 Pokud `/version` nevrací `0.3.1-admin-route-fix`, Render neběží z této verze.
+
+
+## v0.3.2 Import Admin
+
+Přidán bezpečný CSV import:
+- poradci / uživatelé
+- sekce
+- podsekce
+- partneři
+
+Nová URL:
+- `/admin/import`
+
+Kontrolní URL:
+- `/version`
