@@ -23,3 +23,9 @@ Start Command:
 
 Přidán `runtime.txt` s Pythonem 3.12.8.
 Důvod: Render použil Python 3.14, který způsobil chybu kompatibility se SQLAlchemy typováním.
+
+
+## Hotfix v0.2.2
+
+Modely byly převedeny ze SQLAlchemy `Mapped[...]` syntaxe na klasickou `Column(...)` syntaxi.
+Důvod: Render stále spouštěl Python 3.14 a původní typování se na této kombinaci lámalo.
