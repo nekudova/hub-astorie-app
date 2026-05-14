@@ -17,3 +17,9 @@ Build Command:
 
 Start Command:
 `uvicorn app.main:app --host 0.0.0.0 --port 10000`
+
+
+## Hotfix v0.2.1
+
+Přidán `runtime.txt` s Pythonem 3.12.8.
+Důvod: Render použil Python 3.14, který způsobil chybu kompatibility se SQLAlchemy typováním.
