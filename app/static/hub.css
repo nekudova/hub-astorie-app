@@ -330,3 +330,10 @@ input:focus, select:focus, textarea:focus {
   .sidebar { position: relative; height: auto; }
   .grid.cols-4, .grid.cols-2, .form-row, .form-row.three { grid-template-columns: 1fr; }
 }
+
+
+.inline-filters { display:grid; grid-template-columns:1.5fr 1fr auto; gap:12px; align-items:end; margin-bottom:18px; }
+.btn.micro { min-height:34px; padding:0 10px; border-radius:10px; font-size:12px; }
+.checkline { display:flex; align-items:center; gap:10px; min-height:48px; }
+.checkline input[type="checkbox"] { width:auto; min-height:auto; }
+@media (max-width:1100px){ .inline-filters{ grid-template-columns:1fr; } }

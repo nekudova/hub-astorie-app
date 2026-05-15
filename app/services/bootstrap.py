@@ -12,6 +12,10 @@ def ensure_schema_compatibility(db: Session) -> None:
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(120) DEFAULT 'IF' NOT NULL",
         "ALTER TABLE subsections ADD COLUMN IF NOT EXISTS section_code VARCHAR(80)",
         "UPDATE subsections SET section_code = subsection_code WHERE section_code IS NULL",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS contact_type VARCHAR(120)",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS territory VARCHAR(255)",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS is_top BOOLEAN DEFAULT FALSE",
     ]
     for sql in statements:
         try:

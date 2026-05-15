@@ -279,6 +279,9 @@ def import_partner_contacts(db: Session, raw: bytes) -> ImportResult:
             phone = pick(row, "Telefon", "Tel", "Phone")
             email = pick(row, "Email", "E-mail", "Mail")
             specialization = pick(row, "Specifikace", "Specializace", "Spec")
+            contact_type = pick(row, "Druh", "Typ", "Druh_kontaktu", "Typ_kontaktu")
+            territory = pick(row, "Region", "Uzemi", "Území", "Uzemni_platnost", "Územní platnost", "Pusobnost", "Působnost")
+            vip_raw = pick(row, "VIP", "Top", "TOP", default="NE")
             note = pick(row, "Poznamka", "Poznámka", "Note")
             active_raw = pick(row, "Aktivni", "Aktivní", default="ANO")
 
@@ -297,6 +300,10 @@ def import_partner_contacts(db: Session, raw: bytes) -> ImportResult:
                 existing.role = role
                 existing.phone = phone
                 existing.specialization = specialization
+                existing.contact_type = contact_type
+                existing.territory = territory
+                existing.is_vip = is_yes(vip_raw)
+                existing.is_top = is_yes(vip_raw)
                 existing.note = note
                 existing.is_active = is_yes(active_raw)
                 result.updated += 1
@@ -308,6 +315,10 @@ def import_partner_contacts(db: Session, raw: bytes) -> ImportResult:
                     email=email,
                     phone=phone,
                     specialization=specialization,
+                    contact_type=contact_type,
+                    territory=territory,
+                    is_vip=is_yes(vip_raw),
+                    is_top=is_yes(vip_raw),
                     note=note,
                     is_active=is_yes(active_raw),
                 ))

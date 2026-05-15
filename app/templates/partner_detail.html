@@ -16,12 +16,12 @@
   <div class="card table-card">
     <div class="table-head">Kontakty</div>
     <table>
-      <thead><tr><th>Jméno</th><th>Role</th><th>E-mail</th><th>Telefon</th></tr></thead>
+      <thead><tr><th>Jméno</th><th>Druh/role</th><th>Region</th><th>E-mail</th><th>Telefon</th></tr></thead>
       <tbody>
       {% for c in contacts %}
-        <tr><td><strong>{{ c.full_name }}</strong></td><td>{{ c.role }}</td><td>{{ c.email }}</td><td>{{ c.phone }}</td></tr>
+        <tr><td><strong>{{ c.full_name }}</strong>{% if c.is_vip or c.is_top %} <span class="status ok">TOP</span>{% endif %}</td><td>{{ c.contact_type or c.role }}</td><td>{{ c.territory }}</td><td>{{ c.email }}</td><td>{{ c.phone }}</td></tr>
       {% else %}
-        <tr><td colspan="4">Bez kontaktů.</td></tr>
+        <tr><td colspan="5">Bez kontaktů.</td></tr>
       {% endfor %}
       </tbody>
     </table>

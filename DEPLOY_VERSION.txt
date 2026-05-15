@@ -1,2 +1,2 @@
-HUB ASTORIE APP v0.3.5-import-partner-data
-/admin/import supports partner_contacts, partner_links, partner_products
+HUB ASTORIE APP v0.3.6-data-admin-ux
+fulltext + datalist partner picker + duplicate rows + contact VIP/territory

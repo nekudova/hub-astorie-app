@@ -90,3 +90,13 @@ Doporučené pořadí importu:
 5. Odkazy partnerů
 6. Produkty partnerů
 7. Poradci
+
+
+## v0.3.6 Data Admin UX
+
+Přidáno:
+- fulltextové hledání pro kontakty, odkazy a produkty
+- našeptávač partnera přes datalist
+- nové údaje kontaktu: druh kontaktu, územní platnost/region, VIP/TOP
+- rychlé kopírování záznamu
+- bezpečné doplnění sloupců do PostgreSQL bez mazání dat

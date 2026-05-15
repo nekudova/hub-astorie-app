@@ -1,58 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">Odkazy partnerů</h1>
-
-<section class="grid cols-2">
-  <div class="card">
-    <h2 style="margin-top:0;color:var(--petrol);">Nový odkaz</h2>
-
-    <form method="post" action="/admin/links/create">
-      <label>Partner</label>
-      <select name="partner_code" required>
-        {% for p in partners %}
-          <option value="{{ p.partner_code }}">{{ p.name }} ({{ p.partner_code }})</option>
-        {% endfor %}
-      </select>
-
-      <label>Název</label>
-      <input type="text" name="title" required>
-
-      <label>URL</label>
-      <input type="url" name="url" required>
-
-      <label>Kategorie</label>
-      <input type="text" name="category">
-
-      <label>Poznámka</label>
-      <textarea name="note"></textarea>
-
-      <button class="btn orange" type="submit">Uložit odkaz</button>
-    </form>
-  </div>
-
-  <div class="card table-card">
-    <div class="table-head">Existující odkazy</div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Partner</th>
-          <th>Název</th>
-          <th>URL</th>
-          <th>Kategorie</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in links %}
-        <tr>
-          <td>{{ item.partner_code }}</td>
-          <td>{{ item.title }}</td>
-          <td><a href="{{ item.url }}" target="_blank">Otevřít</a></td>
-          <td>{{ item.category }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
+<p class="page-subtitle">Správa odkazů s fulltextovým hledáním a rychlým kopírováním záznamu.</p>
+<datalist id="partners-list">{% for p in partners %}<option value="{{ p.partner_code }}">{{ p.name }} ({{ p.partner_code }})</option>{% endfor %}</datalist>
+<section class="card"><form method="get" action="/admin/links" class="inline-filters"><div><label>Fulltext</label><input type="text" name="q" value="{{ q }}" placeholder="Hledat název, URL, kategorii, poznámku..."></div><div><label>Partner</label><input list="partners-list" name="partner" value="{{ partner }}" placeholder="Začněte psát kód partnera..."></div><button class="btn orange" type="submit">Hledat</button></form></section>
+<section class="grid cols-2 section-space"><div class="card"><h2 style="margin-top:0;color:var(--petrol);">Nový odkaz</h2><form method="post" action="/admin/links/create"><label>Partner</label><input list="partners-list" name="partner_code" required placeholder="Začněte psát kód partnera, např. KOOP"><label>Název</label><input type="text" name="title" required><label>URL</label><input type="url" name="url" required><label>Kategorie</label><input type="text" name="category"><label>Poznámka</label><textarea name="note"></textarea><button class="btn orange" type="submit">Uložit odkaz</button></form></div><div class="card table-card"><div class="table-head">Existující odkazy</div><table><thead><tr><th>Partner</th><th>Název</th><th>URL</th><th>Kategorie</th><th>Akce</th></tr></thead><tbody>{% for item in links %}<tr><td>{{ item.partner_code }}</td><td><strong>{{ item.title }}</strong></td><td><a href="{{ item.url }}" target="_blank">Otevřít</a></td><td>{{ item.category }}</td><td><form method="post" action="/admin/links/{{ item.id }}/duplicate"><button class="btn soft micro" type="submit">Kopírovat</button></form></td></tr>{% else %}<tr><td colspan="5">Zatím nejsou vložené žádné odkazy.</td></tr>{% endfor %}</tbody></table></div></section>
 {% endblock %}

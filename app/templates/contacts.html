@@ -1,66 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">Kontakty partnerů</h1>
+<p class="page-subtitle">Správa kontaktů včetně územní platnosti, VIP/TOP příznaku a fulltextového hledání.</p>
 
-<section class="grid cols-2">
+<datalist id="partners-list">
+  {% for p in partners %}<option value="{{ p.partner_code }}">{{ p.name }} ({{ p.partner_code }})</option>{% endfor %}
+</datalist>
+
+<section class="card">
+  <form method="get" action="/admin/contacts" class="inline-filters">
+    <div><label>Fulltext</label><input type="text" name="q" value="{{ q }}" placeholder="Hledat jméno, e-mail, telefon, region, specializaci..."></div>
+    <div><label>Partner</label><input list="partners-list" name="partner" value="{{ partner }}" placeholder="Začněte psát kód partnera..."></div>
+    <button class="btn orange" type="submit">Hledat</button>
+  </form>
+</section>
+
+<section class="grid cols-2 section-space">
   <div class="card">
     <h2 style="margin-top:0;color:var(--petrol);">Nový kontakt</h2>
-
     <form method="post" action="/admin/contacts/create">
-      <label>Partner</label>
-      <select name="partner_code" required>
-        {% for p in partners %}
-          <option value="{{ p.partner_code }}">{{ p.name }} ({{ p.partner_code }})</option>
-        {% endfor %}
-      </select>
-
-      <label>Jméno</label>
-      <input type="text" name="full_name" required>
-
-      <label>Role</label>
-      <input type="text" name="role">
-
-      <label>E-mail</label>
-      <input type="email" name="email">
-
-      <label>Telefon</label>
-      <input type="text" name="phone">
-
-      <label>Specializace</label>
-      <input type="text" name="specialization">
-
-      <label>Poznámka</label>
-      <textarea name="note"></textarea>
-
+      <label>Partner</label><input list="partners-list" name="partner_code" required placeholder="Začněte psát kód partnera, např. KOOP">
+      <label>Jméno</label><input type="text" name="full_name" required>
+      <label>Druh kontaktu</label><input type="text" name="contact_type" placeholder="např. infolinka, obchodník, likvidace">
+      <label>Role</label><input type="text" name="role">
+      <label>Územní platnost / region</label><input type="text" name="territory" placeholder="např. Celá ČR, Morava, Ústecký kraj">
+      <div class="checkline"><input type="checkbox" name="is_vip" value="1" id="is_vip"><label for="is_vip" style="margin:0;">VIP / TOP kontakt</label></div>
+      <label>E-mail</label><input type="email" name="email">
+      <label>Telefon</label><input type="text" name="phone">
+      <label>Specializace</label><input type="text" name="specialization">
+      <label>Poznámka</label><textarea name="note"></textarea>
       <button class="btn orange" type="submit">Uložit kontakt</button>
     </form>
   </div>
-
   <div class="card table-card">
     <div class="table-head">Existující kontakty</div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Partner</th>
-          <th>Jméno</th>
-          <th>Role</th>
-          <th>E-mail</th>
-          <th>Telefon</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in contacts %}
-        <tr>
-          <td>{{ item.partner_code }}</td>
-          <td>{{ item.full_name }}</td>
-          <td>{{ item.role }}</td>
-          <td>{{ item.email }}</td>
-          <td>{{ item.phone }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <table><thead><tr><th>Partner</th><th>Jméno</th><th>Druh</th><th>Region</th><th>VIP</th><th>Akce</th></tr></thead><tbody>
+    {% for item in contacts %}
+      <tr><td>{{ item.partner_code }}</td><td><strong>{{ item.full_name }}</strong><br><span style="color:#637386;">{{ item.email }} {{ item.phone }}</span></td><td>{{ item.contact_type or item.role }}</td><td>{{ item.territory }}</td><td>{% if item.is_vip or item.is_top %}<span class="status ok">TOP</span>{% endif %}</td><td><form method="post" action="/admin/contacts/{{ item.id }}/duplicate"><button class="btn soft micro" type="submit">Kopírovat</button></form></td></tr>
+    {% else %}<tr><td colspan="6">Zatím nejsou vložené žádné kontakty.</td></tr>{% endfor %}
+    </tbody></table>
   </div>
 </section>
 {% endblock %}
