@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "0.4.2-termination-core"
+APP_VERSION = "0.4.3-navigation-modules"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v0.4.2 Termination Core is loaded",
+        "status": "v0.4.3 Navigation Modules is loaded",
     }
 
 

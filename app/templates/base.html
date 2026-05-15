@@ -2,52 +2,67 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8">
-  <title>{{ app_name }} ASTORIE – Admin</title>
+  <title>ASTORIE HUB Admin Core</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/hub.css">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="logo-block">
-        <div class="logo-mark">A</div>
+      <div class="brand">
+        <div class="brand-mark">A</div>
         <div>
-          <div class="logo-title">ASTORIE</div>
-          <div class="logo-subtitle">HUB Admin Core</div>
+          <div class="brand-title">ASTORIE</div>
+          <div class="brand-subtitle">HUB Admin Core</div>
         </div>
       </div>
 
-      <div class="nav-section-title">Administrace</div>
-      <a class="nav-link {{ 'active' if active == 'dashboard' else '' }}" href="/admin">📊 Dashboard</a>
-      <a class="nav-link {{ 'active' if active == 'users' else '' }}" href="/admin/users">👥 Poradci</a>
-      <a class="nav-link {{ 'active' if active == 'sections' else '' }}" href="/admin/sections">🧭 Sekce / podsekce</a>
-      <a class="nav-link {{ 'active' if active == 'partners' else '' }}" href="/admin/partners">🏢 Partneři</a>
-      <a class="nav-link {{ 'active' if active == 'terminations' else '' }}" href="/admin/terminations">📄 Výpovědi</a>
-      <a class="nav-link {{ 'active' if active == 'audit' else '' }}" href="/admin/audit">🧾 Audit</a>
-      <a class="nav-link {{ 'active' if active == 'import' else '' }}" href="/admin/import">⬆️ Import dat</a>
-      <a class="nav-link {{ 'active' if active == 'contacts' else '' }}" href="/admin/contacts">👥 Kontakty</a>
-      <a class="nav-link {{ 'active' if active == 'links' else '' }}" href="/admin/links">🔗 Odkazy</a>
-      <a class="nav-link {{ 'active' if active == 'products' else '' }}" href="/admin/products">📦 Produkty</a>
+      <nav class="side-nav">
+        <div class="nav-group-title">PŘEHLED</div>
+        <a class="nav-link {{ 'active' if active == 'dashboard' else '' }}" href="/admin">📊 Dashboard</a>
+        <a class="nav-link {{ 'active' if active == 'modules' else '' }}" href="/admin/modules">🧭 Mapa modulů</a>
 
-      <div class="nav-section-title">Systém</div>
-      <a class="nav-link" href="/docs">⚙️ API dokumentace</a>
-      <a class="nav-link" href="/health">✅ Health</a>
+        <div class="nav-group-title">TIP HUB</div>
+        <a class="nav-link disabled-link" href="/admin/modules">📝 Nový TIP</a>
+        <a class="nav-link disabled-link" href="/admin/modules">📌 Moje TIPy</a>
+        <a class="nav-link disabled-link" href="/admin/modules">👤 Specialisté</a>
+        <a class="nav-link disabled-link" href="/admin/modules">🏆 Statistiky & soutěž</a>
+
+        <div class="nav-group-title">ČÍSELNÍKY</div>
+        <a class="nav-link {{ 'active' if active == 'advisors' else '' }}" href="/admin/advisors">👥 Poradci / uživatelé</a>
+        <a class="nav-link {{ 'active' if active == 'sections' else '' }}" href="/admin/sections">🧭 Sekce / podsekce</a>
+        <a class="nav-link {{ 'active' if active == 'partners' else '' }}" href="/admin/partners">🏢 Partneři</a>
+        <a class="nav-link {{ 'active' if active == 'contacts' else '' }}" href="/admin/contacts">👥 Kontakty</a>
+        <a class="nav-link {{ 'active' if active == 'links' else '' }}" href="/admin/links">🔗 Odkazy</a>
+        <a class="nav-link {{ 'active' if active == 'products' else '' }}" href="/admin/products">📦 Produkty</a>
+
+        <div class="nav-group-title">DOKUMENTY</div>
+        <a class="nav-link {{ 'active' if active == 'terminations' else '' }}" href="/admin/terminations">📄 Výpovědi</a>
+        <a class="nav-link {{ 'active' if active == 'form_bridge' else '' }}" href="/admin/form-bridge">🧩 Napojení formulářů</a>
+        <a class="nav-link disabled-link" href="/admin/modules">📑 Formuláře</a>
+
+        <div class="nav-group-title">SYSTÉM</div>
+        <a class="nav-link {{ 'active' if active == 'import' else '' }}" href="/admin/import">⬆️ Import dat</a>
+        <a class="nav-link {{ 'active' if active == 'audit' else '' }}" href="/admin/audit">🧾 Audit</a>
+        <a class="nav-link" href="/docs">⚙️ API dokumentace</a>
+        <a class="nav-link" href="/health">✅ Health</a>
+      </nav>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <div class="user-line">
-          <span>Přihlášen:</span>
-          <span>{{ admin_name }}</span>
-          <span class="badge">Administrátor</span>
-          <span style="color:#637386;">{{ admin_email }}</span>
-        </div>
         <div>
-          <span class="badge orange">{{ version }}</span>
+          <strong>Přihlášen:</strong>
+          <span>Admin ASTORIE</span>
+          <span class="role-pill">Administrátor</span>
+          <span class="muted">nekudova@astorieas.cz</span>
         </div>
+        <div class="version-pill">v0.4.3</div>
       </header>
 
-      {% block content %}{% endblock %}
+      <section class="content">
+        {% block content %}{% endblock %}
+      </section>
     </main>
   </div>
 </body>

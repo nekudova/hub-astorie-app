@@ -10,4 +10,4 @@ router = APIRouter(tags=["health"])
 @router.get("/health")
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"ok": True, "app": settings.app_name, "db": True, "version": "0.4.2-termination-core"}
+    return {"ok": True, "app": settings.app_name, "db": True, "version": "0.4.3-navigation-modules"}

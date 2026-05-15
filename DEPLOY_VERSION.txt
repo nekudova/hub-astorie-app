@@ -1,5 +1,5 @@
-HUB ASTORIE APP v0.4.2-termination-core
-- termination module
-- partner autocomplete in termination form
-- prefill partner registry data
-- printable termination preview
+HUB ASTORIE APP v0.4.3-navigation-modules
+- expanded grouped admin navigation
+- module map page
+- placeholders for TIP HUB modules
+- document group includes terminations and form bridge

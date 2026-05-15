@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Mapa modulů HUB</h1>
+<p class="page-subtitle">Rozšířené menu a vývojová mapa. Funkční moduly jsou aktivní, připravené moduly zatím slouží jako cílová struktura migrace ze současného TIP Hubu.</p>
+
+{% for group in modules %}
+<section class="section-space">
+  <h2 style="color:var(--petrol);margin:0 0 14px;">{{ group.group }}</h2>
+  <div class="module-grid">
+    {% for item in group.items %}
+    <a class="module-card" href="{{ item.url }}">
+      <div class="module-card-head">
+        <strong>{{ item.name }}</strong>
+        <span class="module-status">{{ item.status }}</span>
+      </div>
+      <p>{{ item.desc }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

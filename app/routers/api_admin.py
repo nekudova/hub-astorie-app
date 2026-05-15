@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.4.2-termination-core",
-        "message": "Admin Core + Termination Core běží.",
+        "version": "0.4.3-navigation-modules",
+        "message": "Admin Core + Navigation Modules běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

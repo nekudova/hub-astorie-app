@@ -158,3 +158,12 @@ Přidáno:
 - Dotahování údajů partnera z číselníku.
 - Náhled textu výpovědi.
 - Tisk / uložení jako PDF přes prohlížeč.
+
+
+## v0.4.3 Navigation & Module Structure
+
+Přidáno:
+- Rozšířené levé menu rozdělené na Přehled, TIP HUB, Číselníky, Dokumenty a Systém.
+- Nová stránka `/admin/modules` – mapa modulů.
+- Viditelné připravené položky pro budoucí migraci uživatelského TIP Hubu.
+- Funkční moduly zůstávají zachovány.
