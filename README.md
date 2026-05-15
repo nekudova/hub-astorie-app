@@ -185,3 +185,31 @@ Přidáno:
 - Rychlé filtrování tabulek.
 - Ovládání našeptávače klávesnicí.
 - Základ pro další datagrid workflow a náhradu práce v Google Sheets.
+
+## v0.5.1 Partner Registry Engine
+
+Přidáno: provozní metadata partnera, VIP a segmenty, onboarding/smlouva, auditní poznámka, filtry v seznamu partnerů a bezpečný upgrade DB.
+
+
+## v0.5.2 Audit & History Core
+
+Přidáno:
+- Auditní tabulka `audit_history`.
+- Bezpečný audit helper, který nerozbije hlavní operaci.
+- Stránka `/admin/audit-history`.
+- Historie změn v detailu partnera.
+- První auditování úprav partnera.
+
+
+## v0.5.3 Advisors Fix + User Admin
+
+Opraveno:
+- Sekce Poradci / uživatelé je přepracovaná tak, aby nespadla kvůli rozdílům ve struktuře DB.
+
+Přidáno:
+- Založení poradce / uživatele.
+- Inline úprava jména, e-mailu, telefonu, role a aktivity.
+- Zapnutí/vypnutí uživatele.
+- Reset PINu.
+- Audit změn uživatele.
+- Kompatibilní redirect `/admin/users` → `/admin/advisors`.

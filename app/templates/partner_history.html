@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="detail-topbar">
+  <a class="btn soft" href="/admin/partners/{{ partner_code }}">← Zpět na partnera</a>
+</div>
+
+<h1 class="page-title">Historie partnera</h1>
+<p class="page-subtitle">
+  {% if partner %}{{ partner.name }}{% else %}{{ partner_code }}{% endif %}
+</p>
+
+<section class="card table-card">
+  <div class="table-head">Změny partnera a souvisejících záznamů</div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Datum</th><th>Uživatel</th><th>Akce</th><th>Entita</th><th>Poznámka</th><th>Data</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.created_at }}</td>
+          <td>{{ r.user_email }}</td>
+          <td><span class="status soft">{{ r.action }}</span></td>
+          <td>{{ r.entity }}</td>
+          <td>{{ r.note }}</td>
+          <td><details><summary>Zobrazit</summary><pre class="audit-json">{{ r.new_data }}</pre></details></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">Zatím zde není historie.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

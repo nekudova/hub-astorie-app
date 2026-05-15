@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-toolbar">
+  <div>
+    <h1 class="page-title">Poradci / uživatelé</h1>
+    <p class="page-subtitle">Bezpečná správa uživatelů. Tato verze je odolná proti rozdílům ve struktuře DB a nahrazuje původní správu v Google Sheets.</p>
+  </div>
+  <button class="btn orange" type="button" onclick="toggleAdvisorForm()">+ Nový uživatel</button>
+</div>
+
+<section id="advisor-form-panel" class="card collapsible-panel" style="display:none;">
+  <div class="panel-head">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Nový poradce / uživatel</h2>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Po založení doporučuji vynutit změnu hesla při prvním přihlášení.</p>
+    </div>
+    <button class="btn soft" type="button" onclick="toggleAdvisorForm()">Zavřít</button>
+  </div>
+
+  <form method="post" action="/admin/advisors/create" class="admin-form-grid">
+    <div><label>ID poradce</label><input type="text" name="advisor_id" placeholder="např. 501"></div>
+    <div><label>Role</label><select name="role"><option value="IF">IF</option><option value="PS">PS</option><option value="ADMIN">ADMIN</option><option value="BO">BO</option><option value="VEDENI">VEDENÍ</option></select></div>
+    <div><label>Jméno</label><input type="text" name="name" required></div>
+    <div><label>E-mail</label><input type="email" name="email" required></div>
+    <div><label>Telefon</label><input type="text" name="phone"></div>
+    <div><label>Dočasné heslo / PIN</label><input type="text" name="password" value="1234"></div>
+    <div class="span-2 checkline"><input type="checkbox" name="is_active" value="1" id="new_active" checked><label for="new_active" style="margin:0;">Uživatel je aktivní</label></div>
+    <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit uživatele</button></div>
+  </form>
+</section>
+
+<section class="card section-space">
+  <form method="get" action="/admin/advisors" class="inline-filters">
+    <div>
+      <label>Fulltext</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="ID, jméno, e-mail, telefon…">
+    </div>
+    <div>
+      <label>Role</label>
+      <select name="role">
+        <option value="">Všechny role</option>
+        {% for r in ['IF','PS','ADMIN','BO','VEDENI'] %}
+          <option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Aktivita</label>
+      <select name="active">
+        <option value="">Všichni</option>
+        <option value="1" {% if active_filter == '1' %}selected{% endif %}>Aktivní</option>
+        <option value="0" {% if active_filter == '0' %}selected{% endif %}>Neaktivní</option>
+      </select>
+    </div>
+    <button class="btn orange" type="submit">Filtrovat</button>
+  </form>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">
+    <span>Seznam poradců / uživatelů</span>
+    <span style="font-size:13px;color:#637386;">Zobrazeno: {{ advisors|length }}</span>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Jméno</th>
+          <th>E-mail</th>
+          <th>Telefon</th>
+          <th>Role</th>
+          <th>Stav</th>
+          <th>Změna hesla</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in advisors %}
+        <tr>
+          <form method="post" action="/admin/advisors/{{ u.id }}/update">
+            <td><input class="table-input" name="advisor_id" value="{{ u.advisor_id or '' }}"></td>
+            <td><input class="table-input" name="name" value="{{ u.name or '' }}" required></td>
+            <td><input class="table-input" name="email" value="{{ u.email or '' }}" required></td>
+            <td><input class="table-input" name="phone" value="{{ u.phone or '' }}"></td>
+            <td>
+              <select name="role" class="table-input">
+                {% for r in ['IF','PS','ADMIN','BO','VEDENI'] %}
+                  <option value="{{ r }}" {% if u.role == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if u.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><label class="mini-check"><input type="checkbox" name="must_change_password" value="1" {% if u.must_change_password %}checked{% endif %}> vynutit</label></td>
+            <td>
+              <div class="small-actions">
+                <button class="btn soft micro" type="submit">Uložit</button>
+          </form>
+                <form method="post" action="/admin/advisors/{{ u.id }}/toggle">
+                  <button class="btn soft micro" type="submit">{% if u.is_active %}Vypnout{% else %}Zapnout{% endif %}</button>
+                </form>
+                <form method="post" action="/admin/advisors/{{ u.id }}/reset-password">
+                  <input type="hidden" name="password" value="1234">
+                  <button class="btn soft micro" type="submit">Reset PIN</button>
+                </form>
+              </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8">Zatím nejsou vložení žádní uživatelé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+function toggleAdvisorForm(){
+  const panel = document.getElementById("advisor-form-panel");
+  if(!panel) return;
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if(panel.style.display === "block") panel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+</script>
+{% endblock %}

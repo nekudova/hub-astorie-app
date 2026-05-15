@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-toolbar">
+  <div>
+    <h1 class="page-title">Audit & historie změn</h1>
+    <p class="page-subtitle">Provozní přehled změn. Cílem je nahradit nejistotu v tabulkách: kdo, kdy a co změnil.</p>
+  </div>
+  <form method="post" action="/admin/audit-history/upgrade">
+    <button class="btn soft" type="submit">Ověřit auditní tabulku</button>
+  </form>
+</div>
+
+<section class="card">
+  <form method="get" action="/admin/audit-history" class="inline-filters">
+    <div>
+      <label>Fulltext</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="uživatel, entita, poznámka, data…">
+    </div>
+    <div>
+      <label>Entita</label>
+      <select name="entity">
+        <option value="">Vše</option>
+        <option value="partner" {% if entity == 'partner' %}selected{% endif %}>Partner</option>
+        <option value="contact" {% if entity == 'contact' %}selected{% endif %}>Kontakt</option>
+        <option value="link" {% if entity == 'link' %}selected{% endif %}>Odkaz</option>
+        <option value="product" {% if entity == 'product' %}selected{% endif %}>Produkt</option>
+      </select>
+    </div>
+    <div>
+      <label>Akce</label>
+      <select name="action">
+        <option value="">Vše</option>
+        <option value="CREATE" {% if action == 'CREATE' %}selected{% endif %}>CREATE</option>
+        <option value="UPDATE" {% if action == 'UPDATE' %}selected{% endif %}>UPDATE</option>
+        <option value="TOGGLE" {% if action == 'TOGGLE' %}selected{% endif %}>TOGGLE</option>
+        <option value="DELETE" {% if action == 'DELETE' %}selected{% endif %}>DELETE</option>
+      </select>
+    </div>
+    <div>
+      <label>Limit</label>
+      <input type="number" name="limit" value="{{ limit or 200 }}" min="1" max="1000">
+    </div>
+    <button class="btn orange" type="submit">Filtrovat</button>
+  </form>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">Auditní záznamy</div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Uživatel</th>
+          <th>Akce</th>
+          <th>Entita</th>
+          <th>ID</th>
+          <th>Poznámka</th>
+          <th>Nová data</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.created_at }}</td>
+          <td>{{ r.user_email }}</td>
+          <td><span class="status soft">{{ r.action }}</span></td>
+          <td>{{ r.entity }}</td>
+          <td><strong>{{ r.entity_id }}</strong></td>
+          <td>{{ r.note }}</td>
+          <td><details><summary>Zobrazit</summary><pre class="audit-json">{{ r.new_data }}</pre></details></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">Zatím nejsou žádné auditní záznamy.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

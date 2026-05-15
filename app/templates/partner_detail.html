@@ -13,6 +13,7 @@
     <a class="btn orange" href="/admin/contacts?partner={{ partner_code }}">Kontakty</a>
     <a class="btn orange" href="/admin/links?partner={{ partner_code }}">Odkazy</a>
     <a class="btn orange" href="/admin/products?partner={{ partner_code }}">Produkty</a>
+    <a class="btn soft" href="/admin/partners/{{ partner_code }}/history">Historie změn</a>
   </div>
 </div>
 
@@ -44,6 +45,10 @@
     <div><label>PSČ</label><input type="text" name="zip_code" value="{{ partner.zip_code or '' }}"></div>
     <div class="span-2"><label>Celá adresa / sídlo</label><textarea name="address_full">{{ partner.address_full or '' }}</textarea></div>
     <div class="span-2"><label>Poznámka</label><textarea name="note">{{ partner.note or '' }}</textarea></div>
+    <div><label>Status partnera</label><select name="partner_status"><option value="aktivní" {% if partner.partner_status == 'aktivní' %}selected{% endif %}>Aktivní</option><option value="pozastaveno" {% if partner.partner_status == 'pozastaveno' %}selected{% endif %}>Pozastaveno</option><option value="ukončeno" {% if partner.partner_status == 'ukončeno' %}selected{% endif %}>Ukončeno</option></select></div>
+    <div><label>Stav spolupráce</label><input type="text" name="cooperation_status" value="{{ partner.cooperation_status or '' }}"></div>
+    <div class="span-2 check-grid"><label><input type="checkbox" name="is_vip" value="1" {% if partner.is_vip %}checked{% endif %}> VIP partner</label><label><input type="checkbox" name="segment_fleet" value="1" {% if partner.segment_fleet %}checked{% endif %}> Flotily</label><label><input type="checkbox" name="segment_retail" value="1" {% if partner.segment_retail %}checked{% endif %}> Retail</label><label><input type="checkbox" name="segment_life" value="1" {% if partner.segment_life %}checked{% endif %}> Život</label><label><input type="checkbox" name="segment_business" value="1" {% if partner.segment_business %}checked{% endif %}> Podnikatelé</label><label><input type="checkbox" name="onboarding_done" value="1" {% if partner.onboarding_done %}checked{% endif %}> Onboarding dokončen</label><label><input type="checkbox" name="contract_valid" value="1" {% if partner.contract_valid %}checked{% endif %}> Smlouva platná</label></div>
+    <div class="span-2"><label>Poslední audit / poznámka k řízení</label><textarea name="last_audit_note">{{ partner.last_audit_note or '' }}</textarea></div>
     <div class="span-2 checkline"><input type="checkbox" name="is_active" value="1" id="partner_active" {% if partner.is_active %}checked{% endif %}><label for="partner_active" style="margin:0;">Partner je aktivní</label></div>
     <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit změny</button><button class="btn soft" type="button" onclick="togglePanel('edit-partner-panel')">Zrušit</button></div>
   </form>
@@ -131,6 +136,8 @@
     <p>Partner nebyl nalezen.</p>
   {% endif %}
 </section>
+
+<section class="card section-space"><h2 style="margin-top:0;color:var(--petrol);">Provozní metadata</h2>{% if partner %}<div class="meta-badges">{% if partner.is_vip %}<span class="status ok">VIP partner</span>{% endif %}{% if partner.segment_fleet %}<span class="status soft">Flotily</span>{% endif %}{% if partner.segment_retail %}<span class="status soft">Retail</span>{% endif %}{% if partner.segment_life %}<span class="status soft">Život</span>{% endif %}{% if partner.segment_business %}<span class="status soft">Podnikatelé</span>{% endif %}{% if partner.onboarding_done %}<span class="status ok">Onboarding dokončen</span>{% else %}<span class="status warn">Onboarding není dokončen</span>{% endif %}{% if partner.contract_valid %}<span class="status ok">Smlouva platná</span>{% else %}<span class="status warn">Smlouva neověřena</span>{% endif %}</div><p><strong>Status:</strong> {{ partner.partner_status or "aktivní" }}</p><p><strong>Stav spolupráce:</strong> {{ partner.cooperation_status or "neuvedeno" }}</p><p><strong>Audit:</strong> {{ partner.last_audit_note or "bez poznámky" }}</p>{% endif %}</section>
 
 <section class="card section-space">
   <h2 style="margin-top:0;color:var(--petrol);">Připraveno pro formuláře</h2>
