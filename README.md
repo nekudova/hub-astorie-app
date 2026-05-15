@@ -140,3 +140,12 @@ Přidáno:
 - Kopírování řádků.
 - Zapnutí/vypnutí záznamů bez mazání dat.
 - Detail partnera se mění na hlavní pracovní prostor pro správu master dat.
+
+
+## v0.4.1 Partner Search API + Form Data Bridge
+
+Přidáno:
+- `/api/partners/search?q=...` pro našeptávač partnerů.
+- `/api/partners/{partner_code}/form-source` pro předvyplnění výpovědí a formulářů.
+- Admin stránka „Napojení formulářů“.
+- Detail partnera zobrazuje API zdroje připravené pro formuláře.

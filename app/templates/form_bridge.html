@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Napojení formulářů na partnery</h1>
+<p class="page-subtitle">Technická příprava pro výpovědi a další formuláře. Formulář si vybere partnera a systém si dotáhne kompletní data.</p>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Autocomplete partnera</h2>
+    <p>Endpoint pro našeptávač partnerů:</p>
+    <code>/api/partners/search?q=koop</code>
+    <p style="color:#637386;font-weight:700;">Vrací kód, název, IČO, DS, e-mail a město.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Data pro formulář</h2>
+    <p>Endpoint pro předvyplnění formuláře:</p>
+    <code>/api/partners/KOOP/form-source</code>
+    <p style="color:#637386;font-weight:700;">Vrací název, IČO, DS, e-mail, adresu, kontakty, odkazy a produkty.</p>
+  </div>
+</section>
+
+<section class="card section-space">
+  <h2 style="margin-top:0;color:var(--petrol);">Použití pro výpověď</h2>
+  <p>Po výběru partnera z číselníku formulář převezme:</p>
+  <ul>
+    <li>název pojišťovny / partnera</li>
+    <li>IČO</li>
+    <li>adresu</li>
+    <li>datovou schránku</li>
+    <li>e-mail / podatelnu</li>
+  </ul>
+</section>
+{% endblock %}

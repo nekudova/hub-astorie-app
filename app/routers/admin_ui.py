@@ -17,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.4.0",
+        "version": "v0.4.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -610,3 +610,130 @@ def toggle_product(item_id: int, db: Session = Depends(get_db)):
         db.commit()
         return RedirectResponse(f"/admin/partners/{partner_code}", status_code=303)
     return RedirectResponse("/admin/products", status_code=303)
+
+
+@router.get("/api/partners/search")
+def api_partner_search(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
+    text = (q or "").strip()
+    query = db.query(Partner).filter(Partner.is_active == True)
+
+    if text:
+        like = f"%{text.lower()}%"
+        query = query.filter(
+            (Partner.partner_code.ilike(like)) |
+            (Partner.name.ilike(like)) |
+            (Partner.ico.ilike(like)) |
+            (Partner.data_box.ilike(like)) |
+            (Partner.registry_email.ilike(like)) |
+            (Partner.city.ilike(like))
+        )
+
+    items = query.order_by(Partner.name).limit(max(1, min(limit, 50))).all()
+
+    return {
+        "ok": True,
+        "items": [
+            {
+                "partner_code": p.partner_code,
+                "label": f"{p.partner_code} – {p.name}",
+                "name": p.name,
+                "ico": p.ico,
+                "data_box": p.data_box,
+                "email": p.registry_email,
+                "city": p.city,
+            }
+            for p in items
+        ],
+    }
+
+
+@router.get("/api/partners/{partner_code}/form-source")
+def api_partner_form_source(partner_code: str, db: Session = Depends(get_db)):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if not partner:
+        return JSONResponse({"ok": False, "error": "Partner nebyl nalezen."}, status_code=404)
+
+    top_contacts = (
+        db.query(PartnerContact)
+        .filter(PartnerContact.partner_code == partner.partner_code)
+        .filter(PartnerContact.is_active == True)
+        .order_by(PartnerContact.is_top.desc(), PartnerContact.is_vip.desc(), PartnerContact.full_name)
+        .limit(10)
+        .all()
+    )
+
+    links = (
+        db.query(PartnerLink)
+        .filter(PartnerLink.partner_code == partner.partner_code)
+        .filter(PartnerLink.is_active == True)
+        .order_by(PartnerLink.category, PartnerLink.title)
+        .limit(20)
+        .all()
+    )
+
+    products = (
+        db.query(PartnerProduct)
+        .filter(PartnerProduct.partner_code == partner.partner_code)
+        .filter(PartnerProduct.is_active == True)
+        .order_by(PartnerProduct.area, PartnerProduct.subarea, PartnerProduct.product_name)
+        .limit(50)
+        .all()
+    )
+
+    return {
+        "ok": True,
+        "partner": {
+            "partner_code": partner.partner_code,
+            "name": partner.name,
+            "ico": partner.ico,
+            "dic": partner.dic,
+            "data_box": partner.data_box,
+            "registry_email": partner.registry_email,
+            "street": partner.street,
+            "city": partner.city,
+            "zip_code": partner.zip_code,
+            "address_full": partner.address_full,
+            "legal_form": partner.legal_form,
+            "is_active": partner.is_active,
+        },
+        "form_prefill": {
+            "insurer_name": partner.name,
+            "insurer_ico": partner.ico,
+            "insurer_data_box": partner.data_box,
+            "insurer_email": partner.registry_email,
+            "insurer_address": partner.address_full or " ".join([x for x in [partner.street, partner.zip_code, partner.city] if x]),
+        },
+        "contacts": [
+            {
+                "full_name": c.full_name,
+                "role": c.role,
+                "contact_type": c.contact_type,
+                "territory": c.territory,
+                "email": c.email,
+                "phone": c.phone,
+                "is_top": c.is_top or c.is_vip,
+            }
+            for c in top_contacts
+        ],
+        "links": [
+            {
+                "title": l.title,
+                "url": l.url,
+                "category": l.category,
+            }
+            for l in links
+        ],
+        "products": [
+            {
+                "area": p.area,
+                "subarea": p.subarea,
+                "product_name": p.product_name,
+            }
+            for p in products
+        ],
+    }
+
+
+@router.get("/admin/form-bridge", response_class=HTMLResponse)
+def form_bridge_page(request: Request):
+    return render(request, "form_bridge.html", {"active": "form_bridge"})

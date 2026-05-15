@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.4.0-partner-detail-crud",
-        "message": "Admin Core + Partner Detail CRUD běží.",
+        "version": "0.4.1-partner-search-api-bridge",
+        "message": "Admin Core + Partner Search API Bridge běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

@@ -135,7 +135,11 @@
 <section class="card section-space">
   <h2 style="margin-top:0;color:var(--petrol);">Připraveno pro formuláře</h2>
   <p style="color:#637386;font-weight:700;">Tento partner lze použít jako zdroj dat pro formuláře a výpovědi. Systém bude z detailu partnera brát název, adresu, datovou schránku, e-mail a identifikaci.</p>
-  <code>/api/partners/{{ partner_code }}/registry</code>
+  <div class="api-chip-list">
+    <code>/api/partners/{{ partner_code }}/registry</code>
+    <code>/api/partners/{{ partner_code }}/form-source</code>
+    <code>/api/partners/search?q={{ partner_code }}</code>
+  </div>
 </section>
 
 <section class="card table-card section-space">

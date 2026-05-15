@@ -1,5 +1,4 @@
-HUB ASTORIE APP v0.4.0-partner-detail-crud
-- quick add contact/link/product directly in partner detail
-- inline edit contact/link/product rows
-- duplicate and activate/deactivate rows
-- partner detail becomes operational master-data workspace
+HUB ASTORIE APP v0.4.1-partner-search-api-bridge
+- partner autocomplete API
+- partner form-source API for future forms/termination documents
+- form bridge admin information page

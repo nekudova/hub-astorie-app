@@ -471,3 +471,19 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+
+.api-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.api-chip-list code {
+  display: inline-block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eef7f8;
+  border: 1px solid var(--line);
+}
