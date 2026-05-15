@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>HUB ASTORIE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google" content="notranslate">
+  <link rel="stylesheet" href="/static/hub.css">
+  <link rel="stylesheet" href="/static/hub-public.css">
+</head>
+<body class="hub-public-body">
+  <div class="hub-shell">
+    <aside class="hub-sidebar">
+      <div class="hub-brand">
+        <div class="brand-mark">A</div>
+        <div>
+          <div class="hub-brand-title">HUB ASTORIE</div>
+          <div class="hub-brand-subtitle">Interní systém IF/PS</div>
+        </div>
+      </div>
+
+      <nav class="hub-nav">
+        <a class="{{ 'active' if active == 'new_tip' else '' }}" href="/hub/new-tip">📝 Nový TIP</a>
+        <a class="{{ 'active' if active == 'my_tips' else '' }}" href="/hub/my-tips">📌 Moje TIPy</a>
+        <a class="{{ 'active' if active == 'calculators' else '' }}" href="/hub/calculators">🧮 Kalkulačky</a>
+        <a class="{{ 'active' if active == 'partners' else '' }}" href="/hub/partners">🏢 Partneři</a>
+        <a class="{{ 'active' if active == 'contacts' else '' }}" href="/hub/contacts">☎️ Kontakty</a>
+        <a class="{{ 'active' if active == 'forms' else '' }}" href="/hub/forms">📄 Formuláře</a>
+        <a class="{{ 'active' if active == 'stats' else '' }}" href="/hub/stats">📊 Statistiky</a>
+        <a class="{{ 'active' if active == 'help' else '' }}" href="/hub/help">❓ Nápověda</a>
+        <a href="/admin">⚙️ Administrace</a>
+      </nav>
+    </aside>
+
+    <main class="hub-main">
+      <header class="hub-hero">
+        <div>
+          <div class="hub-title">HUB ASTORIE</div>
+          <div class="hub-subtitle">Interní systém určený pro předání tipů, práci s partnery a důležité firemní odkazy.</div>
+        </div>
+        <div class="hub-user">
+          <strong>{{ user.name }}</strong><br>
+          {{ user.email }}<br>
+          ID: {{ user.advisor_id }}
+          <div class="hub-version">{{ version }}</div>
+        </div>
+      </header>
+
+      <section class="hub-content">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/hub-smart.js"></script>
+  <script src="/static/hub-ux.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

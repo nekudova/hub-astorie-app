@@ -1,7 +1,11 @@
-HUB ASTORIE APP v0.6.0-admin-productivity-pack
-- larger productivity release
-- CSV exports for partners, specialists and taxonomy
-- bulk partner status operation
-- duplicate partner action
-- productivity dashboard
-- safer admin workflow replacing spreadsheet convenience
+HUB ASTORIE APP v0.7.0-user-hub-core
+- user-facing HUB portal
+- new tip submission
+- my tips overview
+- calculators page
+- partners detail page
+- contacts page
+- forms page
+- stats page
+- public HUB visual style
+- admin prepared links now point to real user pages

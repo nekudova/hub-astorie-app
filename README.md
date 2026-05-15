@@ -272,3 +272,26 @@ Přidáno:
 
 Poznámka:
 - Verze je nedestruktivní: nemaže data, pouze přidává nástroje a endpointy.
+
+
+## v0.7.0 User HUB Core
+
+Větší vývojový krok – začátek reálné poradenské části HUBu.
+
+Přidáno:
+- Uživatelský portál `/hub`.
+- Nový TIP `/hub/new-tip`.
+- Moje TIPy `/hub/my-tips`.
+- Kalkulačky `/hub/calculators`.
+- Partneři `/hub/partners`.
+- Kontakty `/hub/contacts`.
+- Formuláře `/hub/forms`.
+- Statistiky `/hub/stats`.
+- Nápověda `/hub/help`.
+- Samostatný firemní vizuál pro poradce.
+- TIPy se ukládají do DB tabulky `tips`.
+- Výběr sekce/podsekce/specialisty je napojený na taxonomii a specialisty.
+- Partner detail zobrazuje kontakty, odkazy a produkty.
+
+Poznámka:
+- Přihlašování poradce je zatím vývojově fixované na testovací identitu. V další verzi se napojí na uživatele/session.

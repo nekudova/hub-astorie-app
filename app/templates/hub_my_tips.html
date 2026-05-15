@@ -1,0 +1,47 @@
+{% extends "hub_base.html" %}
+{% block content %}
+{% if created %}
+<div class="notice-ok">TIP byl uložen.</div>
+{% endif %}
+<div class="hub-card">
+  <h1>Moje TIPy</h1>
+  <div class="kpi-row">
+    <div class="kpi"><span>Odesláno</span><strong>{{ stats.total or 0 }}</strong></div>
+    <div class="kpi"><span>Sjednáno</span><strong>{{ stats.won or 0 }}</strong></div>
+    <div class="kpi"><span>V řešení</span><strong>{{ stats.open or 0 }}</strong></div>
+    <div class="kpi"><span>Storno</span><strong>{{ stats.lost or 0 }}</strong></div>
+  </div>
+
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, specialistu, smlouvu…">
+    <select name="status">
+      <option value="">Všechny stavy</option>
+      <option value="Nový" {% if status == 'Nový' %}selected{% endif %}>Nový</option>
+      <option value="V řešení" {% if status == 'V řešení' %}selected{% endif %}>V řešení</option>
+      <option value="Sjednáno" {% if status == 'Sjednáno' %}selected{% endif %}>Sjednáno</option>
+      <option value="Storno" {% if status == 'Storno' %}selected{% endif %}>Storno</option>
+    </select>
+    <button class="btn orange">Filtrovat</button>
+  </form>
+
+  <div class="table-scroll">
+    <table class="hub-fast-table">
+      <thead><tr><th>Datum</th><th>Klient</th><th>Specialista</th><th>Potenciál</th><th>Stav</th><th>Poznámka</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.created_at }}</td>
+          <td><strong>{{ r.client_name }}</strong><br><span class="muted">{{ r.client_identifier }}</span></td>
+          <td>{{ r.specialist_name or 'Nepřiřazeno' }}</td>
+          <td>{{ r.potential_amount or '' }}</td>
+          <td><span class="status soft">{{ r.status }}</span></td>
+          <td>{{ r.adviser_note }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">Zatím nemáte žádné TIPy.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.6.0-admin-productivity-pack",
-        "message": "Admin Core + Admin Productivity Pack běží.",
+        "version": "0.7.0-user-hub-core",
+        "message": "Admin Core + User HUB Core běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

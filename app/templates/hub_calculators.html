@@ -1,0 +1,40 @@
+{% extends "hub_base.html" %}
+{% block content %}
+<div class="hub-card">
+  <h1>Kalkulačky</h1>
+  <p class="page-subtitle">Přímé odkazy na kalkulačky partnerů a základ sazebníku.</p>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat kalkulačku, partnera, kategorii…">
+    <button class="btn orange">Hledat</button>
+  </form>
+
+  <div class="portal-grid">
+    {% for l in links %}
+      <div class="portal-card">
+        <span class="portal-letter">{{ (l.partner_name or l.partner_code or 'A')[0] }}</span>
+        <h3>{{ l.title }}</h3>
+        <p>{{ l.partner_name or l.partner_code }}</p>
+        <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
+      </div>
+    {% else %}
+      <div class="empty-state">Zatím nejsou vložené odkazy na kalkulačky.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="hub-card">
+  <h2>Kalkulačka provizí / sazebník</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Sekce</th><th>Podsekce</th><th>Partner</th><th>Typ</th><th>Produkt</th><th>Sazba</th></tr></thead>
+      <tbody>
+        {% for r in rates %}
+        <tr><td>{{ r.section_code }}</td><td>{{ r.subsection_code }}</td><td>{{ r.partner_name }}</td><td>{{ r.base_type }}</td><td>{{ r.product_type }}</td><td>{{ r.rate_percent }}</td></tr>
+        {% else %}
+        <tr><td colspan="6">Sazebník zatím není naplněn.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

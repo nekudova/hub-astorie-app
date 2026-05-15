@@ -9,12 +9,12 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "0.6.0-admin-productivity-pack"
+APP_VERSION = "0.7.0-user-hub-core"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
     version=APP_VERSION,
-    description="Admin Core pro postupný převod HUBu z Google Apps Scriptu do Pythonu.",
+    description="HUB ASTORIE – postupný převod původního TIP Hubu z Google Apps Scriptu do Pythonu.",
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v0.6.0 Admin Productivity Pack is loaded",
+        "status": "v0.7.0 User HUB Core is loaded",
     }
 
 

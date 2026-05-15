@@ -1,0 +1,102 @@
+{% extends "hub_base.html" %}
+{% block content %}
+<div class="hub-card">
+  <h1>Nový TIP</h1>
+  <p class="page-subtitle">Zvolte oblast, podsekci a specialistu. Následně vyplňte základní údaje klienta.</p>
+
+  <form method="post" action="/hub/tips/create" class="hub-form">
+    <div class="hub-grid two">
+      <div>
+        <label>Oblast / sekce</label>
+        <select name="section_code" id="section_code" onchange="filterHubSubsections(); filterHubSpecialists();" required>
+          <option value="">— vyberte oblast —</option>
+          {% for s in sections %}
+            <option value="{{ s.section_code }}">{{ s.icon }} {{ s.section_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Podsekce</label>
+        <select name="subsection_code" id="subsection_code" onchange="filterHubSpecialists();">
+          <option value="">— nejdříve vyberte sekci —</option>
+          {% for ss in subsections %}
+            <option value="{{ ss.subsection_code }}" data-section="{{ ss.section_code }}">{{ ss.subsection_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="hub-card inner">
+      <h2>Specialista</h2>
+      <p class="page-subtitle">Zobrazují se pouze specialisté, kteří jsou aktivní. Dostupnost se bude dále řídit jejich profilem.</p>
+      <input type="hidden" name="specialist_email" id="specialist_email">
+      <input type="hidden" name="specialist_name" id="specialist_name">
+      <div class="specialist-grid" id="specialist_grid">
+        {% for s in specialists %}
+          <button type="button" class="specialist-card"
+                  data-section="{{ s.section_code }}" data-subsection="{{ s.subsection_code }}"
+                  data-email="{{ s.email }}" data-name="{{ s.specialist_name }}"
+                  onclick="selectSpecialist(this)">
+            <strong>{{ s.specialist_name }}</strong>
+            <span>{{ s.role_description or 'Specialista' }}</span>
+            <span>{{ s.region or 'ČR' }}</span>
+            <span>{{ s.email }}</span>
+            <em>IF/PS: {{ s.if_share or '—' }} / {{ s.ps_share or '—' }}</em>
+          </button>
+        {% else %}
+          <div class="empty-state">Zatím nejsou založení specialisté.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="hub-card inner orange-border">
+      <h2>Formulář TIPu</h2>
+      <div class="hub-grid three">
+        <div><label>Poradce</label><input value="{{ user.name }}" readonly></div>
+        <div><label>E-mail IF</label><input value="{{ user.email }}" readonly></div>
+        <div><label>Telefon IF</label><input value="{{ user.phone }}" readonly></div>
+      </div>
+
+      <div class="hub-grid three">
+        <div><label>Klient</label><input name="client_name" placeholder="jméno / název klienta" required></div>
+        <div><label>Kontakt na klienta</label><input name="client_phone" placeholder="telefon, e-mail"></div>
+        <div><label>RČ / IČO / datum nar.</label><input name="client_identifier" placeholder="identifikace"></div>
+      </div>
+
+      <div><label>Odhad potenciálu / objemu</label><input name="potential_amount" placeholder="např. 25 000 Kč / rok"></div>
+      <div><label>Smlouva č.</label><input name="policy_no"></div>
+      <div><label>Popis případu</label><textarea name="adviser_note" placeholder="Stručně popište situaci klienta, co řešíte a co očekáváte od specialisty."></textarea></div>
+
+      <div class="form-actions"><button class="btn orange" type="submit">Odeslat TIP</button></div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function filterHubSubsections(){
+  const section = document.getElementById("section_code").value;
+  const sub = document.getElementById("subsection_code");
+  Array.from(sub.options).forEach(opt => {
+    if(!opt.dataset.section){ opt.hidden = false; return; }
+    opt.hidden = opt.dataset.section !== section;
+  });
+  sub.value = "";
+}
+function filterHubSpecialists(){
+  const section = document.getElementById("section_code").value;
+  const subsection = document.getElementById("subsection_code").value;
+  document.querySelectorAll(".specialist-card").forEach(card => {
+    const secOk = !section || card.dataset.section === section;
+    const subOk = !subsection || !card.dataset.subsection || card.dataset.subsection === subsection;
+    card.style.display = secOk && subOk ? "" : "none";
+  });
+}
+function selectSpecialist(btn){
+  document.querySelectorAll(".specialist-card").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("specialist_email").value = btn.dataset.email || "";
+  document.getElementById("specialist_name").value = btn.dataset.name || "";
+}
+</script>
+{% endblock %}
