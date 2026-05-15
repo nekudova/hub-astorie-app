@@ -3,6 +3,7 @@
 <div class="detail-topbar">
   <a class="btn soft" href="/admin/partners">← Zpět na partnery</a>
   <div class="detail-actions">
+    <button class="btn soft" type="button" onclick="toggleEditPartner()">Upravit partnera</button>
     {% if partner and partner.ico %}
     <form method="post" action="/admin/partners/{{ partner.partner_code }}/ares-refresh">
       <button class="btn soft" type="submit">Aktualizovat z ARES</button>
@@ -18,6 +19,90 @@
   {% if partner %}{{ partner.name }}{% else %}Partner {{ partner_code }}{% endif %}
 </h1>
 <p class="page-subtitle">Detail partnera – registrační údaje, kontakty, odkazy a produkty na jednom místě.</p>
+
+{% if partner %}
+<section id="edit-partner-panel" class="card collapsible-panel section-space" style="display:none;">
+  <div class="panel-head">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Upravit partnera</h2>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Změny se propíšou do centrálního číselníku partnerů.</p>
+    </div>
+    <button class="btn soft" type="button" onclick="toggleEditPartner()">Zavřít</button>
+  </div>
+
+  <form method="post" action="/admin/partners/{{ partner.partner_code }}/update" class="admin-form-grid">
+    <div>
+      <label>Kód partnera</label>
+      <input type="text" value="{{ partner.partner_code }}" disabled>
+    </div>
+
+    <div>
+      <label>IČO</label>
+      <input type="text" name="ico" value="{{ partner.ico or '' }}">
+    </div>
+
+    <div class="span-2">
+      <label>Název partnera</label>
+      <input type="text" name="name" value="{{ partner.name or '' }}" required>
+    </div>
+
+    <div>
+      <label>DIČ</label>
+      <input type="text" name="dic" value="{{ partner.dic or '' }}">
+    </div>
+
+    <div>
+      <label>Datová schránka</label>
+      <input type="text" name="data_box" value="{{ partner.data_box or '' }}">
+    </div>
+
+    <div>
+      <label>E-mail / podatelna</label>
+      <input type="email" name="registry_email" value="{{ partner.registry_email or '' }}">
+    </div>
+
+    <div>
+      <label>Právní forma</label>
+      <input type="text" name="legal_form" value="{{ partner.legal_form or '' }}">
+    </div>
+
+    <div>
+      <label>Ulice</label>
+      <input type="text" name="street" value="{{ partner.street or '' }}">
+    </div>
+
+    <div>
+      <label>Město</label>
+      <input type="text" name="city" value="{{ partner.city or '' }}">
+    </div>
+
+    <div>
+      <label>PSČ</label>
+      <input type="text" name="zip_code" value="{{ partner.zip_code or '' }}">
+    </div>
+
+    <div class="span-2">
+      <label>Celá adresa / sídlo</label>
+      <textarea name="address_full">{{ partner.address_full or '' }}</textarea>
+    </div>
+
+    <div class="span-2">
+      <label>Poznámka</label>
+      <textarea name="note">{{ partner.note or '' }}</textarea>
+    </div>
+
+    <div class="span-2 checkline">
+      <input type="checkbox" name="is_active" value="1" id="partner_active" {% if partner.is_active %}checked{% endif %}>
+      <label for="partner_active" style="margin:0;">Partner je aktivní</label>
+    </div>
+
+    <div class="span-2 form-actions">
+      <button class="btn orange" type="submit">Uložit změny</button>
+      <button class="btn soft" type="button" onclick="toggleEditPartner()">Zrušit</button>
+    </div>
+  </form>
+</section>
+{% endif %}
 
 <section class="grid cols-4">
   <div class="stat"><div class="stat-label">Kód partnera</div><div class="stat-value" style="font-size:28px;">{{ partner_code }}</div></div>
@@ -46,6 +131,12 @@
   {% else %}
     <p>Partner nebyl nalezen.</p>
   {% endif %}
+</section>
+
+<section class="card section-space">
+  <h2 style="margin-top:0;color:var(--petrol);">Připraveno pro formuláře</h2>
+  <p style="color:#637386;font-weight:700;">Tento partner lze použít jako zdroj dat pro formuláře a výpovědi. Systém bude z detailu partnera brát název, adresu, datovou schránku, e-mail a identifikaci.</p>
+  <code>/api/partners/{{ partner_code }}/registry</code>
 </section>
 
 <section class="grid cols-2 section-space">
@@ -91,4 +182,15 @@
     </tbody>
   </table>
 </section>
+
+<script>
+function toggleEditPartner() {
+  const panel = document.getElementById("edit-partner-panel");
+  if (!panel) return;
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if (panel.style.display === "block") {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+</script>
 {% endblock %}

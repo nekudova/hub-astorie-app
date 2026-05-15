@@ -17,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.3.8",
+        "version": "v0.3.9",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -429,3 +429,68 @@ def duplicate_partner(partner_code: str, db: Session = Depends(get_db)):
     ))
     db.commit()
     return RedirectResponse("/admin/partners", status_code=303)
+
+
+@router.post("/admin/partners/{partner_code}/update")
+def update_partner(
+    partner_code: str,
+    request: Request,
+    name: str = Form(...),
+    ico: str = Form(""),
+    dic: str = Form(""),
+    data_box: str = Form(""),
+    registry_email: str = Form(""),
+    street: str = Form(""),
+    city: str = Form(""),
+    zip_code: str = Form(""),
+    address_full: str = Form(""),
+    legal_form: str = Form(""),
+    note: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if not partner:
+        return RedirectResponse("/admin/partners", status_code=303)
+
+    partner.name = name
+    partner.ico = ico
+    partner.dic = dic
+    partner.data_box = data_box
+    partner.registry_email = registry_email
+    partner.street = street
+    partner.city = city
+    partner.zip_code = zip_code
+    partner.address_full = address_full
+    partner.legal_form = legal_form
+    partner.note = note
+    partner.is_active = bool(is_active)
+    db.commit()
+
+    return RedirectResponse(f"/admin/partners/{partner.partner_code}", status_code=303)
+
+
+@router.get("/api/partners/{partner_code}/registry")
+def api_partner_registry(partner_code: str, db: Session = Depends(get_db)):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if not partner:
+        return JSONResponse({"ok": False, "error": "Partner nebyl nalezen."}, status_code=404)
+
+    return {
+        "ok": True,
+        "partner": {
+            "partner_code": partner.partner_code,
+            "name": partner.name,
+            "ico": partner.ico,
+            "dic": partner.dic,
+            "data_box": partner.data_box,
+            "registry_email": partner.registry_email,
+            "street": partner.street,
+            "city": partner.city,
+            "zip_code": partner.zip_code,
+            "address_full": partner.address_full,
+            "legal_form": partner.legal_form,
+            "note": partner.note,
+            "is_active": partner.is_active,
+        }
+    }

@@ -121,3 +121,12 @@ Přidáno / upraveno:
 - Detail partnera má návratové tlačítko nahoře.
 - Rychlé akce z detailu: kontakty, odkazy, produkty, aktualizace z ARES.
 - Kopírování partnera jako náhrada práce s řádky v Excelu.
+
+
+## v0.3.9 Partner Edit + Forms Ready
+
+Přidáno:
+- Úprava partnera přímo v detailu.
+- Aktivní/neaktivní stav partnera.
+- JSON endpoint `/api/partners/{partner_code}/registry` pro budoucí formuláře a výpovědi.
+- Blok „Připraveno pro formuláře“ v detailu partnera.
