@@ -487,3 +487,12 @@ input:focus, select:focus, textarea:focus {
   background: #eef7f8;
   border: 1px solid var(--line);
 }
+
+.info-box{border:1px solid var(--line);border-radius:16px;background:#f4fafb;padding:16px;color:#30485a;font-weight:700;line-height:1.6}
+.suggestions{position:relative;z-index:30;margin-top:6px}
+.suggestion-item{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:6px;cursor:pointer;color:var(--text);box-shadow:0 8px 20px rgba(0,61,76,.08)}
+.suggestion-item:hover{border-color:var(--orange)}
+.suggestion-item span{color:#637386;font-size:13px}
+.document-preview{white-space:pre-wrap;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.65;color:#111827;margin:0}
+.print-card{max-width:900px}
+@media print{.sidebar,.topbar,.detail-topbar,.page-subtitle{display:none!important}.app-shell{display:block}.main{padding:0}.card{box-shadow:none;border:none}}

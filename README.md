@@ -149,3 +149,12 @@ Přidáno:
 - `/api/partners/{partner_code}/form-source` pro předvyplnění výpovědí a formulářů.
 - Admin stránka „Napojení formulářů“.
 - Detail partnera zobrazuje API zdroje připravené pro formuláře.
+
+## v0.4.2 Výpovědi Core
+
+Přidáno:
+- Modul `/admin/terminations`.
+- Výběr partnera přes našeptávač.
+- Dotahování údajů partnera z číselníku.
+- Náhled textu výpovědi.
+- Tisk / uložení jako PDF přes prohlížeč.

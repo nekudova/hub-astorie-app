@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Výpovědi</h1>
+<p class="page-subtitle">První pracovní modul pro výpovědi. Partner se vybírá z centrálního číselníku a systém dotahuje jeho adresu, DS a e-mail.</p>
+
+<section class="card">
+  <h2 style="margin-top:0;color:var(--petrol);">Nová výpověď</h2>
+
+  <form method="post" action="/admin/terminations/preview" class="admin-form-grid">
+    <div>
+      <label>Partner / pojišťovna</label>
+      <input type="text" name="partner_code" id="partner_code" value="{{ partner_code }}" placeholder="Začněte psát kód nebo název partnera" autocomplete="off" required>
+      <div id="partner-suggestions" class="suggestions"></div>
+    </div>
+
+    <div>
+      <label>Typ výpovědi</label>
+      <select name="termination_type">
+        <option value="A">A – ke konci pojistného období</option>
+        <option value="B">B – do 2 měsíců od uzavření smlouvy</option>
+        <option value="C">C – po oznámení pojistné události</option>
+        <option value="D">D – nesouhlas se změnou pojistného</option>
+        <option value="E">E – zánik pojistného zájmu / prodej</option>
+        <option value="F">F – vyřazení vozidla / odcizení</option>
+      </select>
+    </div>
+
+    <div class="span-2 info-box" id="partner-info">
+      {% if partner %}
+        <strong>{{ partner.name }}</strong><br>
+        IČO: {{ partner.ico or "" }}<br>
+        DS: {{ partner.data_box or "" }}<br>
+        E-mail: {{ partner.registry_email or "" }}<br>
+        Adresa: {{ partner.address_full or "" }}
+      {% else %}
+        Vyberte partnera z číselníku. Údaje se zobrazí zde.
+      {% endif %}
+    </div>
+
+    <div><label>Jméno klienta / pojistníka</label><input type="text" name="client_name" required></div>
+    <div><label>RČ / IČO klienta</label><input type="text" name="client_identifier"></div>
+    <div class="span-2"><label>Adresa klienta</label><input type="text" name="client_address"></div>
+    <div><label>Číslo pojistné smlouvy</label><input type="text" name="policy_no" required></div>
+    <div><label>Druh pojištění</label><input type="text" name="insurance_type" placeholder="např. POV, HAV, majetek"></div>
+    <div class="span-2"><label>Identifikace předmětu pojištění</label><input type="text" name="insured_subject" placeholder="např. RZ vozidla, adresa nemovitosti"></div>
+    <div><label>Bankovní účet pro přeplatek</label><input type="text" name="bank_account"></div>
+    <div><label>Rozhodné datum</label><input type="date" name="extra_date"></div>
+    <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
+    <div class="span-2 form-actions"><button class="btn orange" type="submit">Vytvořit náhled</button><a class="btn soft" href="/admin">Zpět na dashboard</a></div>
+  </form>
+</section>
+
+<script>
+const input = document.getElementById("partner_code");
+const suggestions = document.getElementById("partner-suggestions");
+const info = document.getElementById("partner-info");
+let timer = null;
+
+input.addEventListener("input", function() {
+  clearTimeout(timer);
+  const q = input.value.trim();
+  if (q.length < 2) { suggestions.innerHTML = ""; return; }
+  timer = setTimeout(async function() {
+    const res = await fetch("/api/partners/search?q=" + encodeURIComponent(q));
+    const data = await res.json();
+    if (!data.ok) return;
+    suggestions.innerHTML = data.items.map(item => `
+      <button type="button" class="suggestion-item" onclick="selectPartner('${item.partner_code}')">
+        <strong>${item.label}</strong><br>
+        <span>IČO: ${item.ico || ""} · DS: ${item.data_box || ""} · ${item.city || ""}</span>
+      </button>
+    `).join("");
+  }, 250);
+});
+
+async function selectPartner(code) {
+  input.value = code;
+  suggestions.innerHTML = "";
+  const res = await fetch("/api/partners/" + encodeURIComponent(code) + "/form-source");
+  const data = await res.json();
+  if (!data.ok) return;
+  const p = data.partner;
+  info.innerHTML = `<strong>${p.name || ""}</strong><br>IČO: ${p.ico || ""}<br>DS: ${p.data_box || ""}<br>E-mail: ${p.registry_email || ""}<br>Adresa: ${p.address_full || ""}`;
+}
+</script>
+{% endblock %}

@@ -1,4 +1,5 @@
-HUB ASTORIE APP v0.4.1-partner-search-api-bridge
-- partner autocomplete API
-- partner form-source API for future forms/termination documents
-- form bridge admin information page
+HUB ASTORIE APP v0.4.2-termination-core
+- termination module
+- partner autocomplete in termination form
+- prefill partner registry data
+- printable termination preview

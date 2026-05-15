@@ -17,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.4.1",
+        "version": "v0.4.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -737,3 +737,98 @@ def api_partner_form_source(partner_code: str, db: Session = Depends(get_db)):
 @router.get("/admin/form-bridge", response_class=HTMLResponse)
 def form_bridge_page(request: Request):
     return render(request, "form_bridge.html", {"active": "form_bridge"})
+
+
+@router.get("/admin/terminations", response_class=HTMLResponse)
+def terminations_page(request: Request, partner_code: str = "", db: Session = Depends(get_db)):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first() if partner_code else None
+    return render(request, "terminations.html", {
+        "active": "terminations",
+        "partner": partner,
+        "partner_code": partner_code.upper() if partner_code else "",
+    })
+
+
+@router.post("/admin/terminations/preview", response_class=HTMLResponse)
+def termination_preview(
+    request: Request,
+    partner_code: str = Form(""),
+    termination_type: str = Form("A"),
+    client_name: str = Form(""),
+    client_identifier: str = Form(""),
+    client_address: str = Form(""),
+    policy_no: str = Form(""),
+    insurance_type: str = Form(""),
+    insured_subject: str = Form(""),
+    bank_account: str = Form(""),
+    extra_date: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first() if partner_code else None
+
+    reason_map = {
+        "A": "ke konci pojistného období",
+        "B": "ve lhůtě do 2 měsíců od uzavření smlouvy",
+        "C": "po oznámení pojistné události",
+        "D": "z důvodu nesouhlasu se změnou výše pojistného",
+        "E": "z důvodu zániku pojistného zájmu – prodej předmětu pojištění",
+        "F": "z důvodu vyřazení vozidla z evidence / odcizení",
+    }
+
+    insurer_name = partner.name if partner else ""
+    insurer_address = partner.address_full if partner else ""
+    insurer_data_box = partner.data_box if partner else ""
+    insurer_email = partner.registry_email if partner else ""
+
+    lines = [
+        "VÝPOVĚĎ POJISTNÉ SMLOUVY",
+        "",
+        f"Adresát: {insurer_name}",
+    ]
+    if insurer_address:
+        lines.append(f"Adresa: {insurer_address}")
+    if insurer_data_box:
+        lines.append(f"Datová schránka: {insurer_data_box}")
+    if insurer_email:
+        lines.append(f"E-mail: {insurer_email}")
+
+    lines += [
+        "",
+        f"Pojistník: {client_name}",
+    ]
+    if client_identifier:
+        lines.append(f"Identifikace: {client_identifier}")
+    if client_address:
+        lines.append(f"Adresa pojistníka: {client_address}")
+
+    lines += [
+        "",
+        f"Tímto vypovídám pojistnou smlouvu č. {policy_no}.",
+        f"Výpověď podávám {reason_map.get(termination_type, reason_map['A'])}.",
+    ]
+
+    if extra_date:
+        lines.append(f"Rozhodné datum: {extra_date}")
+    if insurance_type:
+        lines.append(f"Druh pojištění: {insurance_type}")
+    if insured_subject:
+        lines.append(f"Identifikace předmětu pojištění: {insured_subject}")
+
+    lines += [
+        "",
+        "Žádám o potvrzení přijetí této výpovědi.",
+    ]
+    if bank_account:
+        lines.append(f"Případný přeplatek pojistného žádám zaslat na bankovní účet: {bank_account}.")
+    else:
+        lines.append("Případný přeplatek pojistného žádám zaslat na adresu pojistníka.")
+    if note:
+        lines += ["", f"Poznámka: {note}"]
+
+    return render(request, "termination_preview.html", {
+        "active": "terminations",
+        "partner": partner,
+        "partner_code": partner_code.upper() if partner_code else "",
+        "preview_text": "\\n".join(lines),
+    })

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="detail-topbar">
+  <a class="btn soft" href="/admin/terminations">← Zpět na výpověď</a>
+  <div class="detail-actions"><button class="btn orange" onclick="window.print()">Tisk / uložit jako PDF</button></div>
+</div>
+
+<h1 class="page-title">Náhled výpovědi</h1>
+<p class="page-subtitle">První generovaný text. V další verzi bude doplněn export do PDF šablony.</p>
+
+<section class="card print-card">
+  <pre class="document-preview">{{ preview_text }}</pre>
+</section>
+
+<section class="card section-space">
+  <h2 style="margin-top:0;color:var(--petrol);">Zdrojová data partnera</h2>
+  {% if partner %}
+    <p><strong>{{ partner.name }}</strong></p>
+    <p>IČO: {{ partner.ico or "" }}</p>
+    <p>Datová schránka: {{ partner.data_box or "" }}</p>
+    <p>E-mail: {{ partner.registry_email or "" }}</p>
+    <p>Adresa: {{ partner.address_full or "" }}</p>
+  {% else %}
+    <p>Partner nebyl nalezen.</p>
+  {% endif %}
+</section>
+{% endblock %}
