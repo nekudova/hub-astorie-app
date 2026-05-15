@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.services.audit_helper import safe_audit, model_snapshot
 from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
@@ -19,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.5.2",
+        "version": "v0.4.4",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -143,8 +141,6 @@ def create_subsection(
 def partners_page(
     request: Request,
     q: str = "",
-    status: str = "",
-    segment: str = "",
     db: Session = Depends(get_db),
 ):
     query = db.query(Partner)
@@ -161,30 +157,12 @@ def partners_page(
             (Partner.address_full.ilike(like))
         )
 
-    if status:
-        query = query.filter(Partner.partner_status == status)
-
-    if segment == "vip":
-        query = query.filter(Partner.is_vip == True)
-    elif segment == "fleet":
-        query = query.filter(Partner.segment_fleet == True)
-    elif segment == "retail":
-        query = query.filter(Partner.segment_retail == True)
-    elif segment == "life":
-        query = query.filter(Partner.segment_life == True)
-    elif segment == "business":
-        query = query.filter(Partner.segment_business == True)
-    elif segment == "missing_contact":
-        query = query.outerjoin(PartnerContact, PartnerContact.partner_code == Partner.partner_code).filter(PartnerContact.id == None)
-
     partners = query.order_by(Partner.name).limit(1000).all()
 
     return render(request, "partners.html", {
         "active": "partners",
         "partners": partners,
         "q": q,
-        "status": status,
-        "segment": segment,
     })
 
 
@@ -447,16 +425,6 @@ def duplicate_partner(partner_code: str, db: Session = Depends(get_db)):
         legal_form=src.legal_form,
         source=src.source,
         note=src.note,
-        partner_status=getattr(src, "partner_status", "aktivní"),
-        cooperation_status=getattr(src, "cooperation_status", ""),
-        is_vip=getattr(src, "is_vip", False),
-        segment_fleet=getattr(src, "segment_fleet", False),
-        segment_retail=getattr(src, "segment_retail", False),
-        segment_life=getattr(src, "segment_life", False),
-        segment_business=getattr(src, "segment_business", False),
-        onboarding_done=getattr(src, "onboarding_done", False),
-        contract_valid=getattr(src, "contract_valid", False),
-        last_audit_note=getattr(src, "last_audit_note", ""),
         is_active=True,
     ))
     db.commit()
@@ -478,27 +446,12 @@ def update_partner(
     address_full: str = Form(""),
     legal_form: str = Form(""),
     note: str = Form(""),
-    partner_status: str = Form("aktivní"),
-    cooperation_status: str = Form(""),
-    is_vip: str = Form(""),
-    segment_fleet: str = Form(""),
-    segment_retail: str = Form(""),
-    segment_life: str = Form(""),
-    segment_business: str = Form(""),
-    onboarding_done: str = Form(""),
-    contract_valid: str = Form(""),
-    last_audit_note: str = Form(""),
     is_active: str = Form(""),
     db: Session = Depends(get_db),
 ):
     partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
     if not partner:
         return RedirectResponse("/admin/partners", status_code=303)
-
-    old_snapshot = model_snapshot(partner, [
-        "name", "ico", "dic", "data_box", "registry_email", "street", "city", "zip_code",
-        "address_full", "legal_form", "note", "is_active"
-    ])
 
     partner.name = name
     partner.ico = ico
@@ -511,23 +464,8 @@ def update_partner(
     partner.address_full = address_full
     partner.legal_form = legal_form
     partner.note = note
-    partner.partner_status = partner_status
-    partner.cooperation_status = cooperation_status
-    partner.is_vip = bool(is_vip)
-    partner.segment_fleet = bool(segment_fleet)
-    partner.segment_retail = bool(segment_retail)
-    partner.segment_life = bool(segment_life)
-    partner.segment_business = bool(segment_business)
-    partner.onboarding_done = bool(onboarding_done)
-    partner.contract_valid = bool(contract_valid)
-    partner.last_audit_note = last_audit_note
     partner.is_active = bool(is_active)
-    new_snapshot = model_snapshot(partner, [
-        "name", "ico", "dic", "data_box", "registry_email", "street", "city", "zip_code",
-        "address_full", "legal_form", "note", "is_active"
-    ])
     db.commit()
-    safe_audit(db, "admin@astorie.local", "UPDATE", "partner", partner.partner_code, old_snapshot, new_snapshot, "Úprava partnera")
 
     return RedirectResponse(f"/admin/partners/{partner.partner_code}", status_code=303)
 
@@ -554,13 +492,6 @@ def api_partner_registry(partner_code: str, db: Session = Depends(get_db)):
             "legal_form": partner.legal_form,
             "note": partner.note,
             "is_active": partner.is_active,
-            "partner_status": getattr(partner, "partner_status", "aktivní"),
-            "cooperation_status": getattr(partner, "cooperation_status", ""),
-            "is_vip": getattr(partner, "is_vip", False),
-            "segment_fleet": getattr(partner, "segment_fleet", False),
-            "segment_retail": getattr(partner, "segment_retail", False),
-            "segment_life": getattr(partner, "segment_life", False),
-            "segment_business": getattr(partner, "segment_business", False),
         }
     }
 
@@ -764,13 +695,6 @@ def api_partner_form_source(partner_code: str, db: Session = Depends(get_db)):
             "address_full": partner.address_full,
             "legal_form": partner.legal_form,
             "is_active": partner.is_active,
-            "partner_status": getattr(partner, "partner_status", "aktivní"),
-            "cooperation_status": getattr(partner, "cooperation_status", ""),
-            "is_vip": getattr(partner, "is_vip", False),
-            "segment_fleet": getattr(partner, "segment_fleet", False),
-            "segment_retail": getattr(partner, "segment_retail", False),
-            "segment_life": getattr(partner, "segment_life", False),
-            "segment_business": getattr(partner, "segment_business", False),
         },
         "form_prefill": {
             "insurer_name": partner.name,
@@ -956,119 +880,4 @@ def modules_page(request: Request, focus: str = '', db: Session = Depends(get_db
         "active": "modules",
         "modules": modules,
         "focus": focus,
-    })
-
-
-@router.post("/admin/partners/registry-upgrade")
-def partner_registry_upgrade(db: Session = Depends(get_db)):
-    statements = [
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS partner_status VARCHAR(80) DEFAULT 'aktivní' NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS cooperation_status VARCHAR(120) DEFAULT '' NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_fleet BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_retail BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_life BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_business BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_done BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS contract_valid BOOLEAN DEFAULT FALSE NOT NULL",
-        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS last_audit_note TEXT DEFAULT '' NOT NULL",
-    ]
-    for sql in statements:
-        db.execute(text(sql))
-    db.commit()
-    return RedirectResponse("/admin/partners", status_code=303)
-
-
-@router.post("/admin/audit-history/upgrade")
-def audit_history_upgrade(db: Session = Depends(get_db)):
-    db.execute(text("""
-        CREATE TABLE IF NOT EXISTS audit_history (
-            id SERIAL PRIMARY KEY,
-            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-            user_email TEXT NOT NULL DEFAULT '',
-            action TEXT NOT NULL DEFAULT '',
-            entity TEXT NOT NULL DEFAULT '',
-            entity_id TEXT NOT NULL DEFAULT '',
-            old_data TEXT NOT NULL DEFAULT '',
-            new_data TEXT NOT NULL DEFAULT '',
-            note TEXT NOT NULL DEFAULT ''
-        )
-    """))
-    db.commit()
-    return RedirectResponse("/admin/audit-history", status_code=303)
-
-
-@router.get("/admin/audit-history", response_class=HTMLResponse)
-def audit_history_page(
-    request: Request,
-    q: str = "",
-    entity: str = "",
-    action: str = "",
-    limit: int = 200,
-    db: Session = Depends(get_db),
-):
-    db.execute(text("""
-        CREATE TABLE IF NOT EXISTS audit_history (
-            id SERIAL PRIMARY KEY,
-            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-            user_email TEXT NOT NULL DEFAULT '',
-            action TEXT NOT NULL DEFAULT '',
-            entity TEXT NOT NULL DEFAULT '',
-            entity_id TEXT NOT NULL DEFAULT '',
-            old_data TEXT NOT NULL DEFAULT '',
-            new_data TEXT NOT NULL DEFAULT '',
-            note TEXT NOT NULL DEFAULT ''
-        )
-    """))
-    db.commit()
-
-    sql = "SELECT * FROM audit_history WHERE 1=1"
-    params = {}
-
-    if q:
-        sql += " AND (lower(user_email) LIKE :q OR lower(entity_id) LIKE :q OR lower(note) LIKE :q OR lower(new_data) LIKE :q OR lower(old_data) LIKE :q)"
-        params["q"] = f"%{q.lower()}%"
-
-    if entity:
-        sql += " AND entity = :entity"
-        params["entity"] = entity
-
-    if action:
-        sql += " AND action = :action"
-        params["action"] = action
-
-    sql += " ORDER BY created_at DESC LIMIT :limit"
-    params["limit"] = max(1, min(limit, 1000))
-
-    rows = db.execute(text(sql), params).mappings().all()
-
-    return render(request, "audit_history.html", {
-        "active": "audit_history",
-        "rows": rows,
-        "q": q,
-        "entity": entity,
-        "action": action,
-        "limit": limit,
-    })
-
-
-@router.get("/admin/partners/{partner_code}/history", response_class=HTMLResponse)
-def partner_history_page(request: Request, partner_code: str, db: Session = Depends(get_db)):
-    rows = db.execute(
-        text("""
-            SELECT * FROM audit_history
-            WHERE entity_id = :partner_code OR lower(new_data) LIKE :like OR lower(old_data) LIKE :like
-            ORDER BY created_at DESC
-            LIMIT 300
-        """),
-        {"partner_code": partner_code.upper(), "like": f"%{partner_code.lower()}%"}
-    ).mappings().all()
-
-    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
-
-    return render(request, "partner_history.html", {
-        "active": "partners",
-        "partner": partner,
-        "partner_code": partner_code.upper(),
-        "rows": rows,
     })

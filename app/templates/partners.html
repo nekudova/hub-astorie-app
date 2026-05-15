@@ -1,27 +1,201 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page-toolbar">
-  <div><h1 class="page-title">Partneři</h1><p class="page-subtitle">Centrální master číselník partnerů včetně provozních metadat pro další moduly HUBu.</p></div>
-  <div class="detail-actions"><form method="post" action="/admin/partners/registry-upgrade"><button class="btn soft" type="submit">Ověřit strukturu DB</button></form><button class="btn orange" type="button" onclick="togglePartnerForm()">+ Nový partner</button></div>
+  <div>
+    <h1 class="page-title">Partneři</h1>
+    <p class="page-subtitle">Centrální číselník partnerů včetně IČO, datové schránky, e-mailu a adresy. Údaje lze předvyplnit z ARES podle IČO.</p>
+  </div>
+  <button class="btn orange" type="button" onclick="togglePartnerForm()">+ Nový partner</button>
 </div>
+
 <section id="partner-form-panel" class="card collapsible-panel" style="display:none;">
-  <div class="panel-head"><div><h2 style="margin:0;color:var(--petrol);">Nový partner</h2><p style="margin:6px 0 0;color:#637386;font-weight:700;">Základní údaje partnera. Provozní metadata lze doplnit v detailu.</p></div><button class="btn soft" type="button" onclick="togglePartnerForm()">Zavřít</button></div>
-  <form method="post" action="/admin/partners/create-extended" class="admin-form-grid">
-    <div><label>Kód partnera</label><input type="text" name="partner_code" id="partner_code" required placeholder="např. KOOP"></div>
-    <div><label>IČO</label><div style="display:grid;grid-template-columns:1fr auto;gap:10px;"><input type="text" name="ico" id="ico" placeholder="8 číslic"><button type="button" class="btn soft" onclick="loadAres()">ARES</button></div></div>
-    <div class="span-2"><label>Název partnera</label><input type="text" name="name" id="name" required></div>
-    <div><label>DIČ</label><input type="text" name="dic" id="dic"></div><div><label>Datová schránka</label><input type="text" name="data_box" id="data_box"></div>
-    <div><label>E-mail / podatelna</label><input type="email" name="registry_email" id="registry_email"></div><div><label>Právní forma</label><input type="text" name="legal_form" id="legal_form"></div>
-    <div><label>Ulice</label><input type="text" name="street" id="street"></div><div><label>Město</label><input type="text" name="city" id="city"></div><div><label>PSČ</label><input type="text" name="zip_code" id="zip_code"></div>
-    <div class="span-2"><label>Celá adresa / sídlo</label><textarea name="address_full" id="address_full"></textarea></div><div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
-    <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit partnera</button><span id="ares-msg" style="color:#637386;font-weight:800;"></span></div>
+  <div class="panel-head">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Nový partner</h2>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Formulář je schovaný, aby hlavní pracovní plocha zůstala přehledná.</p>
+    </div>
+    <button class="btn soft" type="button" onclick="togglePartnerForm()">Zavřít</button>
+  </div>
+
+  <form method="post" action="/admin/partners/create-extended" id="partner-form" class="admin-form-grid">
+    <div>
+      <label>Kód partnera</label>
+      <input type="text" name="partner_code" id="partner_code" required placeholder="např. KOOP">
+    </div>
+
+    <div>
+      <label>IČO</label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;">
+        <input type="text" name="ico" id="ico" placeholder="8 číslic">
+        <button type="button" class="btn soft" onclick="loadAres()">ARES</button>
+      </div>
+    </div>
+
+    <div class="span-2">
+      <label>Název partnera</label>
+      <input type="text" name="name" id="name" required>
+    </div>
+
+    <div>
+      <label>DIČ</label>
+      <input type="text" name="dic" id="dic">
+    </div>
+
+    <div>
+      <label>Datová schránka</label>
+      <input type="text" name="data_box" id="data_box">
+    </div>
+
+    <div>
+      <label>E-mail / podatelna</label>
+      <input type="email" name="registry_email" id="registry_email">
+    </div>
+
+    <div>
+      <label>Právní forma</label>
+      <input type="text" name="legal_form" id="legal_form">
+    </div>
+
+    <div>
+      <label>Ulice</label>
+      <input type="text" name="street" id="street">
+    </div>
+
+    <div>
+      <label>Město</label>
+      <input type="text" name="city" id="city">
+    </div>
+
+    <div>
+      <label>PSČ</label>
+      <input type="text" name="zip_code" id="zip_code">
+    </div>
+
+    <div class="span-2">
+      <label>Celá adresa / sídlo</label>
+      <textarea name="address_full" id="address_full"></textarea>
+    </div>
+
+    <div class="span-2">
+      <label>Poznámka</label>
+      <textarea name="note"></textarea>
+    </div>
+
+    <div class="span-2 form-actions">
+      <button class="btn orange" type="submit">Uložit partnera</button>
+      <span id="ares-msg" style="color:#637386;font-weight:800;"></span>
+    </div>
   </form>
 </section>
-<section class="card section-space"><form method="get" action="/admin/partners" class="inline-filters">
-  <div><label>Fulltextové hledání</label><input type="text" name="q" value="{{ q or '' }}" placeholder="Název, kód, IČO, DS, e-mail, město…"></div>
-  <div><label>Stav partnera</label><select name="status"><option value="">Všechny stavy</option><option value="aktivní" {% if status == 'aktivní' %}selected{% endif %}>Aktivní</option><option value="pozastaveno" {% if status == 'pozastaveno' %}selected{% endif %}>Pozastaveno</option><option value="ukončeno" {% if status == 'ukončeno' %}selected{% endif %}>Ukončeno</option></select></div>
-  <div><label>Rychlý filtr</label><select name="segment"><option value="">Bez filtru</option><option value="vip" {% if segment == 'vip' %}selected{% endif %}>VIP</option><option value="fleet" {% if segment == 'fleet' %}selected{% endif %}>Flotily</option><option value="retail" {% if segment == 'retail' %}selected{% endif %}>Retail</option><option value="life" {% if segment == 'life' %}selected{% endif %}>Život</option><option value="business" {% if segment == 'business' %}selected{% endif %}>Podnikatelé</option><option value="missing_contact" {% if segment == 'missing_contact' %}selected{% endif %}>Bez kontaktu</option></select></div>
-  <button class="btn orange" type="submit">Filtrovat</button></form></section>
-<section class="card table-card section-space full-width-card"><div class="table-head"><span>Seznam partnerů</span><span style="font-size:13px;color:#637386;">Zobrazeno: {{ partners|length }}</span></div><div class="table-scroll"><table><thead><tr><th>Kód</th><th>Název</th><th>IČO</th><th>DS</th><th>E-mail</th><th>Město</th><th>Status</th><th>Segmenty</th><th>Stav</th><th>Akce</th></tr></thead><tbody>{% for p in partners %}<tr><td><strong>{{ p.partner_code }}</strong></td><td><strong><a href="/admin/partners/{{ p.partner_code }}">{{ p.name }}</a></strong>{% if p.is_vip %} <span class="status ok">VIP</span>{% endif %}</td><td>{{ p.ico or "" }}</td><td>{{ p.data_box or "" }}</td><td>{{ p.registry_email or "" }}</td><td>{{ p.city or "" }}</td><td>{{ p.partner_status or "aktivní" }}</td><td>{% if p.segment_fleet %}<span class="status soft">Flotily</span>{% endif %}{% if p.segment_retail %}<span class="status soft">Retail</span>{% endif %}{% if p.segment_life %}<span class="status soft">Život</span>{% endif %}{% if p.segment_business %}<span class="status soft">Podnikatelé</span>{% endif %}</td><td>{% if p.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td><td><div class="small-actions"><a class="btn soft micro" href="/admin/partners/{{ p.partner_code }}">Detail</a><form method="post" action="/admin/partners/{{ p.partner_code }}/duplicate-partner"><button class="btn soft micro" type="submit">Kopie</button></form></div></td></tr>{% else %}<tr><td colspan="10">Zatím nejsou vložení žádní partneři.</td></tr>{% endfor %}</tbody></table></div></section>
-<script>function togglePartnerForm(){const panel=document.getElementById('partner-form-panel');if(!panel)return;panel.style.display=panel.style.display==='none'?'block':'none';if(panel.style.display==='block')panel.scrollIntoView({behavior:'smooth',block:'start'});}async function loadAres(){const msg=document.getElementById('ares-msg');const ico=document.getElementById('ico').value.trim();if(!ico){msg.textContent='Nejdříve vyplňte IČO.';return;}msg.textContent='Načítám data z ARES…';try{const res=await fetch('/api/ares/subject?ico='+encodeURIComponent(ico));const data=await res.json();if(!data.ok){msg.textContent=data.error||'Data z ARES se nepodařilo načíst.';return;}['name','dic','data_box','street','city','zip_code','address_full','legal_form'].forEach(function(key){const el=document.getElementById(key);if(el&&data[key])el.value=data[key];});msg.textContent='Data z ARES byla načtena.';}catch(e){msg.textContent='Technická chyba při načítání ARES.';}}</script>
+
+<section class="card section-space">
+  <form method="get" action="/admin/partners" class="inline-filters">
+    <div>
+      <label>Fulltextové hledání</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="Hledat název, kód, IČO, DS, e-mail, město, adresu...">
+    </div>
+    <div></div>
+    <button class="btn orange" type="submit">Hledat</button>
+  </form>
+</section>
+
+<section class="card table-card section-space full-width-card">
+  <div class="table-head">
+    <span>Seznam partnerů</span>
+    <span style="font-size:13px;color:#637386;">Zobrazeno: {{ partners|length }}</span>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Kód</th>
+          <th>Název</th>
+          <th>IČO</th>
+          <th>Datová schránka</th>
+          <th>E-mail</th>
+          <th>Město</th>
+          <th>Adresa</th>
+          <th>Stav</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in partners %}
+        <tr>
+          <td><strong>{{ p.partner_code }}</strong></td>
+          <td><strong><a href="/admin/partners/{{ p.partner_code }}">{{ p.name }}</a></strong></td>
+          <td>{{ p.ico or "" }}</td>
+          <td>{{ p.data_box or "" }}</td>
+          <td>{{ p.registry_email or "" }}</td>
+          <td>{{ p.city or "" }}</td>
+          <td>{{ p.address_full or p.street or "" }}</td>
+          <td>{% if p.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
+          <td>
+            <div class="small-actions">
+              <a class="btn soft micro" href="/admin/partners/{{ p.partner_code }}">Detail</a>
+              <form method="post" action="/admin/partners/{{ p.partner_code }}/duplicate-partner">
+                <button class="btn soft micro" type="submit">Kopírovat</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9">Zatím nejsou vložení žádní partneři.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+function togglePartnerForm() {
+  const panel = document.getElementById("partner-form-panel");
+  if (!panel) return;
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if (panel.style.display === "block") {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+async function loadAres() {
+  const msg = document.getElementById("ares-msg");
+  const ico = document.getElementById("ico").value.trim();
+  if (!ico) {
+    msg.textContent = "Nejdříve vyplňte IČO.";
+    return;
+  }
+  msg.textContent = "Načítám data z ARES…";
+
+  try {
+    const res = await fetch("/api/ares/subject?ico=" + encodeURIComponent(ico));
+    const data = await res.json();
+
+    if (!data.ok) {
+      msg.textContent = data.error || "Data z ARES se nepodařilo načíst.";
+      return;
+    }
+
+    const map = {
+      name: "name",
+      dic: "dic",
+      data_box: "data_box",
+      street: "street",
+      city: "city",
+      zip_code: "zip_code",
+      address_full: "address_full",
+      legal_form: "legal_form"
+    };
+
+    Object.keys(map).forEach(function(key) {
+      const el = document.getElementById(map[key]);
+      if (el && data[key]) el.value = data[key];
+    });
+
+    msg.textContent = "Data z ARES byla načtena. Zkontrolujte je a uložte partnera.";
+  } catch (e) {
+    msg.textContent = "Technická chyba při načítání ARES.";
+  }
+}
+</script>
 {% endblock %}

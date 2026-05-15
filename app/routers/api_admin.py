@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.5.1-partner-registry-engine",
-        "message": "Admin Core + Partner Registry Engine běží.",
+        "version": "0.5.0-smart-select-fulltext",
+        "message": "Admin Core + Smart Select Fulltext běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

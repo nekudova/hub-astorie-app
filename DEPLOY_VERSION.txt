@@ -1,6 +1,6 @@
-HUB ASTORIE APP v0.5.1-partner-registry-engine
-- partner operational metadata
-- VIP and segment flags
-- cooperation/onboarding/contract fields
-- partner status filters
-- safe DB upgrade endpoint
+HUB ASTORIE APP v0.5.0-smart-select-fulltext
+- shared smart autocomplete JS
+- partner autocomplete for contacts/links/products/terminations
+- quick client-side table filters
+- keyboard support for partner suggestions
+- foundation for future inline/data-grid workflow
