@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.services.audit_helper import safe_audit, model_snapshot
 from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
@@ -18,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.5.1",
+        "version": "v0.5.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -494,6 +495,11 @@ def update_partner(
     if not partner:
         return RedirectResponse("/admin/partners", status_code=303)
 
+    old_snapshot = model_snapshot(partner, [
+        "name", "ico", "dic", "data_box", "registry_email", "street", "city", "zip_code",
+        "address_full", "legal_form", "note", "is_active"
+    ])
+
     partner.name = name
     partner.ico = ico
     partner.dic = dic
@@ -516,7 +522,12 @@ def update_partner(
     partner.contract_valid = bool(contract_valid)
     partner.last_audit_note = last_audit_note
     partner.is_active = bool(is_active)
+    new_snapshot = model_snapshot(partner, [
+        "name", "ico", "dic", "data_box", "registry_email", "street", "city", "zip_code",
+        "address_full", "legal_form", "note", "is_active"
+    ])
     db.commit()
+    safe_audit(db, "admin@astorie.local", "UPDATE", "partner", partner.partner_code, old_snapshot, new_snapshot, "Úprava partnera")
 
     return RedirectResponse(f"/admin/partners/{partner.partner_code}", status_code=303)
 
@@ -966,3 +977,98 @@ def partner_registry_upgrade(db: Session = Depends(get_db)):
         db.execute(text(sql))
     db.commit()
     return RedirectResponse("/admin/partners", status_code=303)
+
+
+@router.post("/admin/audit-history/upgrade")
+def audit_history_upgrade(db: Session = Depends(get_db)):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS audit_history (
+            id SERIAL PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            user_email TEXT NOT NULL DEFAULT '',
+            action TEXT NOT NULL DEFAULT '',
+            entity TEXT NOT NULL DEFAULT '',
+            entity_id TEXT NOT NULL DEFAULT '',
+            old_data TEXT NOT NULL DEFAULT '',
+            new_data TEXT NOT NULL DEFAULT '',
+            note TEXT NOT NULL DEFAULT ''
+        )
+    """))
+    db.commit()
+    return RedirectResponse("/admin/audit-history", status_code=303)
+
+
+@router.get("/admin/audit-history", response_class=HTMLResponse)
+def audit_history_page(
+    request: Request,
+    q: str = "",
+    entity: str = "",
+    action: str = "",
+    limit: int = 200,
+    db: Session = Depends(get_db),
+):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS audit_history (
+            id SERIAL PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            user_email TEXT NOT NULL DEFAULT '',
+            action TEXT NOT NULL DEFAULT '',
+            entity TEXT NOT NULL DEFAULT '',
+            entity_id TEXT NOT NULL DEFAULT '',
+            old_data TEXT NOT NULL DEFAULT '',
+            new_data TEXT NOT NULL DEFAULT '',
+            note TEXT NOT NULL DEFAULT ''
+        )
+    """))
+    db.commit()
+
+    sql = "SELECT * FROM audit_history WHERE 1=1"
+    params = {}
+
+    if q:
+        sql += " AND (lower(user_email) LIKE :q OR lower(entity_id) LIKE :q OR lower(note) LIKE :q OR lower(new_data) LIKE :q OR lower(old_data) LIKE :q)"
+        params["q"] = f"%{q.lower()}%"
+
+    if entity:
+        sql += " AND entity = :entity"
+        params["entity"] = entity
+
+    if action:
+        sql += " AND action = :action"
+        params["action"] = action
+
+    sql += " ORDER BY created_at DESC LIMIT :limit"
+    params["limit"] = max(1, min(limit, 1000))
+
+    rows = db.execute(text(sql), params).mappings().all()
+
+    return render(request, "audit_history.html", {
+        "active": "audit_history",
+        "rows": rows,
+        "q": q,
+        "entity": entity,
+        "action": action,
+        "limit": limit,
+    })
+
+
+@router.get("/admin/partners/{partner_code}/history", response_class=HTMLResponse)
+def partner_history_page(request: Request, partner_code: str, db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("""
+            SELECT * FROM audit_history
+            WHERE entity_id = :partner_code OR lower(new_data) LIKE :like OR lower(old_data) LIKE :like
+            ORDER BY created_at DESC
+            LIMIT 300
+        """),
+        {"partner_code": partner_code.upper(), "like": f"%{partner_code.lower()}%"}
+    ).mappings().all()
+
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+
+    return render(request, "partner_history.html", {
+        "active": "partners",
+        "partner": partner,
+        "partner_code": partner_code.upper(),
+        "rows": rows,
+    })
