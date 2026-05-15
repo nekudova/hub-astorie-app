@@ -1,6 +1,6 @@
-HUB ASTORIE APP v0.5.3-advisors-fix-user-admin
-- fixed Poradci / users section
-- robust raw SQL advisors page
-- create/update/toggle/reset PIN
-- safe DB column upgrades
-- audit for user operations
+HUB ASTORIE APP v0.5.4-specialists-core
+- specialists table
+- specialist admin page
+- create/update/toggle specialist availability
+- API /api/specialists/search for future TIP routing
+- audit specialist operations

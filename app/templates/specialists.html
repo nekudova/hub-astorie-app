@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-toolbar">
+  <div>
+    <h1 class="page-title">Specialisté</h1>
+    <p class="page-subtitle">Správa specialistů, odborností, provizního poměru IF/PS a dostupnosti pro příjem TIPů.</p>
+  </div>
+  <button class="btn orange" type="button" onclick="toggleSpecialistForm()">+ Nový specialista</button>
+</div>
+
+<section id="specialist-form-panel" class="card collapsible-panel" style="display:none;">
+  <div class="panel-head">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Nový specialista / odbornost</h2>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Jeden specialista může mít více řádků – pro různé sekce nebo podsekce.</p>
+    </div>
+    <button class="btn soft" type="button" onclick="toggleSpecialistForm()">Zavřít</button>
+  </div>
+
+  <form method="post" action="/admin/specialists/create" class="admin-form-grid">
+    <div><label>ID poradce / specialisty</label><input type="text" name="advisor_id"></div>
+    <div><label>Region</label><input type="text" name="region" placeholder="např. ČR, Morava, Praha"></div>
+    <div><label>Jméno specialisty</label><input type="text" name="specialist_name" required></div>
+    <div><label>E-mail</label><input type="email" name="email"></div>
+    <div><label>Telefon</label><input type="text" name="phone"></div>
+    <div><label>Role / odbornost</label><input type="text" name="role_description" placeholder="např. Hypotéky, flotily, investice"></div>
+    <div><label>Sekce</label><input type="text" name="section_code" placeholder="např. FIN"></div>
+    <div><label>Podsekce</label><input type="text" name="subsection_code" placeholder="volitelné"></div>
+    <div><label>IF podíl</label><input type="text" name="if_share" placeholder="např. 0.3"></div>
+    <div><label>PS podíl</label><input type="text" name="ps_share" placeholder="např. 0.7"></div>
+    <div class="span-2 check-grid">
+      <label><input type="checkbox" name="available" value="1" checked> Dostupný pro TIPy</label>
+      <label><input type="checkbox" name="is_active" value="1" checked> Aktivní</label>
+    </div>
+    <div class="span-2"><label>Důvod nedostupnosti</label><input type="text" name="unavailable_reason"></div>
+    <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
+    <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit specialistu</button></div>
+  </form>
+</section>
+
+<section class="card section-space">
+  <form method="get" action="/admin/specialists" class="inline-filters">
+    <div><label>Fulltext</label><input type="text" name="q" value="{{ q or '' }}" placeholder="Jméno, e-mail, telefon, region, role…"></div>
+    <div><label>Sekce</label><select name="section"><option value="">Všechny sekce</option>{% for s in sections %}<option value="{{ s.code }}" {% if section == s.code %}selected{% endif %}>{{ s.code }}</option>{% endfor %}</select></div>
+    <div><label>Dostupnost</label><select name="available"><option value="">Vše</option><option value="1" {% if available_filter == '1' %}selected{% endif %}>Dostupní</option><option value="0" {% if available_filter == '0' %}selected{% endif %}>Nedostupní / neaktivní</option></select></div>
+    <button class="btn orange" type="submit">Filtrovat</button>
+  </form>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head"><span>Seznam specialistů</span><span style="font-size:13px;color:#637386;">Zobrazeno: {{ specialists|length }}</span></div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Jméno</th><th>E-mail</th><th>Telefon</th><th>Sekce</th><th>Podsekce</th><th>Role</th><th>Region</th><th>IF/PS</th><th>Dostupnost</th><th>Akce</th></tr></thead>
+      <tbody>
+        {% for s in specialists %}
+        <tr>
+          <form method="post" action="/admin/specialists/{{ s.id }}/update">
+            <input type="hidden" name="advisor_id" value="{{ s.advisor_id or '' }}">
+            <td><input class="table-input" name="specialist_name" value="{{ s.specialist_name or '' }}" required></td>
+            <td><input class="table-input" name="email" value="{{ s.email or '' }}"></td>
+            <td><input class="table-input" name="phone" value="{{ s.phone or '' }}"></td>
+            <td><input class="table-input" name="section_code" value="{{ s.section_code or '' }}"></td>
+            <td><input class="table-input" name="subsection_code" value="{{ s.subsection_code or '' }}"></td>
+            <td><input class="table-input" name="role_description" value="{{ s.role_description or '' }}"></td>
+            <td><input class="table-input" name="region" value="{{ s.region or '' }}"></td>
+            <td><input class="table-input small-cell" name="if_share" value="{{ s.if_share or '' }}"><input class="table-input small-cell" name="ps_share" value="{{ s.ps_share or '' }}"></td>
+            <td>
+              <label class="mini-check"><input type="checkbox" name="available" value="1" {% if s.available %}checked{% endif %}> dostupný</label>
+              <label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if s.is_active %}checked{% endif %}> aktivní</label>
+              <input class="table-input" name="unavailable_reason" value="{{ s.unavailable_reason or '' }}" placeholder="důvod">
+              <input type="hidden" name="note" value="{{ s.note or '' }}">
+            </td>
+            <td>
+              <div class="small-actions">
+                <button class="btn soft micro" type="submit">Uložit</button>
+          </form>
+                <form method="post" action="/admin/specialists/{{ s.id }}/toggle"><button class="btn soft micro" type="submit">{% if s.is_active %}Vypnout{% else %}Zapnout{% endif %}</button></form>
+              </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10">Zatím nejsou vložení žádní specialisté.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+function toggleSpecialistForm(){
+  const panel = document.getElementById("specialist-form-panel");
+  if(!panel) return;
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if(panel.style.display === "block") panel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+</script>
+{% endblock %}

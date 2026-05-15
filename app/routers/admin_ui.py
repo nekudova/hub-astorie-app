@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.5.3",
+        "version": "v0.5.4",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1257,4 +1257,267 @@ def advisor_reset_password(
 
     safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), {}, {"password_reset": True}, "Reset hesla poradce")
     return RedirectResponse("/admin/advisors", status_code=303)
+
+
+
+
+def ensure_specialists_table_(db: Session):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS specialists (
+            id SERIAL PRIMARY KEY,
+            advisor_id TEXT NOT NULL DEFAULT '',
+            specialist_name TEXT NOT NULL DEFAULT '',
+            email TEXT NOT NULL DEFAULT '',
+            phone TEXT NOT NULL DEFAULT '',
+            section_code TEXT NOT NULL DEFAULT '',
+            subsection_code TEXT NOT NULL DEFAULT '',
+            role_description TEXT NOT NULL DEFAULT '',
+            region TEXT NOT NULL DEFAULT '',
+            if_share TEXT NOT NULL DEFAULT '',
+            ps_share TEXT NOT NULL DEFAULT '',
+            available BOOLEAN NOT NULL DEFAULT TRUE,
+            unavailable_reason TEXT NOT NULL DEFAULT '',
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """))
+    db.commit()
+
+
+@router.get("/admin/specialists", response_class=HTMLResponse)
+def specialists_page(
+    request: Request,
+    q: str = "",
+    section: str = "",
+    available: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    sql = "SELECT * FROM specialists WHERE 1=1"
+    params = {}
+
+    if q:
+        sql += """
+          AND (
+            lower(specialist_name) LIKE :q OR
+            lower(email) LIKE :q OR
+            lower(phone) LIKE :q OR
+            lower(advisor_id) LIKE :q OR
+            lower(region) LIKE :q OR
+            lower(role_description) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if section:
+        sql += " AND section_code = :section"
+        params["section"] = section
+
+    if available == "1":
+        sql += " AND available = TRUE AND is_active = TRUE"
+    elif available == "0":
+        sql += " AND (available = FALSE OR is_active = FALSE)"
+
+    sql += " ORDER BY specialist_name, section_code, subsection_code LIMIT 1000"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    sections = db.execute(text("""
+        SELECT DISTINCT section_code AS code FROM specialists
+        WHERE COALESCE(section_code, '') <> ''
+        ORDER BY section_code
+    """)).mappings().all()
+
+    return render(request, "specialists.html", {
+        "active": "specialists",
+        "specialists": rows,
+        "sections": sections,
+        "q": q,
+        "section": section,
+        "available_filter": available,
+    })
+
+
+@router.post("/admin/specialists/create")
+def specialist_create(
+    advisor_id: str = Form(""),
+    specialist_name: str = Form(...),
+    email: str = Form(""),
+    phone: str = Form(""),
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form(""),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    available: str = Form(""),
+    is_active: str = Form(""),
+    unavailable_reason: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    db.execute(text("""
+        INSERT INTO specialists
+        (advisor_id, specialist_name, email, phone, section_code, subsection_code, role_description, region,
+         if_share, ps_share, available, unavailable_reason, is_active, note)
+        VALUES
+        (:advisor_id, :specialist_name, :email, :phone, :section_code, :subsection_code, :role_description, :region,
+         :if_share, :ps_share, :available, :unavailable_reason, :is_active, :note)
+    """), {
+        "advisor_id": advisor_id,
+        "specialist_name": specialist_name,
+        "email": email.lower().strip(),
+        "phone": phone,
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "CREATE", "specialist", specialist_name, {}, {
+            "advisor_id": advisor_id, "name": specialist_name, "email": email,
+            "section": section_code, "subsection": subsection_code
+        }, "Založení specialisty")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/specialists", status_code=303)
+
+
+@router.post("/admin/specialists/{item_id}/update")
+def specialist_update(
+    item_id: int,
+    advisor_id: str = Form(""),
+    specialist_name: str = Form(...),
+    email: str = Form(""),
+    phone: str = Form(""),
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form(""),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    available: str = Form(""),
+    is_active: str = Form(""),
+    unavailable_reason: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    db.execute(text("""
+        UPDATE specialists SET
+          advisor_id = :advisor_id,
+          specialist_name = :specialist_name,
+          email = :email,
+          phone = :phone,
+          section_code = :section_code,
+          subsection_code = :subsection_code,
+          role_description = :role_description,
+          region = :region,
+          if_share = :if_share,
+          ps_share = :ps_share,
+          available = :available,
+          unavailable_reason = :unavailable_reason,
+          is_active = :is_active,
+          note = :note
+        WHERE id = :id
+    """), {
+        "id": item_id,
+        "advisor_id": advisor_id,
+        "specialist_name": specialist_name,
+        "email": email.lower().strip(),
+        "phone": phone,
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPDATE", "specialist", str(item_id), dict(old or {}), {
+            "advisor_id": advisor_id, "name": specialist_name, "email": email,
+            "section": section_code, "subsection": subsection_code,
+            "available": bool(available), "is_active": bool(is_active)
+        }, "Úprava specialisty")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/specialists", status_code=303)
+
+
+@router.post("/admin/specialists/{item_id}/toggle")
+def specialist_toggle(item_id: int, db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    if old:
+        new_active = not bool(old["is_active"])
+        db.execute(text("UPDATE specialists SET is_active = :is_active WHERE id = :id"), {"id": item_id, "is_active": new_active})
+        db.commit()
+        try:
+            safe_audit(db, "admin@astorie.local", "TOGGLE", "specialist", str(item_id), dict(old), {"is_active": new_active}, "Zapnutí/vypnutí specialisty")
+        except Exception:
+            pass
+    return RedirectResponse("/admin/specialists", status_code=303)
+
+
+@router.get("/api/specialists/search")
+def api_specialists_search(section: str = "", subsection: str = "", q: str = "", db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    sql = "SELECT * FROM specialists WHERE is_active = TRUE AND available = TRUE"
+    params = {}
+
+    if section:
+        sql += " AND section_code = :section"
+        params["section"] = section.upper()
+
+    if subsection:
+        sql += " AND (subsection_code = :subsection OR COALESCE(subsection_code, '') = '')"
+        params["subsection"] = subsection.upper()
+
+    if q:
+        sql += """
+          AND (
+            lower(specialist_name) LIKE :q OR
+            lower(email) LIKE :q OR
+            lower(region) LIKE :q OR
+            lower(role_description) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    sql += " ORDER BY specialist_name LIMIT 50"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    return {
+        "ok": True,
+        "items": [
+            {
+                "id": r["id"],
+                "advisor_id": r["advisor_id"],
+                "name": r["specialist_name"],
+                "email": r["email"],
+                "phone": r["phone"],
+                "section_code": r["section_code"],
+                "subsection_code": r["subsection_code"],
+                "role_description": r["role_description"],
+                "region": r["region"],
+                "if_share": r["if_share"],
+                "ps_share": r["ps_share"],
+            }
+            for r in rows
+        ],
+    }
 

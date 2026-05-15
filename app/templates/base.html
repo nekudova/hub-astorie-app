@@ -37,7 +37,7 @@
         <div class="nav-section">TIP HUB – PŘIPRAVENO</div>
         <a class="nav-link nav-prepared" href="/admin/modules?focus=new-tip">📝 Nový TIP</a>
         <a class="nav-link nav-prepared" href="/admin/modules?focus=my-tips">📌 Moje TIPy</a>
-        <a class="nav-link nav-prepared" href="/admin/modules?focus=specialists">👤 Specialisté</a>
+        <a class="nav-link {{ 'active' if active == 'specialists' else '' }}" href="/admin/specialists">👤 Specialisté</a>
         <a class="nav-link nav-prepared" href="/admin/modules?focus=stats">🏆 Statistiky & soutěž</a>
         <a class="nav-link nav-prepared" href="/admin/modules?focus=forms">📑 Formuláře</a>
 
@@ -57,7 +57,7 @@
           <span class="role-pill">Administrátor</span>
           <span class="muted">nekudova@astorieas.cz</span>
         </div>
-        <div class="version-pill">v0.5.3</div>
+        <div class="version-pill">v0.5.4</div>
       </header>
 
       <section class="content">

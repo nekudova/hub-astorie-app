@@ -711,3 +711,11 @@ details summary {
 .table-input[type="email"] {
   min-width: 220px;
 }
+
+/* v0.5.4 Specialists Core */
+.small-cell {
+  max-width: 72px;
+  min-width: 68px;
+  display: inline-block;
+  margin-right: 4px;
+}

@@ -213,3 +213,14 @@ Přidáno:
 - Reset PINu.
 - Audit změn uživatele.
 - Kompatibilní redirect `/admin/users` → `/admin/advisors`.
+
+## v0.5.4 Specialisté Core
+
+Přidáno:
+- Správa specialistů.
+- Jeden specialista může mít více odborností.
+- Sekce, podsekce, region, role, IF/PS podíly.
+- Dostupnost / důvod nedostupnosti.
+- Aktivní/neaktivní specialista.
+- API `/api/specialists/search` pro budoucí routing TIPů.
+- Audit změn specialistů.
