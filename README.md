@@ -130,3 +130,13 @@ Přidáno:
 - Aktivní/neaktivní stav partnera.
 - JSON endpoint `/api/partners/{partner_code}/registry` pro budoucí formuláře a výpovědi.
 - Blok „Připraveno pro formuláře“ v detailu partnera.
+
+
+## v0.4.0 Partner Detail CRUD
+
+Přidáno:
+- Rychlé přidání kontaktu, odkazu a produktu přímo z detailu partnera.
+- Inline editace kontaktů, odkazů a produktů.
+- Kopírování řádků.
+- Zapnutí/vypnutí záznamů bez mazání dat.
+- Detail partnera se mění na hlavní pracovní prostor pro správu master dat.

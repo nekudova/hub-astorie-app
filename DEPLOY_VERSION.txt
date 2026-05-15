@@ -1,5 +1,5 @@
-HUB ASTORIE APP v0.3.9-partner-edit-forms-ready
-- editable partner detail
-- active/inactive partner flag edit
-- partner registry JSON endpoint for future forms
-- top detail action bar preserved
+HUB ASTORIE APP v0.4.0-partner-detail-crud
+- quick add contact/link/product directly in partner detail
+- inline edit contact/link/product rows
+- duplicate and activate/deactivate rows
+- partner detail becomes operational master-data workspace

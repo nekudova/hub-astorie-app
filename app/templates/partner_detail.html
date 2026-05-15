@@ -3,7 +3,8 @@
 <div class="detail-topbar">
   <a class="btn soft" href="/admin/partners">← Zpět na partnery</a>
   <div class="detail-actions">
-    <button class="btn soft" type="button" onclick="toggleEditPartner()">Upravit partnera</button>
+    <button class="btn soft" type="button" onclick="togglePanel('edit-partner-panel')">Upravit partnera</button>
+    <button class="btn soft" type="button" onclick="togglePanel('quick-add-panel')">+ Rychle přidat</button>
     {% if partner and partner.ico %}
     <form method="post" action="/admin/partners/{{ partner.partner_code }}/ares-refresh">
       <button class="btn soft" type="submit">Aktualizovat z ARES</button>
@@ -27,80 +28,78 @@
       <h2 style="margin:0;color:var(--petrol);">Upravit partnera</h2>
       <p style="margin:6px 0 0;color:#637386;font-weight:700;">Změny se propíšou do centrálního číselníku partnerů.</p>
     </div>
-    <button class="btn soft" type="button" onclick="toggleEditPartner()">Zavřít</button>
+    <button class="btn soft" type="button" onclick="togglePanel('edit-partner-panel')">Zavřít</button>
   </div>
 
   <form method="post" action="/admin/partners/{{ partner.partner_code }}/update" class="admin-form-grid">
-    <div>
-      <label>Kód partnera</label>
-      <input type="text" value="{{ partner.partner_code }}" disabled>
-    </div>
-
-    <div>
-      <label>IČO</label>
-      <input type="text" name="ico" value="{{ partner.ico or '' }}">
-    </div>
-
-    <div class="span-2">
-      <label>Název partnera</label>
-      <input type="text" name="name" value="{{ partner.name or '' }}" required>
-    </div>
-
-    <div>
-      <label>DIČ</label>
-      <input type="text" name="dic" value="{{ partner.dic or '' }}">
-    </div>
-
-    <div>
-      <label>Datová schránka</label>
-      <input type="text" name="data_box" value="{{ partner.data_box or '' }}">
-    </div>
-
-    <div>
-      <label>E-mail / podatelna</label>
-      <input type="email" name="registry_email" value="{{ partner.registry_email or '' }}">
-    </div>
-
-    <div>
-      <label>Právní forma</label>
-      <input type="text" name="legal_form" value="{{ partner.legal_form or '' }}">
-    </div>
-
-    <div>
-      <label>Ulice</label>
-      <input type="text" name="street" value="{{ partner.street or '' }}">
-    </div>
-
-    <div>
-      <label>Město</label>
-      <input type="text" name="city" value="{{ partner.city or '' }}">
-    </div>
-
-    <div>
-      <label>PSČ</label>
-      <input type="text" name="zip_code" value="{{ partner.zip_code or '' }}">
-    </div>
-
-    <div class="span-2">
-      <label>Celá adresa / sídlo</label>
-      <textarea name="address_full">{{ partner.address_full or '' }}</textarea>
-    </div>
-
-    <div class="span-2">
-      <label>Poznámka</label>
-      <textarea name="note">{{ partner.note or '' }}</textarea>
-    </div>
-
-    <div class="span-2 checkline">
-      <input type="checkbox" name="is_active" value="1" id="partner_active" {% if partner.is_active %}checked{% endif %}>
-      <label for="partner_active" style="margin:0;">Partner je aktivní</label>
-    </div>
-
-    <div class="span-2 form-actions">
-      <button class="btn orange" type="submit">Uložit změny</button>
-      <button class="btn soft" type="button" onclick="toggleEditPartner()">Zrušit</button>
-    </div>
+    <div><label>Kód partnera</label><input type="text" value="{{ partner.partner_code }}" disabled></div>
+    <div><label>IČO</label><input type="text" name="ico" value="{{ partner.ico or '' }}"></div>
+    <div class="span-2"><label>Název partnera</label><input type="text" name="name" value="{{ partner.name or '' }}" required></div>
+    <div><label>DIČ</label><input type="text" name="dic" value="{{ partner.dic or '' }}"></div>
+    <div><label>Datová schránka</label><input type="text" name="data_box" value="{{ partner.data_box or '' }}"></div>
+    <div><label>E-mail / podatelna</label><input type="email" name="registry_email" value="{{ partner.registry_email or '' }}"></div>
+    <div><label>Právní forma</label><input type="text" name="legal_form" value="{{ partner.legal_form or '' }}"></div>
+    <div><label>Ulice</label><input type="text" name="street" value="{{ partner.street or '' }}"></div>
+    <div><label>Město</label><input type="text" name="city" value="{{ partner.city or '' }}"></div>
+    <div><label>PSČ</label><input type="text" name="zip_code" value="{{ partner.zip_code or '' }}"></div>
+    <div class="span-2"><label>Celá adresa / sídlo</label><textarea name="address_full">{{ partner.address_full or '' }}</textarea></div>
+    <div class="span-2"><label>Poznámka</label><textarea name="note">{{ partner.note or '' }}</textarea></div>
+    <div class="span-2 checkline"><input type="checkbox" name="is_active" value="1" id="partner_active" {% if partner.is_active %}checked{% endif %}><label for="partner_active" style="margin:0;">Partner je aktivní</label></div>
+    <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit změny</button><button class="btn soft" type="button" onclick="togglePanel('edit-partner-panel')">Zrušit</button></div>
   </form>
+</section>
+
+<section id="quick-add-panel" class="card collapsible-panel section-space" style="display:none;">
+  <div class="panel-head">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Rychlé přidání k partnerovi</h2>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Náhrada rychlého doplňování řádků v Sheets.</p>
+    </div>
+    <button class="btn soft" type="button" onclick="togglePanel('quick-add-panel')">Zavřít</button>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="subcard">
+      <h3>Nový kontakt</h3>
+      <form method="post" action="/admin/contacts/create">
+        <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
+        <label>Jméno</label><input type="text" name="full_name" required>
+        <label>Druh kontaktu</label><input type="text" name="contact_type">
+        <label>Role</label><input type="text" name="role">
+        <label>Region</label><input type="text" name="territory">
+        <label>E-mail</label><input type="email" name="email">
+        <label>Telefon</label><input type="text" name="phone">
+        <label>Specializace</label><input type="text" name="specialization">
+        <div class="checkline"><input type="checkbox" name="is_vip" value="1" id="quick_vip"><label for="quick_vip" style="margin:0;">VIP / TOP</label></div>
+        <label>Poznámka</label><textarea name="note"></textarea>
+        <button class="btn orange" type="submit">Uložit kontakt</button>
+      </form>
+    </div>
+
+    <div class="subcard">
+      <h3>Nový odkaz</h3>
+      <form method="post" action="/admin/links/create">
+        <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
+        <label>Název</label><input type="text" name="title" required>
+        <label>URL</label><input type="url" name="url" required>
+        <label>Kategorie</label><input type="text" name="category">
+        <label>Poznámka</label><textarea name="note"></textarea>
+        <button class="btn orange" type="submit">Uložit odkaz</button>
+      </form>
+    </div>
+
+    <div class="subcard">
+      <h3>Nový produkt</h3>
+      <form method="post" action="/admin/products/create">
+        <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
+        <label>Oblast</label><input type="text" name="area">
+        <label>Podoblast</label><input type="text" name="subarea">
+        <label>Název produktu</label><input type="text" name="product_name" required>
+        <label>Poznámka</label><textarea name="note"></textarea>
+        <button class="btn orange" type="submit">Uložit produkt</button>
+      </form>
+    </div>
+  </div>
 </section>
 {% endif %}
 
@@ -139,30 +138,50 @@
   <code>/api/partners/{{ partner_code }}/registry</code>
 </section>
 
-<section class="grid cols-2 section-space">
-  <div class="card table-card">
-    <div class="table-head">Kontakty</div>
+<section class="card table-card section-space">
+  <div class="table-head">Kontakty</div>
+  <div class="table-scroll">
     <table>
-      <thead><tr><th>Jméno</th><th>Druh/role</th><th>Region</th><th>E-mail</th><th>Telefon</th></tr></thead>
+      <thead><tr><th>Jméno</th><th>Druh/role</th><th>Region</th><th>E-mail</th><th>Telefon</th><th>Stav</th><th>Akce</th></tr></thead>
       <tbody>
       {% for c in contacts %}
-        <tr><td><strong>{{ c.full_name }}</strong>{% if c.is_vip or c.is_top %} <span class="status ok">TOP</span>{% endif %}</td><td>{{ c.contact_type or c.role }}</td><td>{{ c.territory }}</td><td>{{ c.email }}</td><td>{{ c.phone }}</td></tr>
+        <tr>
+          <form method="post" action="/admin/contacts/{{ c.id }}/update">
+            <input type="hidden" name="partner_code" value="{{ partner_code }}">
+            <td><input class="table-input" name="full_name" value="{{ c.full_name }}"></td>
+            <td><input class="table-input" name="contact_type" value="{{ c.contact_type or c.role or '' }}"><input type="hidden" name="role" value="{{ c.role or '' }}"><input type="hidden" name="specialization" value="{{ c.specialization or '' }}"><input type="hidden" name="note" value="{{ c.note or '' }}"></td>
+            <td><input class="table-input" name="territory" value="{{ c.territory or '' }}"></td>
+            <td><input class="table-input" name="email" value="{{ c.email or '' }}"></td>
+            <td><input class="table-input" name="phone" value="{{ c.phone or '' }}"></td>
+            <td><label class="mini-check"><input type="checkbox" name="is_vip" value="1" {% if c.is_vip or c.is_top %}checked{% endif %}> TOP</label><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if c.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><div class="small-actions"><button class="btn soft micro" type="submit">Uložit</button></form><form method="post" action="/admin/contacts/{{ c.id }}/duplicate"><button class="btn soft micro" type="submit">Kopie</button></form><form method="post" action="/admin/contacts/{{ c.id }}/toggle"><button class="btn soft micro" type="submit">{% if c.is_active %}Vypnout{% else %}Zapnout{% endif %}</button></form></div></td>
+        </tr>
       {% else %}
-        <tr><td colspan="5">Bez kontaktů.</td></tr>
+        <tr><td colspan="7">Bez kontaktů.</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
+</section>
 
-  <div class="card table-card">
-    <div class="table-head">Odkazy</div>
+<section class="card table-card section-space">
+  <div class="table-head">Odkazy</div>
+  <div class="table-scroll">
     <table>
-      <thead><tr><th>Název</th><th>Kategorie</th><th>URL</th></tr></thead>
+      <thead><tr><th>Název</th><th>Kategorie</th><th>URL</th><th>Stav</th><th>Akce</th></tr></thead>
       <tbody>
       {% for l in links %}
-        <tr><td><strong>{{ l.title }}</strong></td><td>{{ l.category }}</td><td><a href="{{ l.url }}" target="_blank">Otevřít</a></td></tr>
+        <tr>
+          <form method="post" action="/admin/links/{{ l.id }}/update">
+            <input type="hidden" name="partner_code" value="{{ partner_code }}">
+            <td><input class="table-input" name="title" value="{{ l.title }}"></td>
+            <td><input class="table-input" name="category" value="{{ l.category or '' }}"><input type="hidden" name="note" value="{{ l.note or '' }}"></td>
+            <td><input class="table-input" name="url" value="{{ l.url }}"></td>
+            <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if l.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><div class="small-actions"><button class="btn soft micro" type="submit">Uložit</button></form><form method="post" action="/admin/links/{{ l.id }}/duplicate"><button class="btn soft micro" type="submit">Kopie</button></form><form method="post" action="/admin/links/{{ l.id }}/toggle"><button class="btn soft micro" type="submit">{% if l.is_active %}Vypnout{% else %}Zapnout{% endif %}</button></form></div></td>
+        </tr>
       {% else %}
-        <tr><td colspan="3">Bez odkazů.</td></tr>
+        <tr><td colspan="5">Bez odkazů.</td></tr>
       {% endfor %}
       </tbody>
     </table>
@@ -171,21 +190,32 @@
 
 <section class="card table-card section-space">
   <div class="table-head">Produkty</div>
-  <table>
-    <thead><tr><th>Oblast</th><th>Podoblast</th><th>Produkt</th><th>Poznámka</th></tr></thead>
-    <tbody>
-    {% for p in products %}
-      <tr><td>{{ p.area }}</td><td>{{ p.subarea }}</td><td><strong>{{ p.product_name }}</strong></td><td>{{ p.note }}</td></tr>
-    {% else %}
-      <tr><td colspan="4">Bez produktů.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Oblast</th><th>Podoblast</th><th>Produkt</th><th>Poznámka</th><th>Stav</th><th>Akce</th></tr></thead>
+      <tbody>
+      {% for p in products %}
+        <tr>
+          <form method="post" action="/admin/products/{{ p.id }}/update">
+            <input type="hidden" name="partner_code" value="{{ partner_code }}">
+            <td><input class="table-input" name="area" value="{{ p.area or '' }}"></td>
+            <td><input class="table-input" name="subarea" value="{{ p.subarea or '' }}"></td>
+            <td><input class="table-input" name="product_name" value="{{ p.product_name }}"></td>
+            <td><input class="table-input" name="note" value="{{ p.note or '' }}"></td>
+            <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if p.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><div class="small-actions"><button class="btn soft micro" type="submit">Uložit</button></form><form method="post" action="/admin/products/{{ p.id }}/duplicate"><button class="btn soft micro" type="submit">Kopie</button></form><form method="post" action="/admin/products/{{ p.id }}/toggle"><button class="btn soft micro" type="submit">{% if p.is_active %}Vypnout{% else %}Zapnout{% endif %}</button></form></div></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Bez produktů.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <script>
-function toggleEditPartner() {
-  const panel = document.getElementById("edit-partner-panel");
+function togglePanel(id) {
+  const panel = document.getElementById(id);
   if (!panel) return;
   panel.style.display = panel.style.display === "none" ? "block" : "none";
   if (panel.style.display === "block") {

@@ -17,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.3.9",
+        "version": "v0.4.0",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -494,3 +494,119 @@ def api_partner_registry(partner_code: str, db: Session = Depends(get_db)):
             "is_active": partner.is_active,
         }
     }
+
+
+@router.post("/admin/contacts/{item_id}/update")
+def update_contact(
+    item_id: int,
+    partner_code: str = Form(...),
+    full_name: str = Form(...),
+    role: str = Form(""),
+    email: str = Form(""),
+    phone: str = Form(""),
+    specialization: str = Form(""),
+    contact_type: str = Form(""),
+    territory: str = Form(""),
+    is_vip: str = Form(""),
+    note: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    item = db.query(PartnerContact).filter(PartnerContact.id == item_id).first()
+    if item:
+        item.partner_code = partner_code.upper().strip()
+        item.full_name = full_name
+        item.role = role
+        item.email = email
+        item.phone = phone
+        item.specialization = specialization
+        item.contact_type = contact_type
+        item.territory = territory
+        item.is_vip = bool(is_vip)
+        item.is_top = bool(is_vip)
+        item.note = note
+        item.is_active = bool(is_active)
+        db.commit()
+        return RedirectResponse(f"/admin/partners/{item.partner_code}", status_code=303)
+    return RedirectResponse("/admin/contacts", status_code=303)
+
+
+@router.post("/admin/contacts/{item_id}/toggle")
+def toggle_contact(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerContact).filter(PartnerContact.id == item_id).first()
+    if item:
+        item.is_active = not item.is_active
+        partner_code = item.partner_code
+        db.commit()
+        return RedirectResponse(f"/admin/partners/{partner_code}", status_code=303)
+    return RedirectResponse("/admin/contacts", status_code=303)
+
+
+@router.post("/admin/links/{item_id}/update")
+def update_link(
+    item_id: int,
+    partner_code: str = Form(...),
+    title: str = Form(...),
+    url: str = Form(...),
+    category: str = Form(""),
+    note: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    item = db.query(PartnerLink).filter(PartnerLink.id == item_id).first()
+    if item:
+        item.partner_code = partner_code.upper().strip()
+        item.title = title
+        item.url = url
+        item.category = category
+        item.note = note
+        item.is_active = bool(is_active)
+        db.commit()
+        return RedirectResponse(f"/admin/partners/{item.partner_code}", status_code=303)
+    return RedirectResponse("/admin/links", status_code=303)
+
+
+@router.post("/admin/links/{item_id}/toggle")
+def toggle_link(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerLink).filter(PartnerLink.id == item_id).first()
+    if item:
+        item.is_active = not item.is_active
+        partner_code = item.partner_code
+        db.commit()
+        return RedirectResponse(f"/admin/partners/{partner_code}", status_code=303)
+    return RedirectResponse("/admin/links", status_code=303)
+
+
+@router.post("/admin/products/{item_id}/update")
+def update_product(
+    item_id: int,
+    partner_code: str = Form(...),
+    area: str = Form(""),
+    subarea: str = Form(""),
+    product_name: str = Form(...),
+    note: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    item = db.query(PartnerProduct).filter(PartnerProduct.id == item_id).first()
+    if item:
+        item.partner_code = partner_code.upper().strip()
+        item.area = area
+        item.subarea = subarea
+        item.product_name = product_name
+        item.note = note
+        item.is_active = bool(is_active)
+        db.commit()
+        return RedirectResponse(f"/admin/partners/{item.partner_code}", status_code=303)
+    return RedirectResponse("/admin/products", status_code=303)
+
+
+@router.post("/admin/products/{item_id}/toggle")
+def toggle_product(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerProduct).filter(PartnerProduct.id == item_id).first()
+    if item:
+        item.is_active = not item.is_active
+        partner_code = item.partner_code
+        db.commit()
+        return RedirectResponse(f"/admin/partners/{partner_code}", status_code=303)
+    return RedirectResponse("/admin/products", status_code=303)
