@@ -1,4 +1,6 @@
-HUB ASTORIE APP v0.3.7-ares-partner-registry
-- ARES lookup endpoint: /api/ares/subject?ico=XXXXXXXX
-- partner registry fields: IČO, DIČ, datová schránka, e-mail, adresa
-- partner detail ready for future forms/termination documents
+HUB ASTORIE APP v0.3.8-partner-registry-ux
+- partners page redesigned as full-width registry
+- new partner form is collapsible
+- fulltext partner search
+- sticky top back button in partner detail
+- partner duplicate action

@@ -110,3 +110,14 @@ Přidáno:
 - tlačítko ARES při zakládání partnera
 - možnost aktualizovat detail partnera z ARES
 - příprava dat pro formuláře a výpovědi pojistných smluv
+
+
+## v0.3.8 Partner Registry UX
+
+Přidáno / upraveno:
+- Seznam partnerů jako hlavní full-width pracovní plocha.
+- Formulář Nový partner je schovaný za tlačítkem.
+- Fulltextové hledání partnerů podle kódu, názvu, IČO, DS, e-mailu, města a adresy.
+- Detail partnera má návratové tlačítko nahoře.
+- Rychlé akce z detailu: kontakty, odkazy, produkty, aktualizace z ARES.
+- Kopírování partnera jako náhrada práce s řádky v Excelu.

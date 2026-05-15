@@ -1,22 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="detail-topbar">
+  <a class="btn soft" href="/admin/partners">← Zpět na partnery</a>
+  <div class="detail-actions">
+    {% if partner and partner.ico %}
+    <form method="post" action="/admin/partners/{{ partner.partner_code }}/ares-refresh">
+      <button class="btn soft" type="submit">Aktualizovat z ARES</button>
+    </form>
+    {% endif %}
+    <a class="btn orange" href="/admin/contacts?partner={{ partner_code }}">Kontakty</a>
+    <a class="btn orange" href="/admin/links?partner={{ partner_code }}">Odkazy</a>
+    <a class="btn orange" href="/admin/products?partner={{ partner_code }}">Produkty</a>
+  </div>
+</div>
+
 <h1 class="page-title">
   {% if partner %}{{ partner.name }}{% else %}Partner {{ partner_code }}{% endif %}
 </h1>
-<p class="page-subtitle">Detail partnera – kontakty, odkazy a produkty na jednom místě.</p>
+<p class="page-subtitle">Detail partnera – registrační údaje, kontakty, odkazy a produkty na jednom místě.</p>
 
 <section class="grid cols-4">
   <div class="stat"><div class="stat-label">Kód partnera</div><div class="stat-value" style="font-size:28px;">{{ partner_code }}</div></div>
   <div class="stat"><div class="stat-label">IČO</div><div class="stat-value" style="font-size:28px;">{{ partner.ico if partner else "" }}</div></div>
   <div class="stat"><div class="stat-label">Kontakty</div><div class="stat-value">{{ contacts|length }}</div></div>
-  <div class="stat"><div class="stat-label">Odkazy</div><div class="stat-value">{{ links|length }}</div></div>
   <div class="stat"><div class="stat-label">Produkty</div><div class="stat-value">{{ products|length }}</div></div>
 </section>
 
 <section class="card section-space">
   <h2 style="margin-top:0;color:var(--petrol);">Registrační údaje partnera</h2>
   {% if partner %}
-  <div class="grid cols-2">
+  <div class="grid cols-2 registry-grid">
     <div>
       <p><strong>IČO:</strong> {{ partner.ico or "" }}</p>
       <p><strong>DIČ:</strong> {{ partner.dic or "" }}</p>
@@ -30,11 +43,6 @@
       <p><strong>Právní forma:</strong> {{ partner.legal_form or "" }}</p>
     </div>
   </div>
-  {% if partner.ico %}
-  <form method="post" action="/admin/partners/{{ partner.partner_code }}/ares-refresh">
-    <button class="btn soft" type="submit">Aktualizovat z ARES podle IČO</button>
-  </form>
-  {% endif %}
   {% else %}
     <p>Partner nebyl nalezen.</p>
   {% endif %}
@@ -82,9 +90,5 @@
     {% endfor %}
     </tbody>
   </table>
-</section>
-
-<section class="section-space">
-  <a class="btn soft" href="/admin/partners">← Zpět na partnery</a>
 </section>
 {% endblock %}

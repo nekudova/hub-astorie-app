@@ -1,72 +1,123 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="page-title">Partneři</h1>
-<p class="page-subtitle">Číselník partnerů včetně IČO, datové schránky, e-mailu a adresy. Údaje lze předvyplnit z ARES podle IČO.</p>
+<div class="page-toolbar">
+  <div>
+    <h1 class="page-title">Partneři</h1>
+    <p class="page-subtitle">Centrální číselník partnerů včetně IČO, datové schránky, e-mailu a adresy. Údaje lze předvyplnit z ARES podle IČO.</p>
+  </div>
+  <button class="btn orange" type="button" onclick="togglePartnerForm()">+ Nový partner</button>
+</div>
 
-<section class="grid cols-2">
-  <div class="card">
-    <h2 style="margin-top:0;color:var(--petrol);">Nový partner</h2>
+<section id="partner-form-panel" class="card collapsible-panel" style="display:none;">
+  <div class="panel-head">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Nový partner</h2>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Formulář je schovaný, aby hlavní pracovní plocha zůstala přehledná.</p>
+    </div>
+    <button class="btn soft" type="button" onclick="togglePartnerForm()">Zavřít</button>
+  </div>
 
-    <form method="post" action="/admin/partners/create-extended" id="partner-form">
+  <form method="post" action="/admin/partners/create-extended" id="partner-form" class="admin-form-grid">
+    <div>
       <label>Kód partnera</label>
       <input type="text" name="partner_code" id="partner_code" required placeholder="např. KOOP">
+    </div>
 
+    <div>
       <label>IČO</label>
       <div style="display:grid;grid-template-columns:1fr auto;gap:10px;">
         <input type="text" name="ico" id="ico" placeholder="8 číslic">
         <button type="button" class="btn soft" onclick="loadAres()">ARES</button>
       </div>
+    </div>
 
+    <div class="span-2">
       <label>Název partnera</label>
       <input type="text" name="name" id="name" required>
+    </div>
 
+    <div>
       <label>DIČ</label>
       <input type="text" name="dic" id="dic">
+    </div>
 
+    <div>
       <label>Datová schránka</label>
       <input type="text" name="data_box" id="data_box">
+    </div>
 
+    <div>
       <label>E-mail / podatelna</label>
       <input type="email" name="registry_email" id="registry_email">
+    </div>
 
-      <label>Ulice</label>
-      <input type="text" name="street" id="street">
-
-      <div style="display:grid;grid-template-columns:1fr 130px;gap:12px;">
-        <div>
-          <label>Město</label>
-          <input type="text" name="city" id="city">
-        </div>
-        <div>
-          <label>PSČ</label>
-          <input type="text" name="zip_code" id="zip_code">
-        </div>
-      </div>
-
-      <label>Celá adresa / sídlo</label>
-      <textarea name="address_full" id="address_full"></textarea>
-
+    <div>
       <label>Právní forma</label>
       <input type="text" name="legal_form" id="legal_form">
+    </div>
 
+    <div>
+      <label>Ulice</label>
+      <input type="text" name="street" id="street">
+    </div>
+
+    <div>
+      <label>Město</label>
+      <input type="text" name="city" id="city">
+    </div>
+
+    <div>
+      <label>PSČ</label>
+      <input type="text" name="zip_code" id="zip_code">
+    </div>
+
+    <div class="span-2">
+      <label>Celá adresa / sídlo</label>
+      <textarea name="address_full" id="address_full"></textarea>
+    </div>
+
+    <div class="span-2">
       <label>Poznámka</label>
       <textarea name="note"></textarea>
+    </div>
 
+    <div class="span-2 form-actions">
       <button class="btn orange" type="submit">Uložit partnera</button>
-      <div id="ares-msg" style="margin-top:12px;color:#637386;font-weight:700;"></div>
-    </form>
+      <span id="ares-msg" style="color:#637386;font-weight:800;"></span>
+    </div>
+  </form>
+</section>
+
+<section class="card section-space">
+  <form method="get" action="/admin/partners" class="inline-filters">
+    <div>
+      <label>Fulltextové hledání</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="Hledat název, kód, IČO, DS, e-mail, město, adresu...">
+    </div>
+    <div></div>
+    <button class="btn orange" type="submit">Hledat</button>
+  </form>
+</section>
+
+<section class="card table-card section-space full-width-card">
+  <div class="table-head">
+    <span>Seznam partnerů</span>
+    <span style="font-size:13px;color:#637386;">Zobrazeno: {{ partners|length }}</span>
   </div>
 
-  <div class="card table-card">
-    <div class="table-head">Existující partneři</div>
+  <div class="table-scroll">
     <table>
       <thead>
         <tr>
           <th>Kód</th>
           <th>Název</th>
           <th>IČO</th>
-          <th>DS</th>
+          <th>Datová schránka</th>
           <th>E-mail</th>
+          <th>Město</th>
+          <th>Adresa</th>
+          <th>Stav</th>
+          <th>Akce</th>
         </tr>
       </thead>
       <tbody>
@@ -77,9 +128,20 @@
           <td>{{ p.ico or "" }}</td>
           <td>{{ p.data_box or "" }}</td>
           <td>{{ p.registry_email or "" }}</td>
+          <td>{{ p.city or "" }}</td>
+          <td>{{ p.address_full or p.street or "" }}</td>
+          <td>{% if p.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
+          <td>
+            <div class="small-actions">
+              <a class="btn soft micro" href="/admin/partners/{{ p.partner_code }}">Detail</a>
+              <form method="post" action="/admin/partners/{{ p.partner_code }}/duplicate-partner">
+                <button class="btn soft micro" type="submit">Kopírovat</button>
+              </form>
+            </div>
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="5">Zatím nejsou vložení žádní partneři.</td></tr>
+        <tr><td colspan="9">Zatím nejsou vložení žádní partneři.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -87,6 +149,15 @@
 </section>
 
 <script>
+function togglePartnerForm() {
+  const panel = document.getElementById("partner-form-panel");
+  if (!panel) return;
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if (panel.style.display === "block") {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 async function loadAres() {
   const msg = document.getElementById("ares-msg");
   const ico = document.getElementById("ico").value.trim();

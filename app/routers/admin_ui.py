@@ -17,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.3.7",
+        "version": "v0.3.8",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -138,9 +138,32 @@ def create_subsection(
 
 
 @router.get("/admin/partners", response_class=HTMLResponse)
-def partners_page(request: Request, db: Session = Depends(get_db)):
-    partners = db.query(Partner).order_by(Partner.name.asc()).all()
-    return render(request, "partners.html", {"active": "partners", "partners": partners})
+def partners_page(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+):
+    query = db.query(Partner)
+
+    if q:
+        like = f"%{q.lower()}%"
+        query = query.filter(
+            (Partner.partner_code.ilike(like)) |
+            (Partner.name.ilike(like)) |
+            (Partner.ico.ilike(like)) |
+            (Partner.data_box.ilike(like)) |
+            (Partner.registry_email.ilike(like)) |
+            (Partner.city.ilike(like)) |
+            (Partner.address_full.ilike(like))
+        )
+
+    partners = query.order_by(Partner.name).limit(1000).all()
+
+    return render(request, "partners.html", {
+        "active": "partners",
+        "partners": partners,
+        "q": q,
+    })
 
 
 @router.post("/admin/partners")
@@ -373,3 +396,36 @@ def refresh_partner_from_ares(partner_code: str, db: Session = Depends(get_db)):
         db.commit()
 
     return RedirectResponse(f"/admin/partners/{partner_code.upper()}", status_code=303)
+
+
+@router.post("/admin/partners/{partner_code}/duplicate-partner")
+def duplicate_partner(partner_code: str, db: Session = Depends(get_db)):
+    src = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if not src:
+        return RedirectResponse("/admin/partners", status_code=303)
+
+    base_code = (src.partner_code + "_COPY")[:40]
+    code = base_code
+    counter = 1
+    while db.query(Partner).filter(Partner.partner_code == code).first():
+        counter += 1
+        code = f"{base_code}_{counter}"[:50]
+
+    db.add(Partner(
+        partner_code=code,
+        name=(src.name or "") + " – kopie",
+        ico=src.ico,
+        dic=src.dic,
+        data_box=src.data_box,
+        registry_email=src.registry_email,
+        street=src.street,
+        city=src.city,
+        zip_code=src.zip_code,
+        address_full=src.address_full,
+        legal_form=src.legal_form,
+        source=src.source,
+        note=src.note,
+        is_active=True,
+    ))
+    db.commit()
+    return RedirectResponse("/admin/partners", status_code=303)
