@@ -2,7 +2,9 @@
 {% block content %}
 <div class="page-toolbar">
   <div><h1 class="page-title">Partneři</h1><p class="page-subtitle">Centrální master číselník partnerů včetně provozních metadat pro další moduly HUBu.</p></div>
-  <div class="detail-actions"><form method="post" action="/admin/partners/registry-upgrade"><button class="btn soft" type="submit">Ověřit strukturu DB</button></form><button class="btn orange" type="button" onclick="togglePartnerForm()">+ Nový partner</button></div>
+  <div class="detail-actions"><form method="post" action="/admin/partners/registry-upgrade"><button class="btn soft" type="submit">Ověřit strukturu DB</button></form><a class="btn soft" href="/admin/export/partners.csv">Export partnerů CSV</a>
+    <a class="btn soft" href="/admin/productivity">Produktivita</a>
+    <button class="btn orange" type="button" onclick="togglePartnerForm()">+ Nový partner</button></div>
 </div>
 <section id="partner-form-panel" class="card collapsible-panel" style="display:none;">
   <div class="panel-head"><div><h2 style="margin:0;color:var(--petrol);">Nový partner</h2><p style="margin:6px 0 0;color:#637386;font-weight:700;">Základní údaje partnera. Provozní metadata lze doplnit v detailu.</p></div><button class="btn soft" type="button" onclick="togglePartnerForm()">Zavřít</button></div>
@@ -17,6 +19,18 @@
     <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit partnera</button><span id="ares-msg" style="color:#637386;font-weight:800;"></span></div>
   </form>
 </section>
+<section id="bulk-status-panel" class="card section-space">
+  <h2 style="margin-top:0;color:var(--petrol);">Hromadná změna partnerů</h2>
+  <p class="page-subtitle">Zadejte kódy partnerů oddělené čárkou. Bezpečné pro rychlé provozní změny bez ručního klikání po jednom řádku.</p>
+  <form method="post" action="/admin/partners/bulk-status" class="inline-filters">
+    <div><label>Kódy partnerů</label><input name="codes" placeholder="např. KOOP, CPP, CSOB"></div>
+    <div><label>Status</label><select name="partner_status"><option value="aktivní">Aktivní</option><option value="pozastaveno">Pozastaveno</option><option value="ukončeno">Ukončeno</option></select></div>
+    <div class="checkline"><input type="checkbox" name="is_active" value="1" checked><label style="margin:0;">Aktivní</label></div>
+    <div class="checkline"><input type="checkbox" name="is_vip" value="1"><label style="margin:0;">Nastavit VIP</label></div>
+    <button class="btn orange" type="submit">Provést změnu</button>
+  </form>
+</section>
+
 <section class="card section-space"><form method="get" action="/admin/partners" class="inline-filters">
   <div><label>Fulltextové hledání</label><input type="text" name="q" value="{{ q or '' }}" placeholder="Název, kód, IČO, DS, e-mail, město…"></div>
   <div><label>Stav partnera</label><select name="status"><option value="">Všechny stavy</option><option value="aktivní" {% if status == 'aktivní' %}selected{% endif %}>Aktivní</option><option value="pozastaveno" {% if status == 'pozastaveno' %}selected{% endif %}>Pozastaveno</option><option value="ukončeno" {% if status == 'ukončeno' %}selected{% endif %}>Ukončeno</option></select></div>

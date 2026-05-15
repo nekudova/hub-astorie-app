@@ -239,3 +239,36 @@ Přidáno:
 - Specialisté vybírají sekci a podsekci z nabídky, nikoli ručním psaním.
 - Můj profil specialisty pro vlastní správu dostupnosti.
 - Routing API `/api/routing/specialists`.
+
+
+## v0.5.6 Performance & Safe UX
+
+Přidáno:
+- Bezpečné výkonové indexy pro partnery, kontakty, odkazy, produkty, specialisty, taxonomii a audit.
+- Endpoint `/admin/performance/upgrade` pro doplnění indexů bez mazání dat.
+- Endpoint `/api/performance/status`.
+- Sticky hlavičky tabulek.
+- Loading stav tlačítek při ukládání.
+- Meta `notranslate`, aby Google Translate méně zasahoval do adminu.
+- Snížení těžkých výpisů na bezpečnější limity.
+
+Poznámka:
+- Verze nic nemaže a nemění existující business data.
+
+
+## v0.6.0 Admin Productivity Pack
+
+Větší vývojová verze zaměřená na rychlost práce administrace.
+
+Přidáno:
+- Modul Produktivita administrace.
+- CSV export partnerů.
+- CSV export specialistů.
+- CSV export sekcí a podsekcí.
+- Hromadná změna partnerů podle kódů.
+- Duplikace partnera jako náhrada kopírování řádku v tabulce.
+- Rychlý přístup k výkonovým indexům.
+- Příprava na bulk operace pro kontakty, odkazy a produkty.
+
+Poznámka:
+- Verze je nedestruktivní: nemaže data, pouze přidává nástroje a endpointy.

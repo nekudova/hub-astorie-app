@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Produktivita administrace</h1>
+<p class="page-subtitle">Rychlé nástroje, které mají nahradit pohodlí práce v Google Sheets bez rizika rozbití dat.</p>
+
+<section class="grid cols-3">
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Exporty</h2>
+    <p>Rychlé stažení dat pro kontrolu, zálohu nebo hromadnou úpravu mimo systém.</p>
+    <div class="stack-actions">
+      <a class="btn orange" href="/admin/export/partners.csv">Partneři CSV</a>
+      <a class="btn soft" href="/admin/export/specialists.csv">Specialisté CSV</a>
+      <a class="btn soft" href="/admin/export/taxonomy.csv">Sekce / podsekce CSV</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Výkon</h2>
+    <p>Bezpečné doplnění indexů v databázi. Data se nemažou ani nepřepisují.</p>
+    <form method="post" action="/admin/performance/upgrade">
+      <button class="btn orange" type="submit">Zrychlit databázi</button>
+    </form>
+    <p><a href="/api/performance/status">Zobrazit stav indexů</a></p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Hromadné operace</h2>
+    <p>První bezpečný bulk režim je připraven u partnerů. Další budou následovat pro kontakty, odkazy a produkty.</p>
+    <a class="btn orange" href="/admin/partners#bulk-status-panel">Otevřít hromadnou změnu partnerů</a>
+  </div>
+</section>
+
+<section class="card section-space">
+  <h2 style="margin-top:0;color:var(--petrol);">Pracovní standard pro další vývoj</h2>
+  <div class="check-grid">
+    <label>✅ žádné dlouhé selecty</label>
+    <label>✅ fulltext a našeptávače</label>
+    <label>✅ exporty pro kontrolu</label>
+    <label>✅ audit změn</label>
+    <label>✅ hromadné operace</label>
+    <label>✅ postupná migrace bez rozbití uživatelského HUBu</label>
+  </div>
+</section>
+{% endblock %}

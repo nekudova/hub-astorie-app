@@ -731,3 +731,58 @@ details summary {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v0.5.6 Performance & Safe UX */
+.table-scroll {
+  max-height: 68vh;
+  overflow: auto;
+  border-radius: 0 0 20px 20px;
+}
+
+.hub-fast-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #eef7f8;
+  box-shadow: 0 1px 0 rgba(0,61,76,.10);
+}
+
+.btn.is-loading {
+  opacity: .72;
+  cursor: wait;
+}
+
+.performance-note {
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: #fff7f3;
+  border: 1px solid rgba(252,76,2,.25);
+  color: #7c2d12;
+  font-weight: 800;
+}
+
+input, select, textarea {
+  will-change: auto;
+}
+
+.card, .nav-link, .module-card {
+  transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+
+
+/* v0.6.0 Admin Productivity Pack */
+.stack-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.small-actions form {
+  display: inline;
+}
+
+tr.is-selected {
+  outline: 2px solid var(--orange);
+  background: #fff7f3;
+}
