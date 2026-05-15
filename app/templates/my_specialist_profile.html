@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Můj profil specialisty</h1>
+<p class="page-subtitle">Specialista si zde bude sám spravovat dostupnost pro příjem TIPů. Nyní je profil dočasně napojen na e-mail {{ email }}.</p>
+
+<section class="card table-card">
+  <div class="table-head">Moje odbornosti a dostupnost</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Sekce</th><th>Podsekce</th><th>Role</th><th>Region</th><th>Dostupnost</th><th>Důvod</th><th>Akce</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <form method="post" action="/admin/my-specialist-profile/{{ r.id }}/availability">
+            <td>{{ r.section_code }}</td>
+            <td>{{ r.subsection_code }}</td>
+            <td>{{ r.role_description }}</td>
+            <td>{{ r.region }}</td>
+            <td><label class="mini-check"><input type="checkbox" name="available" value="1" {% if r.available %}checked{% endif %}> přijímám TIPy</label></td>
+            <td><input class="table-input" name="unavailable_reason" value="{{ r.unavailable_reason or '' }}" placeholder="např. dovolená, nemoc, kapacita"></td>
+            <td><button class="btn orange micro" type="submit">Uložit</button></td>
+          </form>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">Pro tento e-mail zatím není založen žádný profil specialisty.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

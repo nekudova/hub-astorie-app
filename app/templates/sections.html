@@ -1,46 +1,91 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1 class="page-title">Sekce a podsekce</h1>
-  <p class="page-subtitle">Náhrada listů Sekce a Podsekce. Slouží pro routing TIPů a výběr specialistů.</p>
+<div class="page-toolbar">
+  <div>
+    <h1 class="page-title">Sekce / podsekce</h1>
+    <p class="page-subtitle">Taxonomie HUBu. Sekce a podsekce se používají pro specialisty, routing TIPů a budoucí dlaždice v uživatelském HUBu.</p>
+  </div>
+</div>
 
-  <section class="grid cols-2">
-    <div class="card">
-      <h2 style="margin-top:0;color:var(--petrol);">Nová sekce</h2>
-      <form method="post" action="/admin/sections" class="form-row three">
-        <div><label>Kód</label><input name="section_code" required placeholder="FLOTILY"></div>
-        <div><label>Název</label><input name="name" required placeholder="Flotily"></div>
-        <div><label>Ikona</label><input name="icon" placeholder="🚗"></div>
-        <div><label>Pořadí</label><input name="sort_order" type="number" value="0"></div>
-        <div><button class="btn orange" type="submit">Přidat sekci</button></div>
-      </form>
-    </div>
+<section class="grid cols-2">
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Sekce</h2>
+    <form method="post" action="/admin/sections/create" class="admin-form-grid single">
+      <div><label>Kód sekce</label><input name="section_code" required placeholder="např. FLOTILY"></div>
+      <div><label>Název sekce</label><input name="section_name" required placeholder="např. Flotily"></div>
+      <div><label>Ikona / emoji</label><input name="icon" placeholder="např. 🚗"></div>
+      <div><label>URL obrázku</label><input name="image_url" placeholder="https://..."></div>
+      <div><label>Pořadí</label><input type="number" name="sort_order" value="100"></div>
+      <div class="checkline"><input type="checkbox" name="is_active" value="1" checked><label style="margin:0;">Aktivní</label></div>
+      <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
+      <div class="span-2"><button class="btn orange" type="submit">Uložit sekci</button></div>
+    </form>
+  </div>
 
-    <div class="card">
-      <h2 style="margin-top:0;color:var(--petrol);">Nová podsekce</h2>
-      <form method="post" action="/admin/subsections" class="form-row three">
-        <div><label>Kód</label><input name="subsection_code" required placeholder="AUTODOPRAVCI"></div>
-        <div><label>Sekce</label><input name="section_code" required placeholder="FLOTILY"></div>
-        <div><label>Název</label><input name="name" required placeholder="Autodopravci"></div>
-        <div><label>Pořadí</label><input name="sort_order" type="number" value="0"></div>
-        <div><button class="btn orange" type="submit">Přidat podsekci</button></div>
-      </form>
-    </div>
-  </section>
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Podsekce</h2>
+    <form method="post" action="/admin/subsections/create" class="admin-form-grid single">
+      <div>
+        <label>Nadřazená sekce</label>
+        <select name="section_code" required>
+          <option value="">— vyberte sekci —</option>
+          {% for s in sections %}
+            <option value="{{ s.section_code }}">{{ s.icon }} {{ s.section_name }} ({{ s.section_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><label>Kód podsekce</label><input name="subsection_code" required placeholder="např. FLOTILY_FIREMNI"></div>
+      <div><label>Název podsekce</label><input name="subsection_name" required placeholder="např. Firemní flotily"></div>
+      <div><label>Pořadí</label><input type="number" name="sort_order" value="100"></div>
+      <div class="checkline"><input type="checkbox" name="is_active" value="1" checked><label style="margin:0;">Aktivní</label></div>
+      <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
+      <div class="span-2"><button class="btn orange" type="submit">Uložit podsekci</button></div>
+    </form>
+  </div>
+</section>
 
-  <section class="grid cols-2 section-space">
-    <div class="card table-card">
-      <div class="table-head">Sekce</div>
-      <table>
-        <thead><tr><th>Kód</th><th>Název</th><th>Ikona</th><th>Pořadí</th></tr></thead>
-        <tbody>{% for s in sections %}<tr><td>{{ s.section_code }}</td><td><strong>{{ s.name }}</strong></td><td>{{ s.icon }}</td><td>{{ s.sort_order }}</td></tr>{% endfor %}</tbody>
-      </table>
-    </div>
-    <div class="card table-card">
-      <div class="table-head">Podsekce</div>
-      <table>
-        <thead><tr><th>Kód</th><th>Sekce</th><th>Název</th><th>Pořadí</th></tr></thead>
-        <tbody>{% for s in subsections %}<tr><td>{{ s.subsection_code }}</td><td>{{ s.section_code }}</td><td><strong>{{ s.name }}</strong></td><td>{{ s.sort_order }}</td></tr>{% endfor %}</tbody>
-      </table>
-    </div>
-  </section>
+<section class="card table-card section-space">
+  <div class="table-head">Přehled sekcí</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Pořadí</th><th>Kód</th><th>Název</th><th>Ikona</th><th>Obrázek</th><th>Stav</th></tr></thead>
+      <tbody>
+        {% for s in sections %}
+        <tr>
+          <td>{{ s.sort_order }}</td>
+          <td><strong>{{ s.section_code }}</strong></td>
+          <td>{{ s.section_name }}</td>
+          <td>{{ s.icon }}</td>
+          <td>{% if s.image_url %}<a href="{{ s.image_url }}" target="_blank">Otevřít</a>{% else %}—{% endif %}</td>
+          <td>{% if s.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">Zatím nejsou založené žádné sekce.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">Přehled podsekcí</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Sekce</th><th>Kód podsekce</th><th>Název</th><th>Pořadí</th><th>Stav</th></tr></thead>
+      <tbody>
+        {% for s in subsections %}
+        <tr>
+          <td>{{ s.section_name or s.section_code }}</td>
+          <td><strong>{{ s.subsection_code }}</strong></td>
+          <td>{{ s.subsection_name }}</td>
+          <td>{{ s.sort_order }}</td>
+          <td>{% if s.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Zatím nejsou založené žádné podsekce.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}

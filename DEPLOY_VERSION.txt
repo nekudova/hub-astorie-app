@@ -1,6 +1,7 @@
-HUB ASTORIE APP v0.5.4-specialists-core
-- specialists table
-- specialist admin page
-- create/update/toggle specialist availability
-- API /api/specialists/search for future TIP routing
-- audit specialist operations
+HUB ASTORIE APP v0.5.5-routing-taxonomy-core
+- safe sections/subsections taxonomy
+- subsections no longer crash
+- section/subsection select lists for specialists
+- section image_url and icon support
+- specialist self-service availability profile
+- routing API /api/routing/specialists

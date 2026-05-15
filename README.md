@@ -224,3 +224,18 @@ Přidáno:
 - Aktivní/neaktivní specialista.
 - API `/api/specialists/search` pro budoucí routing TIPů.
 - Audit změn specialistů.
+
+
+## v0.5.5 Routing & Taxonomy Core
+
+Opraveno:
+- Sekce/podsekce už nemají padat na interní chybu.
+- `/admin/subsections` je bezpečně přesměrováno na `/admin/sections`.
+
+Přidáno:
+- Samostatná taxonomie `hub_sections` a `hub_subsections`.
+- Zakládání sekcí včetně ikony a URL obrázku.
+- Zakládání podsekcí navázaných na sekci.
+- Specialisté vybírají sekci a podsekci z nabídky, nikoli ručním psaním.
+- Můj profil specialisty pro vlastní správu dostupnosti.
+- Routing API `/api/routing/specialists`.

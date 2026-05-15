@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.5.4-specialists-core",
-        "message": "Admin Core + Specialists Core běží.",
+        "version": "0.5.5-routing-taxonomy-core",
+        "message": "Admin Core + Routing Taxonomy Core běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

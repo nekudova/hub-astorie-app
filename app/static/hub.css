@@ -719,3 +719,15 @@ details summary {
   display: inline-block;
   margin-right: 4px;
 }
+
+
+/* v0.5.5 Routing & Taxonomy Core */
+.admin-form-grid.single {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 900px) {
+  .admin-form-grid.single {
+    grid-template-columns: 1fr;
+  }
+}

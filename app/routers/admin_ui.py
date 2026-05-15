@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.5.4",
+        "version": "v0.5.5",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -94,13 +94,6 @@ def toggle_user(user_id: str, db: Session = Depends(get_db)):
         db.commit()
         audit(db, "TOGGLE_ACTIVE", "users", {"id": user_id, "is_active": user.is_active})
     return RedirectResponse(url="/admin/users", status_code=303)
-
-
-@router.get("/admin/sections", response_class=HTMLResponse)
-def sections_page(request: Request, db: Session = Depends(get_db)):
-    sections = db.query(Section).order_by(Section.sort_order.asc(), Section.name.asc()).all()
-    subsections = db.query(Subsection).order_by(Subsection.section_code.asc(), Subsection.sort_order.asc()).all()
-    return render(request, "sections.html", {"active": "sections", "sections": sections, "subsections": subsections})
 
 
 @router.post("/admin/sections")
@@ -1322,16 +1315,25 @@ def specialists_page(
     sql += " ORDER BY specialist_name, section_code, subsection_code LIMIT 1000"
     rows = db.execute(text(sql), params).mappings().all()
 
+    ensure_taxonomy_tables_(db)
     sections = db.execute(text("""
-        SELECT DISTINCT section_code AS code FROM specialists
-        WHERE COALESCE(section_code, '') <> ''
-        ORDER BY section_code
+        SELECT section_code AS code, section_name AS name
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+    subsections = db.execute(text("""
+        SELECT subsection_code AS code, subsection_name AS name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, subsection_name
     """)).mappings().all()
 
     return render(request, "specialists.html", {
         "active": "specialists",
         "specialists": rows,
         "sections": sections,
+        "subsections": subsections,
         "q": q,
         "section": section,
         "available_filter": available,
@@ -1521,3 +1523,279 @@ def api_specialists_search(section: str = "", subsection: str = "", q: str = "",
         ],
     }
 
+
+
+
+
+def ensure_taxonomy_tables_(db: Session):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS hub_sections (
+            id SERIAL PRIMARY KEY,
+            section_code TEXT UNIQUE NOT NULL,
+            section_name TEXT NOT NULL DEFAULT '',
+            icon TEXT NOT NULL DEFAULT '',
+            image_url TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 100,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """))
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS hub_subsections (
+            id SERIAL PRIMARY KEY,
+            subsection_code TEXT UNIQUE NOT NULL,
+            section_code TEXT NOT NULL DEFAULT '',
+            subsection_name TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 100,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """))
+    db.commit()
+
+
+@router.get("/admin/subsections")
+def admin_subsections_compat():
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.get("/admin/sections", response_class=HTMLResponse)
+def sections_page(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+
+    sql = "SELECT * FROM hub_sections WHERE 1=1"
+    params = {}
+    if q:
+        sql += " AND (lower(section_code) LIKE :q OR lower(section_name) LIKE :q OR lower(note) LIKE :q)"
+        params["q"] = f"%{q.lower()}%"
+    sql += " ORDER BY sort_order, section_name"
+
+    sections = db.execute(text(sql), params).mappings().all()
+    subsections = db.execute(text("""
+        SELECT s.*, h.section_name
+        FROM hub_subsections s
+        LEFT JOIN hub_sections h ON h.section_code = s.section_code
+        ORDER BY h.sort_order, s.sort_order, s.subsection_name
+    """)).mappings().all()
+
+    return render(request, "sections.html", {
+        "active": "sections",
+        "sections": sections,
+        "subsections": subsections,
+        "q": q,
+    })
+
+
+@router.post("/admin/sections/create")
+def section_create(
+    section_code: str = Form(...),
+    section_name: str = Form(...),
+    icon: str = Form(""),
+    image_url: str = Form(""),
+    sort_order: int = Form(100),
+    is_active: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("""
+        INSERT INTO hub_sections
+          (section_code, section_name, icon, image_url, sort_order, is_active, note)
+        VALUES
+          (:section_code, :section_name, :icon, :image_url, :sort_order, :is_active, :note)
+        ON CONFLICT (section_code) DO UPDATE SET
+          section_name = EXCLUDED.section_name,
+          icon = EXCLUDED.icon,
+          image_url = EXCLUDED.image_url,
+          sort_order = EXCLUDED.sort_order,
+          is_active = EXCLUDED.is_active,
+          note = EXCLUDED.note
+    """), {
+        "section_code": section_code.upper().strip(),
+        "section_name": section_name,
+        "icon": icon,
+        "image_url": image_url,
+        "sort_order": sort_order,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPSERT", "section", section_code.upper().strip(), {}, {
+            "section_code": section_code.upper().strip(), "section_name": section_name
+        }, "Založení/úprava sekce")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.post("/admin/subsections/create")
+def subsection_create(
+    section_code: str = Form(...),
+    subsection_code: str = Form(...),
+    subsection_name: str = Form(...),
+    sort_order: int = Form(100),
+    is_active: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("""
+        INSERT INTO hub_subsections
+          (section_code, subsection_code, subsection_name, sort_order, is_active, note)
+        VALUES
+          (:section_code, :subsection_code, :subsection_name, :sort_order, :is_active, :note)
+        ON CONFLICT (subsection_code) DO UPDATE SET
+          section_code = EXCLUDED.section_code,
+          subsection_name = EXCLUDED.subsection_name,
+          sort_order = EXCLUDED.sort_order,
+          is_active = EXCLUDED.is_active,
+          note = EXCLUDED.note
+    """), {
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "subsection_name": subsection_name,
+        "sort_order": sort_order,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPSERT", "subsection", subsection_code.upper().strip(), {}, {
+            "section_code": section_code.upper().strip(),
+            "subsection_code": subsection_code.upper().strip(),
+            "subsection_name": subsection_name
+        }, "Založení/úprava podsekce")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.get("/api/taxonomy/sections")
+def api_taxonomy_sections(db: Session = Depends(get_db)):
+    ensure_taxonomy_tables_(db)
+    rows = db.execute(text("""
+        SELECT section_code, section_name, icon, image_url
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+    return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+@router.get("/api/taxonomy/subsections")
+def api_taxonomy_subsections(section_code: str = "", db: Session = Depends(get_db)):
+    ensure_taxonomy_tables_(db)
+    sql = """
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+    """
+    params = {}
+    if section_code:
+        sql += " AND section_code = :section_code"
+        params["section_code"] = section_code.upper()
+    sql += " ORDER BY sort_order, subsection_name"
+    rows = db.execute(text(sql), params).mappings().all()
+    return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+@router.get("/admin/my-specialist-profile", response_class=HTMLResponse)
+def my_specialist_profile(request: Request, db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    # Dočasně používáme admin e-mail; po ostrém loginu se nahradí session uživatelem.
+    email = "nekudova@astorieas.cz"
+    rows = db.execute(text("""
+        SELECT * FROM specialists
+        WHERE lower(email) = :email
+        ORDER BY specialist_name, section_code, subsection_code
+    """), {"email": email}).mappings().all()
+
+    return render(request, "my_specialist_profile.html", {
+        "active": "my_specialist_profile",
+        "rows": rows,
+        "email": email,
+    })
+
+
+@router.post("/admin/my-specialist-profile/{item_id}/availability")
+def my_specialist_availability(
+    item_id: int,
+    available: str = Form(""),
+    unavailable_reason: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    db.execute(text("""
+        UPDATE specialists
+        SET available = :available,
+            unavailable_reason = :unavailable_reason
+        WHERE id = :id
+    """), {
+        "id": item_id,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPDATE", "specialist_availability", str(item_id), dict(old or {}), {
+            "available": bool(available), "unavailable_reason": unavailable_reason
+        }, "Specialista upravil vlastní dostupnost")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+
+
+@router.get("/api/routing/specialists")
+def api_routing_specialists(section_code: str = "", subsection_code: str = "", db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    ensure_taxonomy_tables_(db)
+
+    sql = """
+        SELECT *
+        FROM specialists
+        WHERE is_active = TRUE
+          AND available = TRUE
+    """
+    params = {}
+
+    if section_code:
+        sql += " AND section_code = :section_code"
+        params["section_code"] = section_code.upper()
+
+    if subsection_code:
+        sql += " AND (subsection_code = :subsection_code OR COALESCE(subsection_code, '') = '')"
+        params["subsection_code"] = subsection_code.upper()
+
+    sql += " ORDER BY specialist_name LIMIT 50"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    return {
+        "ok": True,
+        "routing": {
+            "section_code": section_code.upper() if section_code else "",
+            "subsection_code": subsection_code.upper() if subsection_code else "",
+            "count": len(rows),
+        },
+        "specialists": [
+            {
+                "id": r["id"],
+                "name": r["specialist_name"],
+                "email": r["email"],
+                "phone": r["phone"],
+                "region": r["region"],
+                "section_code": r["section_code"],
+                "subsection_code": r["subsection_code"],
+                "if_share": r["if_share"],
+                "ps_share": r["ps_share"],
+            }
+            for r in rows
+        ],
+    }
