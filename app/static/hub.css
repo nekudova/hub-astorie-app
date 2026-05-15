@@ -786,3 +786,38 @@ tr.is-selected {
   outline: 2px solid var(--orange);
   background: #fff7f3;
 }
+
+
+/* v0.7.1 Specialist Profile & Sections Fix */
+.taxonomy-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.taxonomy-chip {
+  border: 1px solid #d9e7ea;
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.taxonomy-chip span {
+  font-size: 24px;
+}
+
+.taxonomy-chip strong {
+  color: var(--petrol);
+  font-size: 17px;
+}
+
+.taxonomy-chip small {
+  color: #64748b;
+  font-weight: 900;
+}
+
+.page-toolbar.compact {
+  margin-bottom: 16px;
+}

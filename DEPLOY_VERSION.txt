@@ -1,11 +1,6 @@
-HUB ASTORIE APP v0.7.0-user-hub-core
-- user-facing HUB portal
-- new tip submission
-- my tips overview
-- calculators page
-- partners detail page
-- contacts page
-- forms page
-- stats page
-- public HUB visual style
-- admin prepared links now point to real user pages
+HUB ASTORIE APP v0.7.1-specialist-profile-sections-fix
+- default section/subsection seed
+- visible sections in My Specialist Profile
+- add specialization from own specialist profile
+- safer empty-state guidance
+- New TIP auto-seeds taxonomy if empty

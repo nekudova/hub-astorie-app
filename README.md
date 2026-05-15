@@ -295,3 +295,16 @@ Přidáno:
 
 Poznámka:
 - Přihlašování poradce je zatím vývojově fixované na testovací identitu. V další verzi se napojí na uživatele/session.
+
+
+## v0.7.1 Specialist Profile & Sections Fix
+
+Opraveno:
+- V profilu specialisty jsou nově viditelné dostupné sekce HUBu.
+- Profil specialisty už není prázdná slepá stránka, pokud ještě nemá založenou odbornost.
+- Lze si přímo přidat odbornost do profilu specialisty.
+- Výchozí sekce/podsekce lze bezpečně doplnit tlačítkem.
+- Nový TIP automaticky doplní výchozí taxonomii, pokud je prázdná.
+
+Přidáno:
+- Výchozí sekce: Flotily, Majetek, Život, Podnikatelé, Penze, Úvěry, Obnova, Investice, Zlato, Zvíře.

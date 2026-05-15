@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.7.0",
+        "version": "v0.7.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1567,7 +1567,7 @@ def sections_page(
     q: str = "",
     db: Session = Depends(get_db),
 ):
-    ensure_taxonomy_tables_(db)
+    seed_default_hub_taxonomy_(db)
 
     sql = "SELECT * FROM hub_sections WHERE 1=1"
     params = {}
@@ -1706,7 +1706,7 @@ def api_taxonomy_subsections(section_code: str = "", db: Session = Depends(get_d
     return {"ok": True, "items": [dict(r) for r in rows]}
 
 
-@router.get("/admin/my-specialist-profile", response_class=HTMLResponse)
+@router.get("/admin/my-specialist-profile-old", response_class=HTMLResponse)
 def my_specialist_profile(request: Request, db: Session = Depends(get_db)):
     ensure_specialists_table_(db)
     # Dočasně používáme admin e-mail; po ostrém loginu se nahradí session uživatelem.
@@ -1724,7 +1724,7 @@ def my_specialist_profile(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.post("/admin/my-specialist-profile/{item_id}/availability")
+@router.post("/admin/my-specialist-profile-old/{item_id}/availability")
 def my_specialist_availability(
     item_id: int,
     available: str = Form(""),
@@ -1750,7 +1750,7 @@ def my_specialist_availability(
         }, "Specialista upravil vlastní dostupnost")
     except Exception:
         pass
-    return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+    return RedirectResponse("/admin/my-specialist-profile-old", status_code=303)
 
 
 @router.get("/api/routing/specialists")
@@ -1799,3 +1799,202 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
             for r in rows
         ],
     }
+
+
+
+
+# -------------------------------------------------------------------
+# v0.7.1 Specialist Profile & Sections Fix
+# -------------------------------------------------------------------
+
+def seed_default_hub_taxonomy_(db: Session):
+    ensure_taxonomy_tables_(db)
+
+    defaults_sections = [
+        ("FLOTILY", "Flotily", "🚗", 10),
+        ("MAJETEK", "Majetek", "🏡", 20),
+        ("ZIVOT", "Život", "❤️", 30),
+        ("PODNIKATELE", "Podnikatelé", "🏢", 40),
+        ("PENZE", "Penze", "💼", 50),
+        ("UVERY", "Úvěry", "🏦", 60),
+        ("OBNOVA", "Obnova", "♻️", 70),
+        ("INVESTICE", "Investice", "📈", 80),
+        ("ZLATO", "Zlato", "💰", 90),
+        ("ZVIRE", "Zvíře", "🐕", 100),
+    ]
+
+    defaults_subsections = [
+        ("FLOTILY", "FLOTILY_FIREMNI", "Firemní flotily", 10),
+        ("FLOTILY", "AUTODOPRAVCI", "Autodopravci", 20),
+        ("MAJETEK", "DOMACNOSTI", "Domácnosti", 10),
+        ("MAJETEK", "NEMOVITOSTI", "Nemovitosti", 20),
+        ("ZIVOT", "ZIVOTNI_POJISTENI", "Životní pojištění", 10),
+        ("PODNIKATELE", "PODNIKATELSKA_RIZIKA", "Podnikatelská rizika", 10),
+        ("PENZE", "DPS", "Doplňkové penzijní spoření", 10),
+        ("UVERY", "HYPOTEKY", "Hypotéky", 10),
+        ("OBNOVA", "RETENCE", "Obnova / retence", 10),
+        ("INVESTICE", "INVESTICE_OBECNE", "Investice", 10),
+        ("ZLATO", "INVESTICNI_ZLATO", "Investiční zlato", 10),
+        ("ZVIRE", "POJISTENI_ZVIRAT", "Pojištění zvířat", 10),
+    ]
+
+    for code, name, icon, order in defaults_sections:
+        db.execute(text("""
+            INSERT INTO hub_sections (section_code, section_name, icon, sort_order, is_active)
+            VALUES (:code, :name, :icon, :sort_order, TRUE)
+            ON CONFLICT (section_code) DO NOTHING
+        """), {"code": code, "name": name, "icon": icon, "sort_order": order})
+
+    for section_code, sub_code, sub_name, order in defaults_subsections:
+        db.execute(text("""
+            INSERT INTO hub_subsections (section_code, subsection_code, subsection_name, sort_order, is_active)
+            VALUES (:section_code, :sub_code, :sub_name, :sort_order, TRUE)
+            ON CONFLICT (subsection_code) DO NOTHING
+        """), {
+            "section_code": section_code,
+            "sub_code": sub_code,
+            "sub_name": sub_name,
+            "sort_order": order,
+        })
+
+    db.commit()
+
+
+@router.post("/admin/sections/seed-defaults")
+def sections_seed_defaults(db: Session = Depends(get_db)):
+    seed_default_hub_taxonomy_(db)
+    try:
+        safe_audit(db, "admin@astorie.local", "UPSERT", "taxonomy", "defaults", {}, {"seed": "default_hub_taxonomy"}, "Doplnění výchozích sekcí a podsekcí")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.get("/admin/my-specialist-profile", response_class=HTMLResponse)
+def my_specialist_profile_v071(request: Request, db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    seed_default_hub_taxonomy_(db)
+
+    current_user = {
+        "advisor_id": "501",
+        "name": "Nekudová Dagmar",
+        "email": "nekudova@astorieas.cz",
+        "phone": "737 233 888",
+    }
+
+    rows = db.execute(text("""
+        SELECT s.*,
+               hs.section_name,
+               hss.subsection_name
+        FROM specialists s
+        LEFT JOIN hub_sections hs ON hs.section_code = s.section_code
+        LEFT JOIN hub_subsections hss ON hss.subsection_code = s.subsection_code
+        WHERE lower(s.email) = :email
+        ORDER BY s.specialist_name, hs.sort_order, hss.sort_order, s.section_code, s.subsection_code
+    """), {"email": current_user["email"].lower()}).mappings().all()
+
+    sections = db.execute(text("""
+        SELECT section_code, section_name, icon
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+
+    subsections = db.execute(text("""
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)).mappings().all()
+
+    return render(request, "my_specialist_profile.html", {
+        "active": "my_specialist_profile",
+        "rows": rows,
+        "sections": sections,
+        "subsections": subsections,
+        "current_user": current_user,
+        "email": current_user["email"],
+    })
+
+
+@router.post("/admin/my-specialist-profile/add-specialization")
+def my_specialist_add_specialization_v071(
+    section_code: str = Form(...),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form("ČR"),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    seed_default_hub_taxonomy_(db)
+
+    current_user = {
+        "advisor_id": "501",
+        "name": "Nekudová Dagmar",
+        "email": "nekudova@astorieas.cz",
+        "phone": "737 233 888",
+    }
+
+    db.execute(text("""
+        INSERT INTO specialists
+        (advisor_id, specialist_name, email, phone, section_code, subsection_code,
+         role_description, region, if_share, ps_share, available, is_active, note)
+        VALUES
+        (:advisor_id, :name, :email, :phone, :section_code, :subsection_code,
+         :role_description, :region, :if_share, :ps_share, TRUE, TRUE, 'Založeno z profilu specialisty')
+    """), {
+        "advisor_id": current_user["advisor_id"],
+        "name": current_user["name"],
+        "email": current_user["email"].lower(),
+        "phone": current_user["phone"],
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+    })
+    db.commit()
+
+    try:
+        safe_audit(db, current_user["email"], "CREATE", "specialist_profile", current_user["email"], {}, {
+            "section_code": section_code,
+            "subsection_code": subsection_code,
+            "role_description": role_description,
+        }, "Specialista si přidal odbornost do profilu")
+    except Exception:
+        pass
+
+    return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+
+
+@router.post("/admin/my-specialist-profile/{item_id}/availability")
+def my_specialist_availability_v071(
+    item_id: int,
+    available: str = Form(""),
+    unavailable_reason: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    db.execute(text("""
+        UPDATE specialists
+        SET available = :available,
+            unavailable_reason = :unavailable_reason
+        WHERE id = :id
+    """), {
+        "id": item_id,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPDATE", "specialist_availability", str(item_id), dict(old or {}), {
+            "available": bool(available), "unavailable_reason": unavailable_reason
+        }, "Specialista upravil vlastní dostupnost")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+

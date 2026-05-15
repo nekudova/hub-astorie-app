@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.7.0-user-hub-core",
-        "message": "Admin Core + User HUB Core běží.",
+        "version": "0.7.1-specialist-profile-sections-fix",
+        "message": "Admin Core + Specialist Profile Sections Fix běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

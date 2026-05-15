@@ -1,9 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">Můj profil specialisty</h1>
-<p class="page-subtitle">Specialista si zde bude sám spravovat dostupnost pro příjem TIPů. Nyní je profil dočasně napojen na e-mail {{ email }}.</p>
+<p class="page-subtitle">
+  Specialista si zde spravuje vlastní odbornosti a dostupnost pro příjem TIPů.
+  Profil je nyní vývojově napojen na e-mail <strong>{{ email }}</strong>.
+</p>
 
-<section class="card table-card">
+<section class="card section-space">
+  <div class="page-toolbar compact">
+    <div>
+      <h2 style="margin:0;color:var(--petrol);">Dostupné sekce HUBu</h2>
+      <p class="page-subtitle">Toto jsou sekce, ze kterých se vybírá při zakládání TIPu i při nastavení specialisty.</p>
+    </div>
+    <form method="post" action="/admin/sections/seed-defaults">
+      <button class="btn soft" type="submit">Doplnit výchozí sekce</button>
+    </form>
+  </div>
+
+  <div class="taxonomy-chip-grid">
+    {% for s in sections %}
+      <div class="taxonomy-chip">
+        <span>{{ s.icon or '•' }}</span>
+        <strong>{{ s.section_name }}</strong>
+        <small>{{ s.section_code }}</small>
+      </div>
+    {% else %}
+      <div class="empty-state">Zatím nejsou založené žádné sekce. Klikněte na „Doplnit výchozí sekce“.</div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card section-space">
+  <h2 style="margin-top:0;color:var(--petrol);">Přidat moji odbornost</h2>
+  <form method="post" action="/admin/my-specialist-profile/add-specialization" class="admin-form-grid">
+    <div>
+      <label>Sekce</label>
+      <select name="section_code" id="profile_section" onchange="filterProfileSubsections()" required>
+        <option value="">— vyberte sekci —</option>
+        {% for s in sections %}
+          <option value="{{ s.section_code }}">{{ s.icon }} {{ s.section_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Podsekce</label>
+      <select name="subsection_code" id="profile_subsection">
+        <option value="">— celá sekce / bez podsekce —</option>
+        {% for ss in subsections %}
+          <option value="{{ ss.subsection_code }}" data-section="{{ ss.section_code }}">{{ ss.subsection_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div><label>Role / odbornost</label><input name="role_description" placeholder="např. flotily, penze, investice"></div>
+    <div><label>Region</label><input name="region" value="ČR"></div>
+    <div><label>IF podíl</label><input name="if_share" placeholder="např. 0.3"></div>
+    <div><label>PS podíl</label><input name="ps_share" placeholder="např. 0.7"></div>
+    <div class="span-2 form-actions"><button class="btn orange" type="submit">Přidat odbornost do mého profilu</button></div>
+  </form>
+</section>
+
+<section class="card table-card section-space">
   <div class="table-head">Moje odbornosti a dostupnost</div>
   <div class="table-scroll">
     <table>
@@ -12,8 +68,8 @@
         {% for r in rows %}
         <tr>
           <form method="post" action="/admin/my-specialist-profile/{{ r.id }}/availability">
-            <td>{{ r.section_code }}</td>
-            <td>{{ r.subsection_code }}</td>
+            <td><strong>{{ r.section_name or r.section_code }}</strong><br><span class="muted">{{ r.section_code }}</span></td>
+            <td>{{ r.subsection_name or r.subsection_code or 'Celá sekce' }}</td>
             <td>{{ r.role_description }}</td>
             <td>{{ r.region }}</td>
             <td><label class="mini-check"><input type="checkbox" name="available" value="1" {% if r.available %}checked{% endif %}> přijímám TIPy</label></td>
@@ -22,10 +78,27 @@
           </form>
         </tr>
         {% else %}
-        <tr><td colspan="7">Pro tento e-mail zatím není založen žádný profil specialisty.</td></tr>
+        <tr>
+          <td colspan="7">
+            Pro tento e-mail zatím není založená žádná odbornost.
+            Vyberte sekci výše a klikněte na „Přidat odbornost do mého profilu“.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </section>
+
+<script>
+function filterProfileSubsections(){
+  const section = document.getElementById("profile_section").value;
+  const sub = document.getElementById("profile_subsection");
+  Array.from(sub.options).forEach(function(opt){
+    if(!opt.dataset.section){ opt.hidden = false; return; }
+    opt.hidden = opt.dataset.section !== section;
+  });
+  sub.value = "";
+}
+</script>
 {% endblock %}
