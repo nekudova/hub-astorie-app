@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.5.5",
+        "version": "v0.5.6",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -675,7 +675,7 @@ def toggle_product(item_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/api/partners/search")
-def api_partner_search(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
+def api_partner_search(q: str = "", limit: int = 15, db: Session = Depends(get_db)):
     text = (q or "").strip()
     query = db.query(Partner).filter(Partner.is_active == True)
 
@@ -690,7 +690,7 @@ def api_partner_search(q: str = "", limit: int = 20, db: Session = Depends(get_d
             (Partner.city.ilike(like))
         )
 
-    items = query.order_by(Partner.name).limit(max(1, min(limit, 50))).all()
+    items = query.order_by(Partner.name).limit(max(1, min(limit, 25))).all()
 
     return {
         "ok": True,
@@ -997,7 +997,7 @@ def audit_history_page(
     q: str = "",
     entity: str = "",
     action: str = "",
-    limit: int = 200,
+    limit: int = 150,
     db: Session = Depends(get_db),
 ):
     db.execute(text("""
