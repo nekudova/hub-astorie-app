@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.3.6-data-admin-ux",
-        "message": "Admin Core + Data Admin UX běží.",
+        "version": "0.3.7-ares-partner-registry",
+        "message": "Admin Core + ARES Partner Registry běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

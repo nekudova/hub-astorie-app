@@ -10,6 +10,16 @@ def ensure_schema_compatibility(db: Session) -> None:
     # Bezpečné doplnění sloupců, pokud databáze vznikla ze starší ZIP verze.
     statements = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(120) DEFAULT 'IF' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS ico VARCHAR(20)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS dic VARCHAR(30)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS data_box VARCHAR(50)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS registry_email VARCHAR(255)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS street VARCHAR(255)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS city VARCHAR(120)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS address_full TEXT",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS legal_form VARCHAR(255)",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS source VARCHAR(80) DEFAULT 'manual'",
         "ALTER TABLE subsections ADD COLUMN IF NOT EXISTS section_code VARCHAR(80)",
         "UPDATE subsections SET section_code = subsection_code WHERE section_code IS NULL",
         "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS contact_type VARCHAR(120)",

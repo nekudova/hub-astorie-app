@@ -100,3 +100,13 @@ Přidáno:
 - nové údaje kontaktu: druh kontaktu, územní platnost/region, VIP/TOP
 - rychlé kopírování záznamu
 - bezpečné doplnění sloupců do PostgreSQL bez mazání dat
+
+
+## v0.3.7 ARES Partner Registry
+
+Přidáno:
+- napojení na ARES podle IČO
+- rozšíření číselníku partnerů o IČO, DIČ, datovou schránku, e-mail/podatelnu a adresu
+- tlačítko ARES při zakládání partnera
+- možnost aktualizovat detail partnera z ARES
+- příprava dat pro formuláře a výpovědi pojistných smluv

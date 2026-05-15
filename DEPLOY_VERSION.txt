@@ -1,2 +1,4 @@
-HUB ASTORIE APP v0.3.6-data-admin-ux
-fulltext + datalist partner picker + duplicate rows + contact VIP/territory
+HUB ASTORIE APP v0.3.7-ares-partner-registry
+- ARES lookup endpoint: /api/ares/subject?ico=XXXXXXXX
+- partner registry fields: IČO, DIČ, datová schránka, e-mail, adresa
+- partner detail ready for future forms/termination documents

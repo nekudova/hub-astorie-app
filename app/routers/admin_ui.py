@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -7,6 +7,7 @@ from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
 from app.services.passwords import hash_password
 from app.services.importer import IMPORT_HANDLERS
+from app.services.ares import fetch_ares_subject
 
 router = APIRouter(tags=["admin-ui"])
 
@@ -16,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.3.6",
+        "version": "v0.3.7",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -293,3 +294,82 @@ def partner_detail(request: Request, partner_code: str, db: Session = Depends(ge
     links = db.query(PartnerLink).filter(PartnerLink.partner_code == partner_code.upper()).order_by(PartnerLink.title).all()
     products = db.query(PartnerProduct).filter(PartnerProduct.partner_code == partner_code.upper()).order_by(PartnerProduct.area, PartnerProduct.product_name).all()
     return render(request, "partner_detail.html", {"active": "partners", "partner": partner, "partner_code": partner_code.upper(), "contacts": contacts, "links": links, "products": products})
+
+
+@router.get("/api/ares/subject")
+def api_ares_subject(ico: str):
+    return JSONResponse(fetch_ares_subject(ico))
+
+
+@router.post("/admin/partners/create-extended")
+def create_partner_extended(
+    request: Request,
+    partner_code: str = Form(...),
+    name: str = Form(...),
+    ico: str = Form(""),
+    dic: str = Form(""),
+    data_box: str = Form(""),
+    registry_email: str = Form(""),
+    street: str = Form(""),
+    city: str = Form(""),
+    zip_code: str = Form(""),
+    address_full: str = Form(""),
+    legal_form: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    code = partner_code.upper().strip()
+    existing = db.query(Partner).filter(Partner.partner_code == code).first()
+    if existing:
+        existing.name = name
+        existing.ico = ico
+        existing.dic = dic
+        existing.data_box = data_box
+        existing.registry_email = registry_email
+        existing.street = street
+        existing.city = city
+        existing.zip_code = zip_code
+        existing.address_full = address_full
+        existing.legal_form = legal_form
+        existing.note = note
+        existing.is_active = True
+    else:
+        db.add(Partner(
+            partner_code=code,
+            name=name,
+            ico=ico,
+            dic=dic,
+            data_box=data_box,
+            registry_email=registry_email,
+            street=street,
+            city=city,
+            zip_code=zip_code,
+            address_full=address_full,
+            legal_form=legal_form,
+            note=note,
+            is_active=True,
+        ))
+    db.commit()
+    return RedirectResponse("/admin/partners", status_code=303)
+
+
+@router.post("/admin/partners/{partner_code}/ares-refresh")
+def refresh_partner_from_ares(partner_code: str, db: Session = Depends(get_db)):
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if not partner or not partner.ico:
+        return RedirectResponse(f"/admin/partners/{partner_code.upper()}", status_code=303)
+
+    data = fetch_ares_subject(partner.ico)
+    if data.get("ok"):
+        partner.name = data.get("name") or partner.name
+        partner.dic = data.get("dic") or partner.dic
+        partner.data_box = data.get("data_box") or partner.data_box
+        partner.street = data.get("street") or partner.street
+        partner.city = data.get("city") or partner.city
+        partner.zip_code = data.get("zip_code") or partner.zip_code
+        partner.address_full = data.get("address_full") or partner.address_full
+        partner.legal_form = data.get("legal_form") or partner.legal_form
+        partner.source = "ARES"
+        db.commit()
+
+    return RedirectResponse(f"/admin/partners/{partner_code.upper()}", status_code=303)

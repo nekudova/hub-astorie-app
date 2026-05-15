@@ -1,33 +1,130 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1 class="page-title">Správa partnerů</h1>
-  <p class="page-subtitle">Základní náhrada importního listu partnerů. Kontakty, odkazy a produkty doplníme v další verzi.</p>
+<h1 class="page-title">Partneři</h1>
+<p class="page-subtitle">Číselník partnerů včetně IČO, datové schránky, e-mailu a adresy. Údaje lze předvyplnit z ARES podle IČO.</p>
 
-  <section class="card">
-    <form method="post" action="/admin/partners" class="form-row three">
-      <div><label>Kód partnera</label><input name="partner_code" required placeholder="KOOP"></div>
-      <div><label>Název partnera</label><input name="name" required placeholder="Kooperativa pojišťovna, a.s."></div>
-      <div><label>Poznámka</label><input name="note" placeholder="Interní poznámka"></div>
-      <div><button class="btn orange" type="submit">Přidat partnera</button></div>
+<section class="grid cols-2">
+  <div class="card">
+    <h2 style="margin-top:0;color:var(--petrol);">Nový partner</h2>
+
+    <form method="post" action="/admin/partners/create-extended" id="partner-form">
+      <label>Kód partnera</label>
+      <input type="text" name="partner_code" id="partner_code" required placeholder="např. KOOP">
+
+      <label>IČO</label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;">
+        <input type="text" name="ico" id="ico" placeholder="8 číslic">
+        <button type="button" class="btn soft" onclick="loadAres()">ARES</button>
+      </div>
+
+      <label>Název partnera</label>
+      <input type="text" name="name" id="name" required>
+
+      <label>DIČ</label>
+      <input type="text" name="dic" id="dic">
+
+      <label>Datová schránka</label>
+      <input type="text" name="data_box" id="data_box">
+
+      <label>E-mail / podatelna</label>
+      <input type="email" name="registry_email" id="registry_email">
+
+      <label>Ulice</label>
+      <input type="text" name="street" id="street">
+
+      <div style="display:grid;grid-template-columns:1fr 130px;gap:12px;">
+        <div>
+          <label>Město</label>
+          <input type="text" name="city" id="city">
+        </div>
+        <div>
+          <label>PSČ</label>
+          <input type="text" name="zip_code" id="zip_code">
+        </div>
+      </div>
+
+      <label>Celá adresa / sídlo</label>
+      <textarea name="address_full" id="address_full"></textarea>
+
+      <label>Právní forma</label>
+      <input type="text" name="legal_form" id="legal_form">
+
+      <label>Poznámka</label>
+      <textarea name="note"></textarea>
+
+      <button class="btn orange" type="submit">Uložit partnera</button>
+      <div id="ares-msg" style="margin-top:12px;color:#637386;font-weight:700;"></div>
     </form>
-  </section>
+  </div>
 
-  <section class="card table-card section-space">
-    <div class="table-head">Partneři</div>
+  <div class="card table-card">
+    <div class="table-head">Existující partneři</div>
     <table>
-      <thead><tr><th>Kód</th><th>Název</th><th>Poznámka</th><th>Stav</th></tr></thead>
-      <tbody>
-      {% for p in partners %}
+      <thead>
         <tr>
-          <td>{{ p.partner_code }}</td>
-          <td><strong><a href="/admin/partners/{{ p.partner_code }}">{{ p.name }}</a></strong></td>
-          <td>{{ p.note }}</td>
-          <td>{% if p.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status off">Neaktivní</span>{% endif %}</td>
+          <th>Kód</th>
+          <th>Název</th>
+          <th>IČO</th>
+          <th>DS</th>
+          <th>E-mail</th>
         </tr>
-      {% else %}
-        <tr><td colspan="4">Zatím nejsou vloženi žádní partneři.</td></tr>
-      {% endfor %}
+      </thead>
+      <tbody>
+        {% for p in partners %}
+        <tr>
+          <td><strong>{{ p.partner_code }}</strong></td>
+          <td><strong><a href="/admin/partners/{{ p.partner_code }}">{{ p.name }}</a></strong></td>
+          <td>{{ p.ico or "" }}</td>
+          <td>{{ p.data_box or "" }}</td>
+          <td>{{ p.registry_email or "" }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Zatím nejsou vložení žádní partneři.</td></tr>
+        {% endfor %}
       </tbody>
     </table>
-  </section>
+  </div>
+</section>
+
+<script>
+async function loadAres() {
+  const msg = document.getElementById("ares-msg");
+  const ico = document.getElementById("ico").value.trim();
+  if (!ico) {
+    msg.textContent = "Nejdříve vyplňte IČO.";
+    return;
+  }
+  msg.textContent = "Načítám data z ARES…";
+
+  try {
+    const res = await fetch("/api/ares/subject?ico=" + encodeURIComponent(ico));
+    const data = await res.json();
+
+    if (!data.ok) {
+      msg.textContent = data.error || "Data z ARES se nepodařilo načíst.";
+      return;
+    }
+
+    const map = {
+      name: "name",
+      dic: "dic",
+      data_box: "data_box",
+      street: "street",
+      city: "city",
+      zip_code: "zip_code",
+      address_full: "address_full",
+      legal_form: "legal_form"
+    };
+
+    Object.keys(map).forEach(function(key) {
+      const el = document.getElementById(map[key]);
+      if (el && data[key]) el.value = data[key];
+    });
+
+    msg.textContent = "Data z ARES byla načtena. Zkontrolujte je a uložte partnera.";
+  } catch (e) {
+    msg.textContent = "Technická chyba při načítání ARES.";
+  }
+}
+</script>
 {% endblock %}

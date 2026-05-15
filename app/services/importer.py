@@ -234,6 +234,15 @@ def import_partners(db: Session, raw: bytes) -> ImportResult:
         try:
             code = pick(row, "Partner_ID", "ID", "Kod", "Kód", "partner_code")
             name = pick(row, "Nazev", "Název", "Name", "Partner", "Partner_nazev")
+            ico = pick(row, "ICO", "IČO", "Ic", "Ico")
+            dic = pick(row, "DIC", "DIČ", "Dic")
+            data_box = pick(row, "Datova_schranka", "Datová schránka", "DS", "Data_box")
+            registry_email = pick(row, "Email", "E-mail", "Mail", "Podatelna")
+            street = pick(row, "Ulice", "Street")
+            city = pick(row, "Mesto", "Město", "Obec", "City")
+            zip_code = pick(row, "PSC", "PSČ", "Zip")
+            address_full = pick(row, "Adresa", "Sídlo", "Sidlo", "Address")
+            legal_form = pick(row, "Pravni_forma", "Právní forma", "Legal_form")
             note = pick(row, "Poznamka", "Poznámka", "Note")
             active_raw = pick(row, "Aktivni", "Aktivní", "Active", default="ANO")
 
@@ -245,6 +254,15 @@ def import_partners(db: Session, raw: bytes) -> ImportResult:
             item = db.query(Partner).filter(Partner.partner_code == code.upper()).first()
             if item:
                 item.name = name
+                item.ico = ico
+                item.dic = dic
+                item.data_box = data_box
+                item.registry_email = registry_email
+                item.street = street
+                item.city = city
+                item.zip_code = zip_code
+                item.address_full = address_full
+                item.legal_form = legal_form
                 item.note = note
                 item.is_active = is_yes(active_raw)
                 result.updated += 1
@@ -252,6 +270,15 @@ def import_partners(db: Session, raw: bytes) -> ImportResult:
                 db.add(Partner(
                     partner_code=code.upper(),
                     name=name,
+                    ico=ico,
+                    dic=dic,
+                    data_box=data_box,
+                    registry_email=registry_email,
+                    street=street,
+                    city=city,
+                    zip_code=zip_code,
+                    address_full=address_full,
+                    legal_form=legal_form,
                     note=note,
                     is_active=is_yes(active_raw),
                 ))
