@@ -1,5 +1,5 @@
-HUB ASTORIE APP v0.4.3-navigation-modules
-- expanded grouped admin navigation
-- module map page
-- placeholders for TIP HUB modules
-- document group includes terminations and form bridge
+HUB ASTORIE APP v0.4.4-navigation-fix
+- stabilized sidebar visual style
+- prepared menu items redirect safely to module map
+- clear distinction between functional and prepared modules
+- version badge and topbar visual cleanup

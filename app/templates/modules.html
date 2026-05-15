@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">Mapa modulů HUB</h1>
-<p class="page-subtitle">Rozšířené menu a vývojová mapa. Funkční moduly jsou aktivní, připravené moduly zatím slouží jako cílová struktura migrace ze současného TIP Hubu.</p>
+<p class="page-subtitle">
+  Přehled funkčních a připravených modulů. Položky označené „připraveno“ jsou zatím cílová struktura migrace – nejde o chybu.
+</p>
+
+{% if focus %}
+<section class="card section-space info-box">
+  Vybraná položka je zatím ve fázi přípravy: <strong>{{ focus }}</strong>. Bude napojena v dalších vývojových verzích.
+</section>
+{% endif %}
 
 {% for group in modules %}
 <section class="section-space">

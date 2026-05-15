@@ -17,7 +17,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.4.3",
+        "version": "v0.4.4",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -835,7 +835,7 @@ def termination_preview(
 
 
 @router.get("/admin/modules", response_class=HTMLResponse)
-def modules_page(request: Request, db: Session = Depends(get_db)):
+def modules_page(request: Request, focus: str = '', db: Session = Depends(get_db)):
     modules = [
         {
             "group": "TIP HUB",
@@ -879,4 +879,5 @@ def modules_page(request: Request, db: Session = Depends(get_db)):
     return render(request, "modules.html", {
         "active": "modules",
         "modules": modules,
+        "focus": focus,
     })

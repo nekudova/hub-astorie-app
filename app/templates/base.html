@@ -18,17 +18,11 @@
       </div>
 
       <nav class="side-nav">
-        <div class="nav-group-title">PŘEHLED</div>
+        <div class="nav-section">PŘEHLED</div>
         <a class="nav-link {{ 'active' if active == 'dashboard' else '' }}" href="/admin">📊 Dashboard</a>
         <a class="nav-link {{ 'active' if active == 'modules' else '' }}" href="/admin/modules">🧭 Mapa modulů</a>
 
-        <div class="nav-group-title">TIP HUB</div>
-        <a class="nav-link disabled-link" href="/admin/modules">📝 Nový TIP</a>
-        <a class="nav-link disabled-link" href="/admin/modules">📌 Moje TIPy</a>
-        <a class="nav-link disabled-link" href="/admin/modules">👤 Specialisté</a>
-        <a class="nav-link disabled-link" href="/admin/modules">🏆 Statistiky & soutěž</a>
-
-        <div class="nav-group-title">ČÍSELNÍKY</div>
+        <div class="nav-section">ČÍSELNÍKY</div>
         <a class="nav-link {{ 'active' if active == 'advisors' else '' }}" href="/admin/advisors">👥 Poradci / uživatelé</a>
         <a class="nav-link {{ 'active' if active == 'sections' else '' }}" href="/admin/sections">🧭 Sekce / podsekce</a>
         <a class="nav-link {{ 'active' if active == 'partners' else '' }}" href="/admin/partners">🏢 Partneři</a>
@@ -36,12 +30,18 @@
         <a class="nav-link {{ 'active' if active == 'links' else '' }}" href="/admin/links">🔗 Odkazy</a>
         <a class="nav-link {{ 'active' if active == 'products' else '' }}" href="/admin/products">📦 Produkty</a>
 
-        <div class="nav-group-title">DOKUMENTY</div>
+        <div class="nav-section">DOKUMENTY</div>
         <a class="nav-link {{ 'active' if active == 'terminations' else '' }}" href="/admin/terminations">📄 Výpovědi</a>
         <a class="nav-link {{ 'active' if active == 'form_bridge' else '' }}" href="/admin/form-bridge">🧩 Napojení formulářů</a>
-        <a class="nav-link disabled-link" href="/admin/modules">📑 Formuláře</a>
 
-        <div class="nav-group-title">SYSTÉM</div>
+        <div class="nav-section">TIP HUB – PŘIPRAVENO</div>
+        <a class="nav-link nav-prepared" href="/admin/modules?focus=new-tip">📝 Nový TIP</a>
+        <a class="nav-link nav-prepared" href="/admin/modules?focus=my-tips">📌 Moje TIPy</a>
+        <a class="nav-link nav-prepared" href="/admin/modules?focus=specialists">👤 Specialisté</a>
+        <a class="nav-link nav-prepared" href="/admin/modules?focus=stats">🏆 Statistiky & soutěž</a>
+        <a class="nav-link nav-prepared" href="/admin/modules?focus=forms">📑 Formuláře</a>
+
+        <div class="nav-section">SYSTÉM</div>
         <a class="nav-link {{ 'active' if active == 'import' else '' }}" href="/admin/import">⬆️ Import dat</a>
         <a class="nav-link {{ 'active' if active == 'audit' else '' }}" href="/admin/audit">🧾 Audit</a>
         <a class="nav-link" href="/docs">⚙️ API dokumentace</a>
@@ -51,13 +51,13 @@
 
     <main class="main">
       <header class="topbar">
-        <div>
+        <div class="topbar-user">
           <strong>Přihlášen:</strong>
           <span>Admin ASTORIE</span>
           <span class="role-pill">Administrátor</span>
           <span class="muted">nekudova@astorieas.cz</span>
         </div>
-        <div class="version-pill">v0.4.3</div>
+        <div class="version-pill">v0.4.4</div>
       </header>
 
       <section class="content">

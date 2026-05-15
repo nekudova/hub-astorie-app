@@ -167,3 +167,12 @@ Přidáno:
 - Nová stránka `/admin/modules` – mapa modulů.
 - Viditelné připravené položky pro budoucí migraci uživatelského TIP Hubu.
 - Funkční moduly zůstávají zachovány.
+
+
+## v0.4.4 Navigation Fix
+
+Opraveno:
+- Levé menu vráceno do jednotného firemního vizuálu.
+- Funkční a připravené moduly jsou jasně oddělené.
+- Připravené položky nevedou na chybové stránky, ale na mapu modulů.
+- Vizuálně stabilizován sidebar, topbar a verze.

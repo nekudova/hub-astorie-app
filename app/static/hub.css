@@ -581,3 +581,101 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v0.4.4 Navigation visual stabilization */
+.app-shell { min-height: 100vh; }
+
+.sidebar {
+  background: linear-gradient(180deg, #003D4C 0%, #005C66 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 18px 0 45px rgba(0, 61, 76, 0.18);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.brand {
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(255,255,255,.18);
+  margin-bottom: 18px;
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 42px 0;
+}
+
+.nav-section,
+.nav-group-title {
+  margin: 20px 12px 4px;
+  color: rgba(255,255,255,.72) !important;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.nav-link {
+  color: #ffffff !important;
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  opacity: 1 !important;
+  text-decoration: none !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  border-radius: 18px;
+  padding: 12px 16px;
+  margin: 0 10px;
+  font-weight: 900;
+  box-shadow: none !important;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,.17) !important;
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  background: #FC4C02 !important;
+  border-color: #FC4C02 !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 28px rgba(252, 76, 2, .28) !important;
+}
+
+.nav-prepared {
+  opacity: .78 !important;
+  background: rgba(255,255,255,.075) !important;
+}
+
+.nav-prepared::after {
+  content: "připr.";
+  margin-left: auto;
+  font-size: 11px;
+  color: rgba(255,255,255,.85);
+  font-weight: 900;
+}
+
+.disabled-link::after { content: none !important; }
+
+.topbar { min-height: 78px; }
+
+.topbar-user {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.version-pill {
+  background: #FC4C02;
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 900;
+}
+
+.content { padding-top: 28px; }
