@@ -72,3 +72,21 @@ Nové funkce:
 - detail partnera `/admin/partners/{partner_code}`
 - správa produktů partnerů
 - souhrn kontaktů, odkazů a produktů v detailu partnera
+
+
+## v0.3.5 Import Partner Data
+
+Přidáno:
+- import kontaktů partnerů
+- import odkazů partnerů
+- import produktů partnerů
+- automatické vytváření tabulek `partner_contacts`, `partner_links`, `partner_products`
+
+Doporučené pořadí importu:
+1. Sekce
+2. Podsekce
+3. Partneři
+4. Kontakty partnerů
+5. Odkazy partnerů
+6. Produkty partnerů
+7. Poradci

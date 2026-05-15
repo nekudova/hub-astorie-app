@@ -6,6 +6,7 @@ from typing import Callable
 from sqlalchemy.orm import Session
 
 from app.models.core_models import Partner, Section, Subsection, User, AuditLog
+from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
 from app.services.passwords import hash_password
 
 
@@ -264,9 +265,164 @@ def import_partners(db: Session, raw: bytes) -> ImportResult:
     return result
 
 
+
+
+def import_partner_contacts(db: Session, raw: bytes) -> ImportResult:
+    rows = parse_csv_bytes(raw)
+    result = ImportResult(ok=True, entity="partner_contacts", total_rows=len(rows), errors=[])
+
+    for idx, row in enumerate(rows, start=2):
+        try:
+            partner_code = pick(row, "Partner_ID", "Partner", "partner_code")
+            full_name = pick(row, "Jmeno", "Jméno", "Kontakt_jmeno", "Kontakt jméno", "Name", "Nazev", "Název")
+            role = pick(row, "Role", "Pozice", "Funkce")
+            phone = pick(row, "Telefon", "Tel", "Phone")
+            email = pick(row, "Email", "E-mail", "Mail")
+            specialization = pick(row, "Specifikace", "Specializace", "Spec")
+            note = pick(row, "Poznamka", "Poznámka", "Note")
+            active_raw = pick(row, "Aktivni", "Aktivní", default="ANO")
+
+            if not partner_code or not full_name:
+                result.skipped += 1
+                result.errors.append(f"Řádek {idx}: chybí Partner_ID nebo jméno kontaktu.")
+                continue
+
+            existing = db.query(PartnerContact).filter(
+                PartnerContact.partner_code == partner_code.upper(),
+                PartnerContact.full_name == full_name,
+                PartnerContact.email == email,
+            ).first()
+
+            if existing:
+                existing.role = role
+                existing.phone = phone
+                existing.specialization = specialization
+                existing.note = note
+                existing.is_active = is_yes(active_raw)
+                result.updated += 1
+            else:
+                db.add(PartnerContact(
+                    partner_code=partner_code.upper(),
+                    full_name=full_name,
+                    role=role,
+                    email=email,
+                    phone=phone,
+                    specialization=specialization,
+                    note=note,
+                    is_active=is_yes(active_raw),
+                ))
+                result.created += 1
+        except Exception as exc:
+            result.skipped += 1
+            result.errors.append(f"Řádek {idx}: {exc}")
+
+    db.commit()
+    write_import_audit(db, "partner_contacts", result)
+    return result
+
+
+def import_partner_links(db: Session, raw: bytes) -> ImportResult:
+    rows = parse_csv_bytes(raw)
+    result = ImportResult(ok=True, entity="partner_links", total_rows=len(rows), errors=[])
+
+    for idx, row in enumerate(rows, start=2):
+        try:
+            partner_code = pick(row, "Partner_ID", "Partner", "partner_code")
+            title = pick(row, "Nazev", "Název", "Nazev_odkazu", "Název odkazu", "Title", "Name")
+            url = pick(row, "URL", "Url", "Odkaz", "Link")
+            category = pick(row, "Typ", "Kategorie", "Category")
+            note = pick(row, "Poznamka", "Poznámka", "Note")
+            active_raw = pick(row, "Viditelnost", "Aktivni", "Aktivní", default="ANO")
+
+            if not partner_code or not title or not url:
+                result.skipped += 1
+                result.errors.append(f"Řádek {idx}: chybí Partner_ID, název nebo URL.")
+                continue
+
+            existing = db.query(PartnerLink).filter(
+                PartnerLink.partner_code == partner_code.upper(),
+                PartnerLink.url == url,
+            ).first()
+
+            if existing:
+                existing.title = title
+                existing.category = category
+                existing.note = note
+                existing.is_active = is_yes(active_raw)
+                result.updated += 1
+            else:
+                db.add(PartnerLink(
+                    partner_code=partner_code.upper(),
+                    title=title,
+                    url=url,
+                    category=category,
+                    note=note,
+                    is_active=is_yes(active_raw),
+                ))
+                result.created += 1
+        except Exception as exc:
+            result.skipped += 1
+            result.errors.append(f"Řádek {idx}: {exc}")
+
+    db.commit()
+    write_import_audit(db, "partner_links", result)
+    return result
+
+
+def import_partner_products(db: Session, raw: bytes) -> ImportResult:
+    rows = parse_csv_bytes(raw)
+    result = ImportResult(ok=True, entity="partner_products", total_rows=len(rows), errors=[])
+
+    for idx, row in enumerate(rows, start=2):
+        try:
+            partner_code = pick(row, "Partner_ID", "Partner", "partner_code")
+            area = pick(row, "Oblast", "Area")
+            subarea = pick(row, "Podoblast", "Subarea", "Sub_oblast")
+            product_name = pick(row, "Produkt", "Nazev", "Název", "Product", "Product_name")
+            note = pick(row, "Poznamka", "Poznámka", "Note")
+            active_raw = pick(row, "Aktivni", "Aktivní", default="ANO")
+
+            if not partner_code or not product_name:
+                result.skipped += 1
+                result.errors.append(f"Řádek {idx}: chybí Partner_ID nebo název produktu.")
+                continue
+
+            existing = db.query(PartnerProduct).filter(
+                PartnerProduct.partner_code == partner_code.upper(),
+                PartnerProduct.product_name == product_name,
+                PartnerProduct.area == area,
+                PartnerProduct.subarea == subarea,
+            ).first()
+
+            if existing:
+                existing.note = note
+                existing.is_active = is_yes(active_raw)
+                result.updated += 1
+            else:
+                db.add(PartnerProduct(
+                    partner_code=partner_code.upper(),
+                    area=area,
+                    subarea=subarea,
+                    product_name=product_name,
+                    note=note,
+                    is_active=is_yes(active_raw),
+                ))
+                result.created += 1
+        except Exception as exc:
+            result.skipped += 1
+            result.errors.append(f"Řádek {idx}: {exc}")
+
+    db.commit()
+    write_import_audit(db, "partner_products", result)
+    return result
+
+
 IMPORT_HANDLERS: dict[str, Callable[[Session, bytes], ImportResult]] = {
     "users": import_users,
     "sections": import_sections,
     "subsections": import_subsections,
     "partners": import_partners,
+    "partner_contacts": import_partner_contacts,
+    "partner_links": import_partner_links,
+    "partner_products": import_partner_products,
 }

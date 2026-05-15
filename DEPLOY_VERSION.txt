@@ -1,3 +1,2 @@
-HUB ASTORIE APP v0.3.4-partner-products
-/admin/products must exist
-/admin/partners/<code> must exist
+HUB ASTORIE APP v0.3.5-import-partner-data
+/admin/import supports partner_contacts, partner_links, partner_products

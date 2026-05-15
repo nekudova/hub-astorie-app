@@ -28,4 +28,5 @@ def get_db():
 
 def init_db():
     from app.models import core_models  # noqa: F401
+    from app.models import contact_models  # noqa: F401
     Base.metadata.create_all(bind=engine)
