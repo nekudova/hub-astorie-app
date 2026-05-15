@@ -19,6 +19,18 @@ def ensure_schema_compatibility(db: Session) -> None:
         "ALTER TABLE partners ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20)",
         "ALTER TABLE partners ADD COLUMN IF NOT EXISTS address_full TEXT",
         "ALTER TABLE partners ADD COLUMN IF NOT EXISTS legal_form VARCHAR(255)",
+
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS partner_status VARCHAR(80) DEFAULT 'aktivní' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS cooperation_status VARCHAR(120) DEFAULT '' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_fleet BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_retail BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_life BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_business BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_done BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS contract_valid BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS last_audit_note TEXT DEFAULT '' NOT NULL",
+
         "ALTER TABLE partners ADD COLUMN IF NOT EXISTS source VARCHAR(80) DEFAULT 'manual'",
         "ALTER TABLE subsections ADD COLUMN IF NOT EXISTS section_code VARCHAR(80)",
         "UPDATE subsections SET section_code = subsection_code WHERE section_code IS NULL",

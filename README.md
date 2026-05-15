@@ -185,3 +185,7 @@ Přidáno:
 - Rychlé filtrování tabulek.
 - Ovládání našeptávače klávesnicí.
 - Základ pro další datagrid workflow a náhradu práce v Google Sheets.
+
+## v0.5.1 Partner Registry Engine
+
+Přidáno: provozní metadata partnera, VIP a segmenty, onboarding/smlouva, auditní poznámka, filtry v seznamu partnerů a bezpečný upgrade DB.

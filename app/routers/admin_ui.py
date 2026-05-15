@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,7 +18,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.4.4",
+        "version": "v0.5.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -141,6 +142,8 @@ def create_subsection(
 def partners_page(
     request: Request,
     q: str = "",
+    status: str = "",
+    segment: str = "",
     db: Session = Depends(get_db),
 ):
     query = db.query(Partner)
@@ -157,12 +160,30 @@ def partners_page(
             (Partner.address_full.ilike(like))
         )
 
+    if status:
+        query = query.filter(Partner.partner_status == status)
+
+    if segment == "vip":
+        query = query.filter(Partner.is_vip == True)
+    elif segment == "fleet":
+        query = query.filter(Partner.segment_fleet == True)
+    elif segment == "retail":
+        query = query.filter(Partner.segment_retail == True)
+    elif segment == "life":
+        query = query.filter(Partner.segment_life == True)
+    elif segment == "business":
+        query = query.filter(Partner.segment_business == True)
+    elif segment == "missing_contact":
+        query = query.outerjoin(PartnerContact, PartnerContact.partner_code == Partner.partner_code).filter(PartnerContact.id == None)
+
     partners = query.order_by(Partner.name).limit(1000).all()
 
     return render(request, "partners.html", {
         "active": "partners",
         "partners": partners,
         "q": q,
+        "status": status,
+        "segment": segment,
     })
 
 
@@ -425,6 +446,16 @@ def duplicate_partner(partner_code: str, db: Session = Depends(get_db)):
         legal_form=src.legal_form,
         source=src.source,
         note=src.note,
+        partner_status=getattr(src, "partner_status", "aktivní"),
+        cooperation_status=getattr(src, "cooperation_status", ""),
+        is_vip=getattr(src, "is_vip", False),
+        segment_fleet=getattr(src, "segment_fleet", False),
+        segment_retail=getattr(src, "segment_retail", False),
+        segment_life=getattr(src, "segment_life", False),
+        segment_business=getattr(src, "segment_business", False),
+        onboarding_done=getattr(src, "onboarding_done", False),
+        contract_valid=getattr(src, "contract_valid", False),
+        last_audit_note=getattr(src, "last_audit_note", ""),
         is_active=True,
     ))
     db.commit()
@@ -446,6 +477,16 @@ def update_partner(
     address_full: str = Form(""),
     legal_form: str = Form(""),
     note: str = Form(""),
+    partner_status: str = Form("aktivní"),
+    cooperation_status: str = Form(""),
+    is_vip: str = Form(""),
+    segment_fleet: str = Form(""),
+    segment_retail: str = Form(""),
+    segment_life: str = Form(""),
+    segment_business: str = Form(""),
+    onboarding_done: str = Form(""),
+    contract_valid: str = Form(""),
+    last_audit_note: str = Form(""),
     is_active: str = Form(""),
     db: Session = Depends(get_db),
 ):
@@ -464,6 +505,16 @@ def update_partner(
     partner.address_full = address_full
     partner.legal_form = legal_form
     partner.note = note
+    partner.partner_status = partner_status
+    partner.cooperation_status = cooperation_status
+    partner.is_vip = bool(is_vip)
+    partner.segment_fleet = bool(segment_fleet)
+    partner.segment_retail = bool(segment_retail)
+    partner.segment_life = bool(segment_life)
+    partner.segment_business = bool(segment_business)
+    partner.onboarding_done = bool(onboarding_done)
+    partner.contract_valid = bool(contract_valid)
+    partner.last_audit_note = last_audit_note
     partner.is_active = bool(is_active)
     db.commit()
 
@@ -492,6 +543,13 @@ def api_partner_registry(partner_code: str, db: Session = Depends(get_db)):
             "legal_form": partner.legal_form,
             "note": partner.note,
             "is_active": partner.is_active,
+            "partner_status": getattr(partner, "partner_status", "aktivní"),
+            "cooperation_status": getattr(partner, "cooperation_status", ""),
+            "is_vip": getattr(partner, "is_vip", False),
+            "segment_fleet": getattr(partner, "segment_fleet", False),
+            "segment_retail": getattr(partner, "segment_retail", False),
+            "segment_life": getattr(partner, "segment_life", False),
+            "segment_business": getattr(partner, "segment_business", False),
         }
     }
 
@@ -695,6 +753,13 @@ def api_partner_form_source(partner_code: str, db: Session = Depends(get_db)):
             "address_full": partner.address_full,
             "legal_form": partner.legal_form,
             "is_active": partner.is_active,
+            "partner_status": getattr(partner, "partner_status", "aktivní"),
+            "cooperation_status": getattr(partner, "cooperation_status", ""),
+            "is_vip": getattr(partner, "is_vip", False),
+            "segment_fleet": getattr(partner, "segment_fleet", False),
+            "segment_retail": getattr(partner, "segment_retail", False),
+            "segment_life": getattr(partner, "segment_life", False),
+            "segment_business": getattr(partner, "segment_business", False),
         },
         "form_prefill": {
             "insurer_name": partner.name,
@@ -881,3 +946,23 @@ def modules_page(request: Request, focus: str = '', db: Session = Depends(get_db
         "modules": modules,
         "focus": focus,
     })
+
+
+@router.post("/admin/partners/registry-upgrade")
+def partner_registry_upgrade(db: Session = Depends(get_db)):
+    statements = [
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS partner_status VARCHAR(80) DEFAULT 'aktivní' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS cooperation_status VARCHAR(120) DEFAULT '' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_fleet BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_retail BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_life BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_business BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_done BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS contract_valid BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS last_audit_note TEXT DEFAULT '' NOT NULL",
+    ]
+    for sql in statements:
+        db.execute(text(sql))
+    db.commit()
+    return RedirectResponse("/admin/partners", status_code=303)

@@ -75,6 +75,17 @@ class Partner(Base):
     note = Column(Text)
     is_active = Column(Boolean, default=True, nullable=False)
 
+    partner_status = Column(String(80), default="aktivní", nullable=False)
+    cooperation_status = Column(String(120), default="", nullable=False)
+    is_vip = Column(Boolean, default=False, nullable=False)
+    segment_fleet = Column(Boolean, default=False, nullable=False)
+    segment_retail = Column(Boolean, default=False, nullable=False)
+    segment_life = Column(Boolean, default=False, nullable=False)
+    segment_business = Column(Boolean, default=False, nullable=False)
+    onboarding_done = Column(Boolean, default=False, nullable=False)
+    contract_valid = Column(Boolean, default=False, nullable=False)
+    last_audit_note = Column(Text, default="", nullable=False)
+
 
 class Tip(Base):
     __tablename__ = "tips"
