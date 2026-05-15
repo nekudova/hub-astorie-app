@@ -9,8 +9,7 @@
   <form method="post" action="/admin/terminations/preview" class="admin-form-grid">
     <div>
       <label>Partner / pojišťovna</label>
-      <input type="text" name="partner_code" id="partner_code" value="{{ partner_code }}" placeholder="Začněte psát kód nebo název partnera" autocomplete="off" required>
-      <div id="partner-suggestions" class="suggestions"></div>
+      <input type="text" id="partner_search" value="{{ partner_code }}" placeholder="Začněte psát název / kód / IČO partnera" autocomplete="off" required><input type="hidden" name="partner_code" id="partner_code" value="{{ partner_code }}">
     </div>
 
     <div>
@@ -50,37 +49,4 @@
   </form>
 </section>
 
-<script>
-const input = document.getElementById("partner_code");
-const suggestions = document.getElementById("partner-suggestions");
-const info = document.getElementById("partner-info");
-let timer = null;
-
-input.addEventListener("input", function() {
-  clearTimeout(timer);
-  const q = input.value.trim();
-  if (q.length < 2) { suggestions.innerHTML = ""; return; }
-  timer = setTimeout(async function() {
-    const res = await fetch("/api/partners/search?q=" + encodeURIComponent(q));
-    const data = await res.json();
-    if (!data.ok) return;
-    suggestions.innerHTML = data.items.map(item => `
-      <button type="button" class="suggestion-item" onclick="selectPartner('${item.partner_code}')">
-        <strong>${item.label}</strong><br>
-        <span>IČO: ${item.ico || ""} · DS: ${item.data_box || ""} · ${item.city || ""}</span>
-      </button>
-    `).join("");
-  }, 250);
-});
-
-async function selectPartner(code) {
-  input.value = code;
-  suggestions.innerHTML = "";
-  const res = await fetch("/api/partners/" + encodeURIComponent(code) + "/form-source");
-  const data = await res.json();
-  if (!data.ok) return;
-  const p = data.partner;
-  info.innerHTML = `<strong>${p.name || ""}</strong><br>IČO: ${p.ico || ""}<br>DS: ${p.data_box || ""}<br>E-mail: ${p.registry_email || ""}<br>Adresa: ${p.address_full || ""}`;
-}
-</script>
-{% endblock %}
+<script>document.addEventListener('DOMContentLoaded',()=>{HubSmart.initPartnerAutocomplete('#partner_search',{hiddenSelector:'#partner_code',infoSelector:'#partner-info'});});</script>{% endblock %}

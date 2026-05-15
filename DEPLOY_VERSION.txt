@@ -1,5 +1,6 @@
-HUB ASTORIE APP v0.4.4-navigation-fix
-- stabilized sidebar visual style
-- prepared menu items redirect safely to module map
-- clear distinction between functional and prepared modules
-- version badge and topbar visual cleanup
+HUB ASTORIE APP v0.5.0-smart-select-fulltext
+- shared smart autocomplete JS
+- partner autocomplete for contacts/links/products/terminations
+- quick client-side table filters
+- keyboard support for partner suggestions
+- foundation for future inline/data-grid workflow

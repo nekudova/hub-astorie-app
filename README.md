@@ -176,3 +176,12 @@ Opraveno:
 - Funkční a připravené moduly jsou jasně oddělené.
 - Připravené položky nevedou na chybové stránky, ale na mapu modulů.
 - Vizuálně stabilizován sidebar, topbar a verze.
+
+## v0.5.0 Smart Select + Fulltext Core
+
+Přidáno:
+- Společný JS základ `/static/hub-smart.js`.
+- Našeptávač partnerů pro kontakty, odkazy, produkty a výpovědi.
+- Rychlé filtrování tabulek.
+- Ovládání našeptávače klávesnicí.
+- Základ pro další datagrid workflow a náhradu práce v Google Sheets.
