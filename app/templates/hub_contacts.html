@@ -1,27 +1,70 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Kontakty</h1>
-  <p class="page-subtitle">Kontakty se načítají z administrace kontaktů partnerů.</p>
+  <h1>Kontakty ASTORIE</h1>
+  <p class="page-subtitle">Tato sekce zobrazuje pouze interní kontakty ASTORIE. Kontakty partnerů jsou v detailu konkrétního partnera.</p>
+
+  {% if request.query_params.get('suggestion') == 'ok' %}
+    <div class="notice ok">Návrh byl uložen pro BackOffice ke kontrole.</div>
+  {% endif %}
 
   <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat jméno, partnera, telefon, e-mail, region…">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat jméno, oddělení, telefon, e-mail, lokalitu…">
     <button class="btn orange">Hledat</button>
+    <button type="button" class="btn soft" onclick="toggleSuggest('global-contact-suggest')">+ Navrhnout doplnění</button>
+  </form>
+
+  <form id="global-contact-suggest" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
+    <input type="hidden" name="module" value="contacts">
+    <input type="hidden" name="item_type" value="global_contact">
+    <input type="hidden" name="suggestion_type" value="Doplnění / oprava kontaktu ASTORIE">
+    <label>Název / kontakt</label>
+    <input name="title" placeholder="např. doplnit telefon na BO">
+    <label>Popis návrhu</label>
+    <textarea name="description"></textarea>
+    <button class="btn orange">Odeslat návrh</button>
   </form>
 
   <div class="contact-grid">
     {% for c in rows %}
       <div class="contact-card">
-        <h3>{{ c.full_name }}</h3>
-        <p><strong>{{ c.partner_name or c.partner_code }}</strong></p>
-        <p>{{ c.role or c.contact_type or '' }}{% if c.territory %} · {{ c.territory }}{% endif %}</p>
+        <h3>{{ c.contact_name }}</h3>
+        {% if c.is_vip %}<span class="status ok">VIP</span>{% endif %}
+        <p><strong>{{ c.department or 'ASTORIE' }}</strong></p>
+        <p>{{ c.role_description or '' }}{% if c.location %} · {{ c.location }}{% endif %}</p>
         <p>{{ c.phone or '' }}<br>{{ c.email or '' }}</p>
-        {% if c.is_vip or c.is_top %}<span class="status ok">TOP / VIP</span>{% endif %}
+        {% if c.note %}<p class="muted">{{ c.note }}</p>{% endif %}
+        <button type="button" class="link-button" onclick="openGlobalContactSuggest('{{ c.id }}','{{ c.contact_name|e }}')">Nahlásit změnu</button>
       </div>
     {% else %}
-      <div class="empty-state">Zatím nejsou zadané žádné kontakty nebo neodpovídají filtru.</div>
+      <div class="empty-state">Zatím nejsou načtené žádné kontakty ASTORIE nebo neodpovídají filtru.</div>
     {% endfor %}
   </div>
+
+  <form id="global-contact-change" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
+    <input type="hidden" name="module" value="contacts">
+    <input type="hidden" name="item_type" value="global_contact">
+    <input type="hidden" id="globalContactId" name="item_id">
+    <input type="hidden" name="suggestion_type" value="Neaktuální kontakt ASTORIE">
+    <label>Nahlášení změny kontaktu</label>
+    <input id="globalContactTitle" name="title" readonly>
+    <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>
+    <button class="btn orange">Odeslat změnu</button>
+  </form>
 </div>
+
+<script>
+function toggleSuggest(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+function openGlobalContactSuggest(id, title){
+  const form = document.getElementById("global-contact-change");
+  document.getElementById("globalContactId").value = id || "";
+  document.getElementById("globalContactTitle").value = title || "Kontakt";
+  form.style.display = "block";
+  form.scrollIntoView({behavior:"smooth", block:"center"});
+}
+</script>
 {% endblock %}

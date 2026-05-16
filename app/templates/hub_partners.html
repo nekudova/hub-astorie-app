@@ -1,9 +1,14 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
   <h1>Partneři</h1>
-  <p class="page-subtitle">Data jsou načtená z administrace partnerů. Vyberte partnera vlevo a zobrazí se detail, kontakty, odkazy a produkty.</p>
+  <p class="page-subtitle">Vyhledávání partnerů, jejich kontaktů, odkazů, produktů a FAQ. Kontakty partnerů jsou zde, hlavní menu Kontakty slouží pouze pro kontakty ASTORIE.</p>
+
+  {% if request.query_params.get('suggestion') == 'ok' %}
+    <div class="notice ok">Návrh byl uložen pro BackOffice ke kontrole.</div>
+  {% elif request.query_params.get('suggestion') == 'error' %}
+    <div class="notice danger">Návrh se nepodařilo uložit. Zkuste to prosím znovu.</div>
+  {% endif %}
 
   <form method="get" class="hub-filters">
     <div class="autocomplete-wrap">
@@ -27,21 +32,46 @@
 
     <div class="partner-detail">
       {% if partner %}
-        <h2>{{ partner.name }}</h2>
-        <p><strong>Kód:</strong> {{ partner.partner_code }} · <strong>IČO:</strong> {{ partner.ico or '—' }} · <strong>DS:</strong> {{ partner.data_box or '—' }}</p>
-        <p><strong>E-mail / podatelna:</strong> {{ partner.registry_email or '—' }}</p>
-        <p><strong>Adresa:</strong> {{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</p>
+        <div class="partner-headline">
+          <div>
+            <h2>{{ partner.name }}</h2>
+            <p><strong>Kód:</strong> {{ partner.partner_code }} · <strong>IČO:</strong> {{ partner.ico or '—' }} · <strong>DS:</strong> {{ partner.data_box or '—' }}</p>
+            <p><strong>E-mail / podatelna:</strong> {{ partner.registry_email or '—' }}</p>
+            <p><strong>Adresa:</strong> {{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</p>
+          </div>
+          <button type="button" class="btn soft" onclick="toggleSuggest('partner-suggest')">+ Navrhnout doplnění</button>
+        </div>
+
+        <form id="partner-suggest" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
+          <input type="hidden" name="module" value="partners">
+          <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
+          <input type="hidden" name="tab" value="{{ tab }}">
+          <input type="hidden" name="item_type" value="partner">
+          <label>Typ návrhu</label>
+          <select name="suggestion_type">
+            <option>Doplnění údaje</option>
+            <option>Oprava údaje</option>
+            <option>Neaktuální údaj</option>
+          </select>
+          <label>Název / čeho se návrh týká</label>
+          <input name="title" placeholder="např. nový kontakt, nový odkaz, oprava adresy">
+          <label>Popis návrhu</label>
+          <textarea name="description" placeholder="Popište, co má BackOffice ověřit nebo doplnit."></textarea>
+          <button class="btn orange">Odeslat návrh</button>
+        </form>
 
         <div class="tab-row">
           <a class="{{ 'active' if tab == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts">Kontakty</a>
           <a class="{{ 'active' if tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links">Odkazy</a>
           <a class="{{ 'active' if tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products">Produkty</a>
+          <a class="{{ 'active' if tab == 'faq' else '' }}" href="/hub/partners?selected={{ selected }}&tab=faq">FAQ</a>
         </div>
 
         {% if tab == 'links' %}
+          <div class="tab-action"><button type="button" class="btn soft" onclick="toggleSuggest('tab-suggest')">+ Navrhnout odkaz / opravu</button></div>
           {% for l in links %}
             <div class="detail-item">
-              <strong>{{ l.title }}</strong><br>
+              <strong>{{ l.title or l.link_name }}</strong><br>
               <span class="muted">{{ l.category or '' }}</span><br>
               <a href="{{ l.url }}" target="_blank">{{ l.url }}</a>
             </div>
@@ -49,36 +79,110 @@
             <div class="empty-state">U partnera nejsou zadané odkazy.</div>
           {% endfor %}
         {% elif tab == 'products' %}
+          <div class="tab-action"><button type="button" class="btn soft" onclick="toggleSuggest('tab-suggest')">+ Navrhnout produkt / opravu</button></div>
+          {% set grouped = {} %}
           {% for pr in products %}
-            <div class="detail-item">
-              <strong>{{ pr.product_name }}</strong><br>
-              {{ pr.area or '' }}{% if pr.subarea %} / {{ pr.subarea }}{% endif %}<br>
-              <span class="muted">{{ pr.note or '' }}</span>
-            </div>
+            <details class="product-accordion">
+              <summary>
+                <strong>{{ pr.area or 'Bez oblasti' }}</strong>
+                {% if pr.subarea %}<span>{{ pr.subarea }}</span>{% endif %}
+                <em>{{ pr.product_name }}</em>
+              </summary>
+              <div class="product-body">
+                {% if pr.risks %}<p><strong>Rizika:</strong> {{ pr.risks }}</p>{% endif %}
+                {% if pr.client_type %}<p><strong>Typ klienta:</strong> {{ pr.client_type }}</p>{% endif %}
+                {% if pr.keywords %}<p><strong>Klíčová slova:</strong> {{ pr.keywords }}</p>{% endif %}
+                {% if pr.note %}<p><strong>Poznámka:</strong> {{ pr.note }}</p>{% endif %}
+              </div>
+            </details>
           {% else %}
             <div class="empty-state">U partnera nejsou zadané produkty.</div>
           {% endfor %}
+        {% elif tab == 'faq' %}
+          <div class="tab-action"><button type="button" class="btn soft" onclick="toggleSuggest('tab-suggest')">+ Navrhnout FAQ / doplnění</button></div>
+          {% for f in faqs %}
+            <details class="product-accordion" open>
+              <summary>
+                <strong>{{ f.question }}</strong>
+                {% if f.category %}<span>{{ f.category }}</span>{% endif %}
+              </summary>
+              <div class="product-body">
+                <p>{{ f.answer or 'Odpověď zatím není doplněna.' }}</p>
+                {% if f.tags %}<p class="muted">Tagy: {{ f.tags }}</p>{% endif %}
+              </div>
+            </details>
+          {% else %}
+            <div class="empty-state">U partnera zatím není FAQ. Můžete navrhnout doplnění.</div>
+          {% endfor %}
         {% else %}
+          <div class="tab-action"><button type="button" class="btn soft" onclick="toggleSuggest('tab-suggest')">+ Navrhnout kontakt / opravu</button></div>
           {% for c in contacts %}
-            <div class="detail-item">
-              <strong>{{ c.full_name }}</strong>
-              {% if c.is_vip or c.is_top %}<span class="status ok">TOP / VIP</span>{% endif %}<br>
-              {{ c.role or c.contact_type or '' }}{% if c.territory %} · {{ c.territory }}{% endif %}<br>
-              {{ c.phone or '' }}{% if c.email %} · {{ c.email }}{% endif %}
+            <div class="detail-item contact-detail">
+              <div>
+                <strong>{{ c.full_name or c.contact_name or c.name }}</strong>
+                {% if c.is_vip or c.is_top %}<span class="status ok">TOP / VIP</span>{% endif %}<br>
+                {{ c.role or c.role_description or c.contact_type or '' }}{% if c.territory or c.region %} · {{ c.territory or c.region }}{% endif %}<br>
+                {% if c.specialization %}<span class="muted">Specifikace: {{ c.specialization }}</span><br>{% endif %}
+                {{ c.phone or '' }}{% if c.email %} · {{ c.email }}{% endif %}
+                {% if c.note %}<br><span class="muted">{{ c.note }}</span>{% endif %}
+              </div>
+              <button type="button" class="link-button" onclick="openContactSuggest('{{ c.id }}','{{ (c.full_name or c.contact_name or c.name)|e }}')">Nahlásit změnu</button>
             </div>
           {% else %}
             <div class="empty-state">U partnera nejsou zadané kontakty.</div>
           {% endfor %}
         {% endif %}
+
+        <form id="tab-suggest" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
+          <input type="hidden" name="module" value="partners">
+          <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
+          <input type="hidden" name="tab" value="{{ tab }}">
+          <input type="hidden" name="item_type" value="{{ tab }}">
+          <label>Typ návrhu</label>
+          <select name="suggestion_type">
+            <option>Doplnění</option>
+            <option>Oprava</option>
+            <option>Neaktuální údaj</option>
+          </select>
+          <label>Název / čeho se návrh týká</label>
+          <input name="title">
+          <label>Popis návrhu</label>
+          <textarea name="description"></textarea>
+          <button class="btn orange">Odeslat návrh</button>
+        </form>
+
+        <form id="contact-suggest" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
+          <input type="hidden" name="module" value="partners">
+          <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
+          <input type="hidden" name="tab" value="contacts">
+          <input type="hidden" name="item_type" value="contact">
+          <input type="hidden" id="contactItemId" name="item_id">
+          <input type="hidden" name="suggestion_type" value="Neaktuální kontakt">
+          <label>Nahlášení změny kontaktu</label>
+          <input id="contactTitle" name="title" readonly>
+          <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>
+          <button class="btn orange">Odeslat změnu</button>
+        </form>
       {% else %}
         <div class="empty-state">Vyberte partnera ze seznamu.</div>
       {% endif %}
     </div>
   </div>
 </div>
-{% endblock %}
 
 <script>
+function toggleSuggest(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+function openContactSuggest(id, title){
+  const form = document.getElementById("contact-suggest");
+  document.getElementById("contactItemId").value = id || "";
+  document.getElementById("contactTitle").value = title || "Kontakt";
+  form.style.display = "block";
+  form.scrollIntoView({behavior:"smooth", block:"center"});
+}
 const partnerInput = document.getElementById("partnerSearch");
 const partnerBox = document.getElementById("partnerSuggest");
 let partnerTimer = null;
@@ -115,3 +219,4 @@ if(partnerInput){
   });
 }
 </script>
+{% endblock %}

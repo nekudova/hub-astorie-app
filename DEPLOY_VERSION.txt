@@ -1,6 +1,10 @@
-HUB ASTORIE APP v1.0.2-uuid-relationship-fix
+HUB ASTORIE APP v1.0.3-import-cleanup-partner-ui
 
-Opraveno:
-- section_id je UUID, proto se už nikdy neporovnává s prázdným řetězcem
-- vazba subsections.section_id se doplňuje jen přes IS NULL
-- endpoint /api/import/hub-xlsx/repair-uuid-relationships
+Opravy:
+- vyčištění duplicit po opakovaném importu
+- hlavní menu Kontakty = pouze kontakty ASTORIE
+- kontakty partnerů zůstávají v detailu partnera
+- produkty partnera jsou rozklikávací
+- partner FAQ záložka
+- návrhy změn/doplnění od poradců
+- nahlášení změny u každého kontaktu
