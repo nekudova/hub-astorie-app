@@ -1,12 +1,14 @@
-HUB ASTORIE APP v0.8.5-tip-admin-data-flow
+HUB ASTORIE APP v0.9.1-unified-tip-inbox
 
 Přidáno:
-- Nový TIP načítá sekce/podsekce z administrace
-- Nový TIP načítá dostupné specialisty z administrace
-- Ukládání TIPu ukládá i sekci, podsekci a jejich názvy
-- Moje TIPy umí filtrovat podle sekce
-- Moje TIPy zobrazují sekci/podsekci u každého TIPu
-- diagnostika /api/hub/taxonomy-status
+- jedna společná obrazovka Moje TIPy podle stávající aplikace
+- záložky:
+  1) Moje odeslané
+  2) K vyřízení pro mě
+  3) Zpracované / Archiv
+- jednotný detail TIPu pro poradce i specialistu
+- specialista může z detailu rovnou aktualizovat stav, zprávu pro tipaře, interní poznámku a konečnou zprávu
+- zachována BO centrální evidence /admin/tips
 
 Cíl:
-Poradenská část už vidí data založená v administraci.
+Přiblížit UX stávající aplikaci a sjednotit práci s TIPy na jedné obrazovce.

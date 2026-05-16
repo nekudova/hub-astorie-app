@@ -1,0 +1,61 @@
+
+{% extends "hub_base.html" %}
+{% block content %}
+<div class="hub-card">
+  <h1>Přehled a výkonnost TIPů</h1>
+  <p class="page-subtitle">Jedna pracovní obrazovka: moje odeslané TIPy, TIPy k vyřízení pro mě a zpracované/archivní TIPy.</p>
+
+  <div class="hub-grid four">
+    <div class="metric-card"><span>Moje odeslané</span><strong>{{ stats.sent_count or 0 }}</strong></div>
+    <div class="metric-card"><span>K vyřízení pro mě</span><strong>{{ stats.work_count or 0 }}</strong></div>
+    <div class="metric-card"><span>Zpracované / archiv</span><strong>{{ stats.archive_count or 0 }}</strong></div>
+    <div class="metric-card"><span>Sjednáno</span><strong>{{ stats.won_count or 0 }}</strong></div>
+  </div>
+
+  <div class="tip-tabs">
+    <a class="{{ 'active' if tab == 'sent' else '' }}" href="/hub/my-tips?tab=sent">Moje odeslané</a>
+    <a class="{{ 'active' if tab == 'work' else '' }}" href="/hub/my-tips?tab=work">K vyřízení pro mě</a>
+    <a class="{{ 'active' if tab == 'archive' else '' }}" href="/hub/my-tips?tab=archive">Zpracované / archiv</a>
+  </div>
+
+  <form method="get" class="hub-filters wide">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, poradce, specialistu, smlouvu, sekci…">
+    <select name="status">
+      <option value="">Všechny stavy</option>
+      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
+        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn orange">Filtrovat</button>
+  </form>
+
+  <div class="tip-card-list">
+    {% for r in rows %}
+      <div class="tip-work-card {{ 'closed' if r.status in ['Sjednáno','Storno','Archiv'] else '' }}">
+        <div>
+          <div class="tip-line-head">
+            <h3>{{ r.client_name }}</h3>
+            <span class="status ok">{{ r.status }}</span>
+          </div>
+          <p><strong>Odbornost:</strong> {{ r.section_name or r.section_code }}{% if r.subsection_name or r.subsection_code %} / {{ r.subsection_name or r.subsection_code }}{% endif %}</p>
+          <p><strong>Poradce:</strong> {{ r.adviser_name or '—' }} · {{ r.adviser_email or '' }}</p>
+          <p><strong>Specialista:</strong> {{ r.specialist_name or '—' }} · {{ r.specialist_email or '' }}</p>
+          <p><strong>Zadání:</strong> {{ r.adviser_note or '—' }}</p>
+          {% if r.adviser_last_message %}
+            <div class="message-box"><strong>Poslední zpráva:</strong> {{ r.adviser_last_message }}</div>
+          {% endif %}
+        </div>
+        <div class="tip-actions">
+          <p class="muted">Aktualizace:<br>{{ r.last_update_at }}</p>
+          <a class="btn orange" href="/hub/tips/{{ r.id }}">Detail</a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        V této záložce zatím nejsou žádné TIPy.
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

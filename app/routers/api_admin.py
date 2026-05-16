@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.8.5-tip-admin-data-flow",
+        "version": "0.9.1-unified-tip-inbox",
         "message": "Admin Core + Visible Sections Fix běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

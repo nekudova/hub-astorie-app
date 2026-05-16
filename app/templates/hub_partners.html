@@ -6,7 +6,10 @@
   <p class="page-subtitle">Data jsou načtená z administrace partnerů. Vyberte partnera vlevo a zobrazí se detail, kontakty, odkazy a produkty.</p>
 
   <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, kód, IČO, DS, e-mail…">
+    <div class="autocomplete-wrap">
+      <input id="partnerSearch" name="q" value="{{ q or '' }}" placeholder="Hledat partnera, kód, IČO, DS, e-mail…" autocomplete="off">
+      <div id="partnerSuggest" class="suggest-box" style="display:none;"></div>
+    </div>
     <button class="btn orange">Hledat</button>
   </form>
 
@@ -74,3 +77,41 @@
   </div>
 </div>
 {% endblock %}
+
+<script>
+const partnerInput = document.getElementById("partnerSearch");
+const partnerBox = document.getElementById("partnerSuggest");
+let partnerTimer = null;
+function escapeHtmlPartner(s){
+  return (s || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+if(partnerInput){
+  partnerInput.addEventListener("input", function(){
+    clearTimeout(partnerTimer);
+    const q = partnerInput.value.trim();
+    if(q.length < 2){ partnerBox.style.display = "none"; partnerBox.innerHTML = ""; return; }
+    partnerTimer = setTimeout(async function(){
+      try{
+        const res = await fetch("/api/hub/partners/search?q=" + encodeURIComponent(q));
+        const data = await res.json();
+        const items = data.items || [];
+        if(!items.length){
+          partnerBox.innerHTML = '<div class="suggest-empty">Nic nenalezeno.</div>';
+          partnerBox.style.display = "block";
+          return;
+        }
+        partnerBox.innerHTML = items.map(p => `
+          <a class="suggest-item" href="/hub/partners?selected=${encodeURIComponent(p.partner_code)}&q=${encodeURIComponent(q)}">
+            <strong>${escapeHtmlPartner(p.name)}</strong>
+            <span>${escapeHtmlPartner(p.partner_code || "")}${p.ico ? " · IČO " + escapeHtmlPartner(p.ico) : ""}</span>
+          </a>
+        `).join("");
+        partnerBox.style.display = "block";
+      }catch(e){
+        partnerBox.innerHTML = '<div class="suggest-empty">Našeptávač se nepodařilo načíst.</div>';
+        partnerBox.style.display = "block";
+      }
+    }, 180);
+  });
+}
+</script>

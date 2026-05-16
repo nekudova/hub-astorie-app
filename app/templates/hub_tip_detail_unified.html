@@ -1,0 +1,74 @@
+
+{% extends "hub_base.html" %}
+{% block content %}
+<p><a href="/hub/my-tips">← Zpět na přehled TIPů</a></p>
+
+{% if not tip %}
+  <div class="hub-card"><h1>TIP nenalezen nebo k němu nemáte přístup.</h1></div>
+{% else %}
+<div class="hub-card">
+  <h1>{{ tip.client_name }}</h1>
+  <p class="page-subtitle">{{ tip.section_name or tip.section_code }} / {{ tip.subsection_name or tip.subsection_code }}</p>
+
+  <div class="partner-data-grid">
+    <div><span>Stav</span><strong>{{ tip.status }}</strong></div>
+    <div><span>Poradce</span><strong>{{ tip.adviser_name or '—' }}</strong><br>{{ tip.adviser_email or '' }}</div>
+    <div><span>Specialista</span><strong>{{ tip.specialist_name or '—' }}</strong><br>{{ tip.specialist_email or '' }}</div>
+    <div><span>Potenciál</span><strong>{{ tip.potential_amount or '—' }}</strong></div>
+    <div><span>Smlouva</span><strong>{{ tip.policy_no or '—' }}</strong></div>
+    <div><span>Poslední aktualizace</span><strong>{{ tip.last_update_at }}</strong></div>
+    <div class="wide"><span>Zadání poradce</span><strong>{{ tip.adviser_note or '—' }}</strong></div>
+    <div class="wide"><span>Poslední informace pro tipaře</span><strong>{{ tip.adviser_last_message or '—' }}</strong></div>
+    <div class="wide"><span>Konečná zpráva</span><strong>{{ tip.final_report or '—' }}</strong></div>
+  </div>
+</div>
+
+{% if is_specialist %}
+<div class="hub-card">
+  <h2>Aktualizace specialisty</h2>
+  <form method="post" action="/hub/tips/{{ tip.id }}/specialist-update" class="hub-form">
+    <label>Stav TIPu</label>
+    <select name="status">
+      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
+        <option value="{{ s }}" {% if tip.status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Průběžná informace pro tipaře</label>
+    <textarea name="message_to_adviser" placeholder="Co se s TIPem aktuálně děje…">{{ tip.adviser_last_message or '' }}</textarea>
+
+    <label>Interní poznámka specialisty</label>
+    <textarea name="internal_note">{{ tip.specialist_internal_note or '' }}</textarea>
+
+    <label>Konečná zpráva</label>
+    <textarea name="final_report">{{ tip.final_report or '' }}</textarea>
+
+    <button class="btn orange">Uložit aktualizaci</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="hub-card">
+  <h2>Historie TIPu</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Datum</th><th>Autor</th><th>Stav</th><th>Zpráva pro tipaře</th><th>Interní poznámka</th><th>Konečná zpráva</th></tr></thead>
+      <tbody>
+        {% for u in updates %}
+          <tr>
+            <td>{{ u.created_at }}</td>
+            <td>{{ u.author_name }}<br><span class="muted">{{ u.author_role }}</span></td>
+            <td>{{ u.old_status }} → {{ u.new_status }}</td>
+            <td>{{ u.message_to_adviser }}</td>
+            <td>{{ u.internal_note }}</td>
+            <td>{{ u.final_report }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">Zatím není žádná historie.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

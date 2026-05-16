@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Import TIPů ze stávající aplikace</h1>
+<p class="page-subtitle">
+  Nahrajte CSV export ze staré aplikace. Import je nedestruktivní – data přidá jako nové TIPy a zapíše původní zdroj.
+</p>
+
+<section class="card section-space">
+  <h2>Nahrát CSV</h2>
+  <form method="post" action="/admin/import/legacy-tips" enctype="multipart/form-data" class="admin-form-grid">
+    <div><label>Zdroj importu</label><input name="source_name" value="Stávající HUB ASTORIE"></div>
+    <div><label>CSV soubor</label><input type="file" name="file" accept=".csv,text/csv" required></div>
+    <div class="span-2 form-actions"><button class="btn orange">Importovat TIPy</button></div>
+  </form>
+
+  <div class="visible-section-hint">
+    Doporučené sloupce: Klient, Poradce, E-mail poradce, Specialista, E-mail specialista, Stav, Sekce, Podsekce, Smlouva, Poznámka, Potenciál.
+  </div>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">Historie importů</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Datum</th><th>Zdroj</th><th>Celkem</th><th>Importováno</th><th>Přeskočeno</th><th>Chyby</th></tr></thead>
+      <tbody>
+        {% for j in jobs %}
+          <tr>
+            <td>{{ j.created_at }}</td>
+            <td>{{ j.source_name }}</td>
+            <td>{{ j.rows_total }}</td>
+            <td>{{ j.rows_imported }}</td>
+            <td>{{ j.rows_skipped }}</td>
+            <td><pre>{{ j.error_log }}</pre></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">Zatím nebyl proveden žádný import.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

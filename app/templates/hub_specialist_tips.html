@@ -1,0 +1,47 @@
+
+{% extends "hub_base.html" %}
+{% block content %}
+<div class="hub-card">
+  <h1>Moje TIPy specialisty</h1>
+  <p class="page-subtitle">TIPy přiřazené specialistovi. Specialista zde průběžně informuje tipaře a uzavírá konečnou zprávu.</p>
+
+  <div class="hub-grid four">
+    <div class="metric-card"><span>Celkem</span><strong>{{ stats.total or 0 }}</strong></div>
+    <div class="metric-card"><span>Nové</span><strong>{{ stats.new_count or 0 }}</strong></div>
+    <div class="metric-card"><span>V řešení</span><strong>{{ stats.progress_count or 0 }}</strong></div>
+    <div class="metric-card"><span>Uzavřené</span><strong>{{ (stats.won_count or 0) + (stats.lost_count or 0) }}</strong></div>
+  </div>
+
+  <form method="get" class="hub-filters wide">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, poradce, smlouvu, sekci…">
+    <select name="status">
+      <option value="">Všechny stavy</option>
+      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
+        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <label class="mini-check"><input type="checkbox" name="archive" value="1" {% if archive == '1' %}checked{% endif %}> včetně archivu</label>
+    <button class="btn orange">Filtrovat</button>
+  </form>
+
+  <div class="tip-card-list">
+    {% for r in rows %}
+      <div class="tip-work-card">
+        <div>
+          <h3>{{ r.client_name }}</h3>
+          <p>{{ r.section_name or r.section_code }} / {{ r.subsection_name or r.subsection_code }}</p>
+          <p><strong>Poradce:</strong> {{ r.adviser_name }} · {{ r.adviser_email }}</p>
+          <p><strong>Zadání:</strong> {{ r.adviser_note or '—' }}</p>
+        </div>
+        <div>
+          <span class="status ok">{{ r.status }}</span>
+          <p class="muted">{{ r.last_update_at }}</p>
+          <a class="btn orange" href="/hub/specialist-tips/{{ r.id }}">Zpracovat</a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state">Nemáte přiřazené žádné TIPy.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+
+{% extends "hub_base.html" %}
+{% block content %}
+<p><a href="/hub/specialist-tips">← Zpět na moje TIPy specialisty</a></p>
+
+{% if not tip %}
+  <div class="hub-card"><h1>TIP nenalezen nebo není přiřazen Vašemu e-mailu.</h1></div>
+{% else %}
+<div class="hub-card">
+  <h1>{{ tip.client_name }}</h1>
+  <p class="page-subtitle">{{ tip.section_name or tip.section_code }} / {{ tip.subsection_name or tip.subsection_code }}</p>
+
+  <div class="partner-data-grid">
+    <div><span>Stav</span><strong>{{ tip.status }}</strong></div>
+    <div><span>Poradce</span><strong>{{ tip.adviser_name }}</strong><br>{{ tip.adviser_email }}</div>
+    <div><span>Kontakt klienta</span><strong>{{ tip.client_phone or '—' }}</strong></div>
+    <div><span>Smlouva</span><strong>{{ tip.policy_no or '—' }}</strong></div>
+    <div class="wide"><span>Zadání poradce</span><strong>{{ tip.adviser_note or '—' }}</strong></div>
+  </div>
+</div>
+
+<div class="hub-card">
+  <h2>Aktualizace pro tipaře a konečná zpráva</h2>
+  <form method="post" action="/hub/specialist-tips/{{ tip.id }}/update" class="hub-form">
+    <label>Stav TIPu</label>
+    <select name="status">
+      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
+        <option value="{{ s }}" {% if tip.status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Průběžná informace pro tipaře</label>
+    <textarea name="message_to_adviser" placeholder="Co se s TIPem aktuálně děje, co bylo zjištěno, co bude následovat…">{{ tip.adviser_last_message or '' }}</textarea>
+
+    <label>Interní poznámka specialisty</label>
+    <textarea name="internal_note" placeholder="Interní poznámka – nebude určena pro klienta.">{{ tip.specialist_internal_note or '' }}</textarea>
+
+    <label>Konečná zpráva</label>
+    <textarea name="final_report" placeholder="Vyplnit zejména při stavu Sjednáno nebo Storno.">{{ tip.final_report or '' }}</textarea>
+
+    <button class="btn orange">Uložit aktualizaci</button>
+  </form>
+</div>
+
+<div class="hub-card">
+  <h2>Historie</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Datum</th><th>Autor</th><th>Stav</th><th>Zpráva pro tipaře</th><th>Interní poznámka</th><th>Konečná zpráva</th></tr></thead>
+      <tbody>
+        {% for u in updates %}
+          <tr>
+            <td>{{ u.created_at }}</td>
+            <td>{{ u.author_name }}<br><span class="muted">{{ u.author_role }}</span></td>
+            <td>{{ u.old_status }} → {{ u.new_status }}</td>
+            <td>{{ u.message_to_adviser }}</td>
+            <td>{{ u.internal_note }}</td>
+            <td>{{ u.final_report }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">Zatím není žádná historie.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,3 +1,6 @@
+from datetime import datetime
+import io
+import csv
 from decimal import Decimal
 import uuid
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
@@ -21,7 +24,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.8.5",
+        "version": "v0.9.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1810,7 +1813,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.8.5 Specialist Profile & Sections Fix
+# v0.9.1 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2009,7 +2012,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.8.5 Visible Sections Fix
+# v0.9.1 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2079,7 +2082,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.8.5-tip-admin-data-flow",
+        "version": "0.9.1-unified-tip-inbox",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2098,7 +2101,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.8.5 – bezpečné tabulky pro TIPy.
+    v0.9.1 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2157,18 +2160,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.8.5-tip-admin-data-flow",
+            "version": "0.9.1-unified-tip-inbox",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.8.5-tip-admin-data-flow", "error": str(e)}
+        return {"ok": False, "version": "0.9.1-unified-tip-inbox", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.8.5 Adviser HUB routes fix
+# v0.9.1 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2185,7 +2188,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.8.5-tip-admin-data-flow",
+        "version": "0.9.1-unified-tip-inbox",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2405,7 +2408,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v0.8.5 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v0.9.1 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2629,7 +2632,7 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
     })
 
 
-@router.get("/hub/forms", response_class=HTMLResponse)
+@router.get("/hub/forms-old-v086", response_class=HTMLResponse)
 def hub_forms_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
     partners = []
     if table_exists_v084_(db, "partners"):
@@ -2712,7 +2715,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "0.8.5-tip-admin-data-flow",
+        "version": "0.9.1-unified-tip-inbox",
         "tables": result,
     }
 
@@ -2720,7 +2723,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.8.5 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v0.9.1 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2880,7 +2883,7 @@ def hub_create_tip_v085(
     return RedirectResponse("/hub/my-tips?created=1", status_code=303)
 
 
-@router.get("/hub/my-tips", response_class=HTMLResponse)
+@router.get("/hub/my-tips-old-v091", response_class=HTMLResponse)
 def hub_my_tips_v085(
     request: Request,
     q: str = "",
@@ -2952,11 +2955,885 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "0.8.5-tip-admin-data-flow",
+        "version": "0.9.1-unified-tip-inbox",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
+
+
+
+# -------------------------------------------------------------------
+# v0.9.1 Partner autocomplete & Forms data source
+# -------------------------------------------------------------------
+
+@router.get("/api/hub/partners/search")
+def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
+    """Našeptávač partnerů pro uživatelskou část HUBu."""
+    if not table_exists_v084_(db, "partners"):
+        return {"ok": True, "version": "0.9.1-unified-tip-inbox", "items": []}
+
+    q_clean = (q or "").strip().lower()
+    params = {"limit": max(1, min(limit, 50))}
+    where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+
+    if q_clean:
+        where += """
+          AND (
+            lower(COALESCE(partner_code, '')) LIKE :q OR
+            lower(COALESCE(name, '')) LIKE :q OR
+            lower(COALESCE(ico, '')) LIKE :q OR
+            lower(COALESCE(data_box, '')) LIKE :q OR
+            lower(COALESCE(registry_email, '')) LIKE :q OR
+            lower(COALESCE(city, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q_clean}%"
+
+    rows = fetch_all_safe_v084_(db, f"""
+        SELECT partner_code, name, ico, data_box, registry_email, address_full, street, city, zip_code, status
+        FROM partners
+        {where}
+        ORDER BY
+          CASE WHEN lower(COALESCE(partner_code, '')) = :exact THEN 0 ELSE 1 END,
+          name
+        LIMIT :limit
+    """, {**params, "exact": q_clean})
+
+    return {
+        "ok": True,
+        "version": "0.9.1-unified-tip-inbox",
+        "items": [dict(r) for r in rows],
+    }
+
+
+@router.get("/api/hub/partners/{partner_code}/form-source")
+def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
+    """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
+    if not table_exists_v084_(db, "partners"):
+        return {"ok": False, "version": "0.9.1-unified-tip-inbox", "error": "Tabulka partners neexistuje."}
+
+    partner = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM partners
+        WHERE upper(partner_code) = upper(:code)
+        LIMIT 1
+    """, {"code": partner_code})
+
+    if not partner:
+        return {"ok": False, "version": "0.9.1-unified-tip-inbox", "error": "Partner nenalezen."}
+
+    contacts = []
+    links = []
+    products = []
+
+    if table_exists_v084_(db, "partner_contacts"):
+        contacts = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM partner_contacts
+            WHERE upper(partner_code) = upper(:code)
+              AND COALESCE(is_active, TRUE) = TRUE
+            ORDER BY COALESCE(is_vip, FALSE) DESC, COALESCE(is_top, FALSE) DESC, full_name
+            LIMIT 100
+        """, {"code": partner_code})
+
+    if table_exists_v084_(db, "partner_links"):
+        links = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM partner_links
+            WHERE upper(partner_code) = upper(:code)
+              AND COALESCE(is_active, TRUE) = TRUE
+            ORDER BY category, title
+            LIMIT 100
+        """, {"code": partner_code})
+
+    if table_exists_v084_(db, "partner_products"):
+        products = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM partner_products
+            WHERE upper(partner_code) = upper(:code)
+              AND COALESCE(is_active, TRUE) = TRUE
+            ORDER BY area, subarea, product_name
+            LIMIT 100
+        """, {"code": partner_code})
+
+    return {
+        "ok": True,
+        "version": "0.9.1-unified-tip-inbox",
+        "partner": dict(partner),
+        "contacts": [dict(c) for c in contacts],
+        "links": [dict(l) for l in links],
+        "products": [dict(p) for p in products],
+    }
+
+
+@router.get("/api/hub/partners/{partner_code}/summary")
+def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db)):
+    """Rychlý souhrn partnera pro detail v HUBu."""
+    data = api_hub_partner_form_source_v086(partner_code, db)
+    if not data.get("ok"):
+        return data
+    return {
+        "ok": True,
+        "version": "0.9.1-unified-tip-inbox",
+        "partner": data["partner"],
+        "counts": {
+            "contacts": len(data["contacts"]),
+            "links": len(data["links"]),
+            "products": len(data["products"]),
+        },
+    }
+
+
+
+@router.get("/hub/forms", response_class=HTMLResponse)
+def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Session = Depends(get_db)):
+    partners = []
+    partner = None
+
+    if table_exists_v084_(db, "partners"):
+        params = {}
+        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(name, '')) LIKE :q OR
+                lower(COALESCE(partner_code, '')) LIKE :q OR
+                lower(COALESCE(ico, '')) LIKE :q OR
+                lower(COALESCE(data_box, '')) LIKE :q OR
+                lower(COALESCE(registry_email, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        partners = fetch_all_safe_v084_(db, f"""
+            SELECT partner_code, name, ico, data_box, registry_email, address_full, street, city, zip_code
+            FROM partners
+            {where}
+            ORDER BY name
+            LIMIT 200
+        """, params)
+
+        if selected:
+            partner = fetch_one_safe_v084_(db, """
+                SELECT partner_code, name, ico, data_box, registry_email, address_full, street, city, zip_code
+                FROM partners
+                WHERE upper(partner_code) = upper(:code)
+                LIMIT 1
+            """, {"code": selected})
+
+    return hub_render_v083_(request, "hub_forms.html", {
+        "active": "forms",
+        "partners": partners,
+        "partner": partner,
+        "q": q,
+        "selected": selected,
+    })
+
+
+
+
+
+# -------------------------------------------------------------------
+# v0.9.1 Operational TIP Workflow
+# Import dat + BO centrální evidence + specialista pracovní fronta
+# -------------------------------------------------------------------
+
+def current_bo_user_v090_():
+    return {
+        "name": "Admin ASTORIE",
+        "email": "nekudova@astorieas.cz",
+        "role": "BO",
+    }
+
+
+def ensure_tip_workflow_v090_(db: Session):
+    ensure_tips_columns_v085_(db)
+
+    alters = [
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS bo_note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_internal_note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_last_message TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS final_report TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS closed_at TIMESTAMP WITH TIME ZONE",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS last_update_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS imported_source TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS imported_original_id TEXT NOT NULL DEFAULT ''",
+    ]
+    for stmt in alters:
+        db.execute(text(stmt))
+
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS tip_updates (
+            id TEXT PRIMARY KEY,
+            tip_id TEXT NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            author_name TEXT NOT NULL DEFAULT '',
+            author_email TEXT NOT NULL DEFAULT '',
+            author_role TEXT NOT NULL DEFAULT '',
+            update_type TEXT NOT NULL DEFAULT '',
+            old_status TEXT NOT NULL DEFAULT '',
+            new_status TEXT NOT NULL DEFAULT '',
+            message_to_adviser TEXT NOT NULL DEFAULT '',
+            internal_note TEXT NOT NULL DEFAULT '',
+            final_report TEXT NOT NULL DEFAULT ''
+        )
+    """))
+
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS import_jobs (
+            id TEXT PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            source_name TEXT NOT NULL DEFAULT '',
+            rows_total INTEGER NOT NULL DEFAULT 0,
+            rows_imported INTEGER NOT NULL DEFAULT 0,
+            rows_skipped INTEGER NOT NULL DEFAULT 0,
+            error_log TEXT NOT NULL DEFAULT '',
+            created_by TEXT NOT NULL DEFAULT ''
+        )
+    """))
+
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_specialist_email ON tips (specialist_email)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_status_all ON tips (status)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_last_update ON tips (last_update_at DESC)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tip_updates_tip ON tip_updates (tip_id, created_at DESC)"))
+    db.commit()
+
+
+def normalize_tip_status_v090_(status: str) -> str:
+    s = (status or "").strip().lower()
+    if not s:
+        return "Nový"
+    if s in ["novy", "nový", "new", "zadáno", "zadano"]:
+        return "Nový"
+    if s in ["v reseni", "v řešení", "reseni", "řešení", "pracuje se", "rozpracováno"]:
+        return "V řešení"
+    if s in ["sjednano", "sjednáno", "hotovo", "uzavreno", "uzavřeno", "vyřízeno"]:
+        return "Sjednáno"
+    if s in ["storno", "zruseno", "zrušeno", "nezajem", "nezájem", "nevyšlo"]:
+        return "Storno"
+    if s in ["archiv", "archivováno", "archivovano"]:
+        return "Archiv"
+    return status.strip()
+
+
+def find_header_v090_(row: dict, candidates: list[str]) -> str:
+    normalized = {str(k).strip().lower(): k for k in row.keys()}
+    for c in candidates:
+        key = c.strip().lower()
+        if key in normalized:
+            return normalized[key]
+    return ""
+
+
+def get_row_value_v090_(row: dict, candidates: list[str], default: str = ""):
+    key = find_header_v090_(row, candidates)
+    if not key:
+        return default
+    return (row.get(key) or default)
+
+
+@router.get("/admin/tips", response_class=HTMLResponse)
+def admin_all_tips_v090(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    specialist: str = "",
+    adviser: str = "",
+    archive: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE 1=1
+    """
+    params = {}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(adviser_name, '')) LIKE :q OR
+            lower(COALESCE(adviser_email, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(specialist_email, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    if specialist:
+        sql += " AND lower(COALESCE(specialist_email, '')) LIKE :specialist"
+        params["specialist"] = f"%{specialist.lower()}%"
+
+    if adviser:
+        sql += " AND lower(COALESCE(adviser_email, '')) LIKE :adviser"
+        params["adviser"] = f"%{adviser.lower()}%"
+
+    if archive != "1":
+        sql += " AND COALESCE(status, '') <> 'Archiv'"
+
+    sql += " ORDER BY last_update_at DESC, created_at DESC LIMIT 800"
+
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status = 'Nový') AS new_count,
+          COUNT(*) FILTER (WHERE status = 'V řešení') AS progress_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count,
+          COUNT(*) FILTER (WHERE status = 'Archiv') AS archive_count
+        FROM tips
+    """)).mappings().first()
+
+    return request.app.state.templates.TemplateResponse("admin_tips.html", {
+        "request": request,
+        "active": "admin_tips",
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+        "specialist": specialist,
+        "adviser": adviser,
+        "archive": archive,
+        "version": "0.9.1-unified-tip-inbox",
+    })
+
+
+@router.get("/admin/tips/{tip_id}", response_class=HTMLResponse)
+def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    tip = fetch_one_safe_v084_(db, "SELECT * FROM tips WHERE id = :id", {"id": tip_id})
+    updates = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM tip_updates
+        WHERE tip_id = :id
+        ORDER BY created_at DESC
+    """, {"id": tip_id})
+
+    return request.app.state.templates.TemplateResponse("admin_tip_detail.html", {
+        "request": request,
+        "active": "admin_tips",
+        "tip": tip,
+        "updates": updates,
+        "version": "0.9.1-unified-tip-inbox",
+    })
+
+
+@router.post("/admin/tips/{tip_id}/bo-update")
+def admin_tip_bo_update_v090(
+    tip_id: str,
+    status: str = Form(""),
+    bo_note: str = Form(""),
+    message_to_adviser: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = current_bo_user_v090_()
+    old = fetch_one_safe_v084_(db, "SELECT * FROM tips WHERE id = :id", {"id": tip_id})
+    old_status = old["status"] if old else ""
+
+    new_status = normalize_tip_status_v090_(status or old_status)
+    closed_sql = ", closed_at = now()" if new_status in ["Sjednáno", "Storno"] else ""
+    archived_sql = ", archived_at = now()" if new_status == "Archiv" else ""
+
+    db.execute(text(f"""
+        UPDATE tips
+        SET status = :status,
+            bo_note = :bo_note,
+            adviser_last_message = :message_to_adviser,
+            last_update_at = now()
+            {closed_sql}
+            {archived_sql}
+        WHERE id = :id
+    """), {
+        "id": tip_id,
+        "status": new_status,
+        "bo_note": bo_note,
+        "message_to_adviser": message_to_adviser,
+    })
+
+    db.execute(text("""
+        INSERT INTO tip_updates
+        (id, tip_id, author_name, author_email, author_role, update_type,
+         old_status, new_status, message_to_adviser, internal_note)
+        VALUES
+        (:id, :tip_id, :author_name, :author_email, :author_role, 'BO_UPDATE',
+         :old_status, :new_status, :message_to_adviser, :internal_note)
+    """), {
+        "id": str(uuid.uuid4()),
+        "tip_id": tip_id,
+        "author_name": user["name"],
+        "author_email": user["email"],
+        "author_role": user["role"],
+        "old_status": old_status,
+        "new_status": new_status,
+        "message_to_adviser": message_to_adviser,
+        "internal_note": bo_note,
+    })
+    db.commit()
+    return RedirectResponse(f"/admin/tips/{tip_id}", status_code=303)
+
+
+@router.get("/hub/specialist-tips", response_class=HTMLResponse)
+def hub_specialist_tips_v090(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    archive: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    email = (user.get("email") or "").lower()
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE lower(COALESCE(specialist_email, '')) = :email
+    """
+    params = {"email": email}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(adviser_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    if archive != "1":
+        sql += " AND COALESCE(status, '') <> 'Archiv'"
+
+    sql += " ORDER BY last_update_at DESC, created_at DESC LIMIT 300"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status = 'Nový') AS new_count,
+          COUNT(*) FILTER (WHERE status = 'V řešení') AS progress_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count,
+          COUNT(*) FILTER (WHERE status = 'Archiv') AS archive_count
+        FROM tips
+        WHERE lower(COALESCE(specialist_email, '')) = :email
+    """), {"email": email}).mappings().first()
+
+    return hub_render_v083_(request, "hub_specialist_tips.html", {
+        "active": "specialist_tips",
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+        "archive": archive,
+    })
+
+
+@router.get("/hub/specialist-tips/{tip_id}", response_class=HTMLResponse)
+def hub_specialist_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    tip = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM tips
+        WHERE id = :id
+          AND lower(COALESCE(specialist_email, '')) = lower(:email)
+        LIMIT 1
+    """, {"id": tip_id, "email": user["email"]})
+
+    updates = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM tip_updates
+        WHERE tip_id = :id
+        ORDER BY created_at DESC
+    """, {"id": tip_id})
+
+    return hub_render_v083_(request, "hub_specialist_tip_detail.html", {
+        "active": "specialist_tips",
+        "tip": tip,
+        "updates": updates,
+    })
+
+
+@router.post("/hub/specialist-tips/{tip_id}/update")
+def hub_specialist_tip_update_v090(
+    tip_id: str,
+    status: str = Form("V řešení"),
+    message_to_adviser: str = Form(""),
+    internal_note: str = Form(""),
+    final_report: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    old = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM tips
+        WHERE id = :id
+          AND lower(COALESCE(specialist_email, '')) = lower(:email)
+        LIMIT 1
+    """, {"id": tip_id, "email": user["email"]})
+
+    if not old:
+        return RedirectResponse("/hub/specialist-tips", status_code=303)
+
+    old_status = old["status"]
+    new_status = normalize_tip_status_v090_(status)
+    closed_sql = ", closed_at = now()" if new_status in ["Sjednáno", "Storno"] else ""
+
+    db.execute(text(f"""
+        UPDATE tips
+        SET status = :status,
+            adviser_last_message = :message_to_adviser,
+            specialist_internal_note = :internal_note,
+            final_report = :final_report,
+            last_update_at = now()
+            {closed_sql}
+        WHERE id = :id
+    """), {
+        "id": tip_id,
+        "status": new_status,
+        "message_to_adviser": message_to_adviser,
+        "internal_note": internal_note,
+        "final_report": final_report,
+    })
+
+    db.execute(text("""
+        INSERT INTO tip_updates
+        (id, tip_id, author_name, author_email, author_role, update_type,
+         old_status, new_status, message_to_adviser, internal_note, final_report)
+        VALUES
+        (:id, :tip_id, :author_name, :author_email, 'SPECIALIST', 'SPECIALIST_UPDATE',
+         :old_status, :new_status, :message_to_adviser, :internal_note, :final_report)
+    """), {
+        "id": str(uuid.uuid4()),
+        "tip_id": tip_id,
+        "author_name": user["name"],
+        "author_email": user["email"],
+        "old_status": old_status,
+        "new_status": new_status,
+        "message_to_adviser": message_to_adviser,
+        "internal_note": internal_note,
+        "final_report": final_report,
+    })
+
+    db.commit()
+    return RedirectResponse(f"/hub/specialist-tips/{tip_id}", status_code=303)
+
+
+@router.get("/admin/import/legacy-tips", response_class=HTMLResponse)
+def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    jobs = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM import_jobs
+        ORDER BY created_at DESC
+        LIMIT 20
+    """)
+    return request.app.state.templates.TemplateResponse("admin_import_legacy_tips.html", {
+        "request": request,
+        "active": "import",
+        "jobs": jobs,
+        "version": "0.9.1-unified-tip-inbox",
+    })
+
+
+@router.post("/admin/import/legacy-tips")
+async def admin_import_legacy_tips_v090(
+    file: UploadFile = File(...),
+    source_name: str = Form("Stávající HUB ASTORIE"),
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = current_bo_user_v090_()
+    job_id = str(uuid.uuid4())
+    rows_total = rows_imported = rows_skipped = 0
+    errors = []
+
+    content = await file.read()
+    text_content = content.decode("utf-8-sig", errors="replace")
+    reader = csv.DictReader(io.StringIO(text_content), delimiter=";")
+    if not reader.fieldnames or len(reader.fieldnames) <= 1:
+        reader = csv.DictReader(io.StringIO(text_content), delimiter=",")
+
+    for row in reader:
+        rows_total += 1
+        try:
+            original_id = str(get_row_value_v090_(row, ["id", "tip_id", "ID", "Číslo", "Cislo"], "")).strip()
+            client_name = str(get_row_value_v090_(row, ["client_name", "Klient", "Jméno klienta", "Jmeno klienta", "Název klienta"], "")).strip()
+            adviser_name = str(get_row_value_v090_(row, ["adviser_name", "Poradce", "Tipař", "Tipar", "IF"], "")).strip()
+            adviser_email = str(get_row_value_v090_(row, ["adviser_email", "E-mail poradce", "Email poradce", "E-mail IF"], "")).strip()
+            specialist_name = str(get_row_value_v090_(row, ["specialist_name", "Specialista", "PS"], "")).strip()
+            specialist_email = str(get_row_value_v090_(row, ["specialist_email", "E-mail specialista", "Email specialista", "E-mail PS"], "")).strip()
+            status = normalize_tip_status_v090_(str(get_row_value_v090_(row, ["status", "Stav"], "Nový")).strip())
+            section_name = str(get_row_value_v090_(row, ["section_name", "Sekce", "Oblast"], "")).strip()
+            subsection_name = str(get_row_value_v090_(row, ["subsection_name", "Podsekce", "Podoblast"], "")).strip()
+            policy_no = str(get_row_value_v090_(row, ["policy_no", "Smlouva", "Číslo smlouvy", "Cislo smlouvy"], "")).strip()
+            note = str(get_row_value_v090_(row, ["adviser_note", "Poznámka", "Poznamka", "Popis"], "")).strip()
+            potential_raw = str(get_row_value_v090_(row, ["potential_amount", "Potenciál", "Potencial", "Objem"], "")).strip()
+
+            if not client_name and not adviser_name and not specialist_name:
+                rows_skipped += 1
+                continue
+
+            amount = None
+            if potential_raw:
+                try:
+                    amount = Decimal(potential_raw.replace(" ", "").replace("Kč", "").replace(",", "."))
+                except Exception:
+                    amount = None
+
+            db.execute(text("""
+                INSERT INTO tips
+                (id, adviser_original_id, adviser_name, adviser_email,
+                 specialist_name, specialist_email, client_name, potential_amount,
+                 adviser_note, status, policy_no, section_name, subsection_name,
+                 imported_source, imported_original_id, last_update_at)
+                VALUES
+                (:id, :adviser_original_id, :adviser_name, :adviser_email,
+                 :specialist_name, :specialist_email, :client_name, :potential_amount,
+                 :adviser_note, :status, :policy_no, :section_name, :subsection_name,
+                 :imported_source, :imported_original_id, now())
+            """), {
+                "id": str(uuid.uuid4()),
+                "adviser_original_id": str(get_row_value_v090_(row, ["advisor_id", "ID poradce", "ID"], "")),
+                "adviser_name": adviser_name,
+                "adviser_email": adviser_email,
+                "specialist_name": specialist_name,
+                "specialist_email": specialist_email,
+                "client_name": client_name,
+                "potential_amount": amount,
+                "adviser_note": note,
+                "status": status,
+                "policy_no": policy_no,
+                "section_name": section_name,
+                "subsection_name": subsection_name,
+                "imported_source": source_name,
+                "imported_original_id": original_id,
+            })
+            rows_imported += 1
+        except Exception as e:
+            rows_skipped += 1
+            errors.append(f"Řádek {rows_total}: {str(e)}")
+
+    db.execute(text("""
+        INSERT INTO import_jobs
+        (id, source_name, rows_total, rows_imported, rows_skipped, error_log, created_by)
+        VALUES
+        (:id, :source_name, :rows_total, :rows_imported, :rows_skipped, :error_log, :created_by)
+    """), {
+        "id": job_id,
+        "source_name": source_name,
+        "rows_total": rows_total,
+        "rows_imported": rows_imported,
+        "rows_skipped": rows_skipped,
+        "error_log": "\n".join(errors[:100]),
+        "created_by": user["email"],
+    })
+    db.commit()
+
+    return RedirectResponse("/admin/import/legacy-tips", status_code=303)
+
+
+@router.get("/api/tips/central-status")
+def api_tips_central_status_v090(db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status = 'Nový') AS new_count,
+          COUNT(*) FILTER (WHERE status = 'V řešení') AS progress_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count,
+          COUNT(*) FILTER (WHERE status = 'Archiv') AS archive_count
+        FROM tips
+    """)).mappings().first()
+    return {
+        "ok": True,
+        "version": "0.9.1-unified-tip-inbox",
+        "stats": dict(stats or {}),
+    }
+
+
+
+
+
+# -------------------------------------------------------------------
+# v0.9.1 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# -------------------------------------------------------------------
+
+@router.get("/hub/my-tips", response_class=HTMLResponse)
+def hub_my_tips_unified_v091(
+    request: Request,
+    tab: str = "sent",
+    q: str = "",
+    status: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    adviser_id = user.get("advisor_id") or ""
+    email = (user.get("email") or "").lower()
+
+    base_where = "1=1"
+    params = {}
+
+    if tab == "work":
+        base_where = "lower(COALESCE(specialist_email, '')) = :email AND COALESCE(status, '') NOT IN ('Sjednáno','Storno','Archiv')"
+        params["email"] = email
+    elif tab == "archive":
+        base_where = """
+          (
+            COALESCE(adviser_original_id, '') = :adviser_id
+            OR lower(COALESCE(adviser_email, '')) = :email
+            OR lower(COALESCE(specialist_email, '')) = :email
+          )
+          AND COALESCE(status, '') IN ('Sjednáno','Storno','Archiv')
+        """
+        params["adviser_id"] = adviser_id
+        params["email"] = email
+    else:
+        tab = "sent"
+        base_where = """
+          (
+            COALESCE(adviser_original_id, '') = :adviser_id
+            OR lower(COALESCE(adviser_email, '')) = :email
+          )
+          AND COALESCE(status, '') <> 'Archiv'
+        """
+        params["adviser_id"] = adviser_id
+        params["email"] = email
+
+    sql = f"SELECT * FROM tips WHERE {base_where}"
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(adviser_name, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q OR
+            lower(COALESCE(adviser_note, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    sql += " ORDER BY last_update_at DESC, created_at DESC LIMIT 500"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) FILTER (
+            WHERE (COALESCE(adviser_original_id, '') = :adviser_id OR lower(COALESCE(adviser_email, '')) = :email)
+              AND COALESCE(status, '') <> 'Archiv'
+          ) AS sent_count,
+          COUNT(*) FILTER (
+            WHERE lower(COALESCE(specialist_email, '')) = :email
+              AND COALESCE(status, '') NOT IN ('Sjednáno','Storno','Archiv')
+          ) AS work_count,
+          COUNT(*) FILTER (
+            WHERE (
+              COALESCE(adviser_original_id, '') = :adviser_id
+              OR lower(COALESCE(adviser_email, '')) = :email
+              OR lower(COALESCE(specialist_email, '')) = :email
+            )
+            AND COALESCE(status, '') IN ('Sjednáno','Storno','Archiv')
+          ) AS archive_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count
+        FROM tips
+    """), {"adviser_id": adviser_id, "email": email}).mappings().first()
+
+    return hub_render_v083_(request, "hub_my_tips_unified.html", {
+        "active": "my_tips",
+        "tab": tab,
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+    })
+
+
+@router.get("/hub/tips/{tip_id}", response_class=HTMLResponse)
+def hub_tip_detail_unified_v091(request: Request, tip_id: str, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    email = (user.get("email") or "").lower()
+    adviser_id = user.get("advisor_id") or ""
+
+    tip = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM tips
+        WHERE id = :id
+          AND (
+            COALESCE(adviser_original_id, '') = :adviser_id
+            OR lower(COALESCE(adviser_email, '')) = :email
+            OR lower(COALESCE(specialist_email, '')) = :email
+          )
+        LIMIT 1
+    """, {"id": tip_id, "email": email, "adviser_id": adviser_id})
+
+    updates = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM tip_updates
+        WHERE tip_id = :id
+        ORDER BY created_at DESC
+    """, {"id": tip_id})
+
+    return hub_render_v083_(request, "hub_tip_detail_unified.html", {
+        "active": "my_tips",
+        "tip": tip,
+        "updates": updates,
+        "is_specialist": bool(tip and (tip.get("specialist_email") or "").lower() == email),
+    })
+
+
+@router.post("/hub/tips/{tip_id}/specialist-update")
+def hub_tip_unified_specialist_update_v091(
+    tip_id: str,
+    status: str = Form("V řešení"),
+    message_to_adviser: str = Form(""),
+    internal_note: str = Form(""),
+    final_report: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    return hub_specialist_tip_update_v090(
+        tip_id=tip_id,
+        status=status,
+        message_to_adviser=message_to_adviser,
+        internal_note=internal_note,
+        final_report=final_report,
+        db=db,
+    )
 

@@ -1,0 +1,70 @@
+
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/tips">← Zpět na centrální evidenci TIPů</a></p>
+
+{% if not tip %}
+  <div class="card"><h1>TIP nenalezen</h1></div>
+{% else %}
+<h1 class="page-title">Detail TIPu</h1>
+
+<section class="card section-space">
+  <h2>{{ tip.client_name }}</h2>
+  <div class="detail-grid">
+    <div><span>Stav</span><strong>{{ tip.status }}</strong></div>
+    <div><span>Poradce</span><strong>{{ tip.adviser_name }}</strong><br>{{ tip.adviser_email }}</div>
+    <div><span>Specialista</span><strong>{{ tip.specialist_name or '—' }}</strong><br>{{ tip.specialist_email or '' }}</div>
+    <div><span>Sekce</span><strong>{{ tip.section_name or tip.section_code }}</strong><br>{{ tip.subsection_name or tip.subsection_code }}</div>
+    <div><span>Smlouva</span><strong>{{ tip.policy_no or '—' }}</strong></div>
+    <div><span>Potenciál</span><strong>{{ tip.potential_amount or '—' }}</strong></div>
+  </div>
+  <h3>Zadání poradce</h3>
+  <p>{{ tip.adviser_note or '—' }}</p>
+  <h3>Poslední informace pro tipaře</h3>
+  <p>{{ tip.adviser_last_message or '—' }}</p>
+  <h3>Konečná zpráva</h3>
+  <p>{{ tip.final_report or '—' }}</p>
+</section>
+
+<section class="card section-space">
+  <h2>BO aktualizace</h2>
+  <form method="post" action="/admin/tips/{{ tip.id }}/bo-update" class="admin-form-grid">
+    <div>
+      <label>Stav</label>
+      <select name="status">
+        {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
+          <option value="{{ s }}" {% if tip.status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div><label>Poznámka BO</label><input name="bo_note" value="{{ tip.bo_note or '' }}"></div>
+    <div class="span-2"><label>Informace pro tipaře</label><textarea name="message_to_adviser">{{ tip.adviser_last_message or '' }}</textarea></div>
+    <div class="span-2 form-actions"><button class="btn orange">Uložit BO aktualizaci</button></div>
+  </form>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">Historie komunikace a změn</div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Datum</th><th>Autor</th><th>Typ</th><th>Stav</th><th>Zpráva pro tipaře</th><th>Interní poznámka</th><th>Konečná zpráva</th></tr></thead>
+      <tbody>
+        {% for u in updates %}
+          <tr>
+            <td>{{ u.created_at }}</td>
+            <td>{{ u.author_name }}<br><span class="muted">{{ u.author_role }}</span></td>
+            <td>{{ u.update_type }}</td>
+            <td>{{ u.old_status }} → {{ u.new_status }}</td>
+            <td>{{ u.message_to_adviser }}</td>
+            <td>{{ u.internal_note }}</td>
+            <td>{{ u.final_report }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">Zatím není žádná historie.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

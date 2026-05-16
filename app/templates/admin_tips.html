@@ -1,0 +1,58 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Centrální evidence TIPů</h1>
+<p class="page-subtitle">BO vidí všechny TIPy zadané kýmkoliv, včetně rozpracovaných, uzavřených a archivu.</p>
+
+<div class="dashboard-grid">
+  <div class="metric-card"><span>Celkem</span><strong>{{ stats.total or 0 }}</strong></div>
+  <div class="metric-card"><span>Nové</span><strong>{{ stats.new_count or 0 }}</strong></div>
+  <div class="metric-card"><span>V řešení</span><strong>{{ stats.progress_count or 0 }}</strong></div>
+  <div class="metric-card"><span>Sjednáno</span><strong>{{ stats.won_count or 0 }}</strong></div>
+  <div class="metric-card"><span>Storno</span><strong>{{ stats.lost_count or 0 }}</strong></div>
+  <div class="metric-card"><span>Archiv</span><strong>{{ stats.archive_count or 0 }}</strong></div>
+</div>
+
+<section class="card section-space">
+  <form method="get" class="admin-filter-grid">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, poradce, specialistu, smlouvu, sekci…">
+    <select name="status">
+      <option value="">Všechny stavy</option>
+      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
+        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <input name="specialist" value="{{ specialist or '' }}" placeholder="E-mail specialisty">
+    <input name="adviser" value="{{ adviser or '' }}" placeholder="E-mail poradce">
+    <label class="mini-check"><input type="checkbox" name="archive" value="1" {% if archive == '1' %}checked{% endif %}> včetně archivu</label>
+    <button class="btn orange">Filtrovat</button>
+  </form>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">Všechny TIPy</div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Datum</th><th>Klient</th><th>Poradce</th><th>Specialista</th><th>Sekce</th><th>Stav</th><th>Aktualizace</th><th>Akce</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.created_at }}</td>
+          <td><strong>{{ r.client_name }}</strong><br><span class="muted">{{ r.client_identifier or '' }}</span></td>
+          <td>{{ r.adviser_name }}<br><span class="muted">{{ r.adviser_email }}</span></td>
+          <td>{{ r.specialist_name or '—' }}<br><span class="muted">{{ r.specialist_email or '' }}</span></td>
+          <td>{{ r.section_name or r.section_code }}<br><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></td>
+          <td><span class="status ok">{{ r.status }}</span></td>
+          <td>{{ r.last_update_at }}</td>
+          <td><a class="btn soft micro" href="/admin/tips/{{ r.id }}">Detail</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8">Zatím nejsou žádné TIPy.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
