@@ -1,8 +1,9 @@
-HUB ASTORIE APP v1.0.0-full-import-schema-fix
+HUB ASTORIE APP v1.0.1-import-relationship-fix
 
-Jednorázová profesionální oprava importu:
-- sjednocuje schéma sections/subsections/partners a dalších importních tabulek
-- doplňuje created_at/updated_at tam, kde v DB chybí
-- doplňuje id a business sloupce podle importu
-- import si opravu spustí automaticky před nahráním XLSX
-- servisní endpoint: /api/import/hub-xlsx/repair-database
+Rychlá profesionální oprava importu:
+- subsections.section_id se doplňuje podle sections.section_code
+- oprava existujících vazeb
+- preflight kontrola před importem
+- endpointy:
+  /api/import/hub-xlsx/repair-relationships
+  /api/import/hub-xlsx/preflight

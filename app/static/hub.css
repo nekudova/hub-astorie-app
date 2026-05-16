@@ -878,7 +878,7 @@ tr.is-selected {
 }
 
 
-/* v1.0.0 import pills */
+/* v1.0.1 import pills */
 .pill{
   display:inline-block;
   padding:6px 10px;
@@ -891,7 +891,7 @@ tr.is-selected {
 }
 
 
-/* v1.0.0 import boxes */
+/* v1.0.1 import boxes */
 .success-box{
   background:#dcfce7;
   border:1px solid #bbf7d0;
@@ -912,7 +912,7 @@ tr.is-selected {
 }
 
 
-/* v1.0.0 import loader */
+/* v1.0.1 import loader */
 .import-overlay{
   position:fixed;
   inset:0;
