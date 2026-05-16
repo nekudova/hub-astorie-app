@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 from datetime import datetime
 import io
@@ -25,7 +26,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.9.3",
+        "version": "v0.9.4",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1814,7 +1815,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.9.3 Specialist Profile & Sections Fix
+# v0.9.4 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2013,7 +2014,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.9.3 Visible Sections Fix
+# v0.9.4 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2083,7 +2084,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2102,7 +2103,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.9.3 – bezpečné tabulky pro TIPy.
+    v0.9.4 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2161,18 +2162,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.9.3-xlsx-sheet-import",
+            "version": "0.9.4-import-hardening",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.9.3-xlsx-sheet-import", "error": str(e)}
+        return {"ok": False, "version": "0.9.4-import-hardening", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.9.3 Adviser HUB routes fix
+# v0.9.4 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2189,7 +2190,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2409,7 +2410,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v0.9.3 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v0.9.4 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2716,7 +2717,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "tables": result,
     }
 
@@ -2724,7 +2725,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.3 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v0.9.4 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2956,7 +2957,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -2967,14 +2968,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.3 Partner autocomplete & Forms data source
+# v0.9.4 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "0.9.3-xlsx-sheet-import", "items": []}
+        return {"ok": True, "version": "0.9.4-import-hardening", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3005,7 +3006,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "items": [dict(r) for r in rows],
     }
 
@@ -3014,7 +3015,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "0.9.3-xlsx-sheet-import", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "0.9.4-import-hardening", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3024,7 +3025,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "0.9.3-xlsx-sheet-import", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "0.9.4-import-hardening", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3062,7 +3063,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3078,7 +3079,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3138,7 +3139,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v0.9.3 Operational TIP Workflow
+# v0.9.4 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3312,7 +3313,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
     })
 
 
@@ -3332,7 +3333,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
     })
 
 
@@ -3559,7 +3560,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
     })
 
 
@@ -3675,7 +3676,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "stats": dict(stats or {}),
     }
 
@@ -3684,7 +3685,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.3 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v0.9.4 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3843,7 +3844,7 @@ def hub_tip_unified_specialist_update_v091(
 
 
 # -------------------------------------------------------------------
-# v0.9.3 XLSX importer – import přímo ze staženého Google Sheetu
+# v0.9.4 XLSX importer – import přímo ze staženého Google Sheetu
 # -------------------------------------------------------------------
 
 def xlsx_cell_to_str_v093_(value):
@@ -4326,7 +4327,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
     })
 
 
@@ -4343,7 +4344,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "0.9.3-xlsx-sheet-import",
+            "version": "0.9.4-import-hardening",
         })
 
     raw = await file.read()
@@ -4358,7 +4359,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
     })
 
 
@@ -4366,7 +4367,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -4385,4 +4386,160 @@ def api_import_hub_xlsx_expected_sheets_v093():
         ],
         "note": "Importer nemění původní Google Sheet. Načítá XLSX do nové databáze aplikace.",
     }
+
+
+
+# -------------------------------------------------------------------
+# v0.9.4 import hardening endpoints
+# - chybějící /api/admin/summary
+# - aliasy pro import route
+# - JSON upload endpoint
+# - bezpečné počty tabulek
+# -------------------------------------------------------------------
+
+def safe_count_table_v094_(db: Session, table_name: str):
+    try:
+        exists = db.execute(text("""
+            SELECT EXISTS (
+              SELECT 1
+              FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = :table_name
+            )
+        """), {"table_name": table_name}).scalar()
+        if not exists:
+            return {"exists": False, "count": 0, "error": None}
+        count = db.execute(text(f"SELECT COUNT(*) FROM {table_name}")).scalar()
+        return {"exists": True, "count": int(count or 0), "error": None}
+    except Exception as exc:
+        return {"exists": False, "count": 0, "error": str(exc)}
+
+
+@router.get("/api/admin/summary")
+def api_admin_summary_v094(db: Session = Depends(get_db)):
+    """
+    Stabilní kontrolní endpoint pro BO a testování migrace.
+    Vrací počty hlavních tabulek, aby bylo po importu jasně vidět, zda data přibyla.
+    """
+    # vytvoří/rozšíří struktury, ale nemaže data
+    try:
+        ensure_xlsx_import_structures_v093_(db)
+    except Exception:
+        try:
+            ensure_tip_workflow_v090_(db)
+        except Exception:
+            pass
+
+    tables = [
+        "users",
+        "roles",
+        "app_settings",
+        "sections",
+        "subsections",
+        "hub_sections",
+        "hub_subsections",
+        "specialists",
+        "partners",
+        "partner_contacts",
+        "partner_links",
+        "partner_products",
+        "commission_rates",
+        "tips",
+        "tip_updates",
+        "import_jobs",
+        "audit_log",
+    ]
+    return {
+        "ok": True,
+        "version": "0.9.4-import-hardening",
+        "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
+        "counts": {t: safe_count_table_v094_(db, t) for t in tables},
+    }
+
+
+@router.get("/api/import/hub-xlsx/status")
+def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
+    """
+    Zatím synchronní import: endpoint vrací poslední stav podle import_jobs.
+    Plnohodnotný async progress bude další krok, až bude ověřen základní import.
+    """
+    try:
+        ensure_tip_workflow_v090_(db)
+        last_job = fetch_one_safe_v084_(db, """
+            SELECT *
+            FROM import_jobs
+            ORDER BY created_at DESC
+            LIMIT 1
+        """)
+        return {
+            "ok": True,
+            "version": "0.9.4-import-hardening",
+            "running": False,
+            "last_job": dict(last_job) if last_job else None,
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "version": "0.9.4-import-hardening",
+            "running": False,
+            "error": str(exc),
+        }
+
+
+@router.post("/api/import/hub-xlsx")
+async def api_import_hub_xlsx_upload_v094(
+    file: UploadFile = File(...),
+    update_existing: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    """
+    JSON varianta importu pro budoucí AJAX/frontend.
+    Používá stejný importní engine jako HTML stránka.
+    """
+    try:
+        from openpyxl import load_workbook
+        raw = await file.read()
+        wb = load_workbook(BytesIO(raw), data_only=True, read_only=True)
+        result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
+        result["ok"] = len(result.get("errors", [])) == 0
+        result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
+        result["version"] = "0.9.4-import-hardening"
+        return result
+    except Exception as exc:
+        return {
+            "ok": False,
+            "version": "0.9.4-import-hardening",
+            "errors": [str(exc)],
+        }
+
+
+# Alias, kdyby někde frontend / uživatel použil jiný název.
+@router.get("/admin/import/hub-xlsx/")
+def admin_import_hub_xlsx_slash_alias_v094(request: Request):
+    return RedirectResponse("/admin/import/hub-xlsx", status_code=307)
+
+
+@router.post("/admin/import/hub-xlsx/")
+async def admin_import_hub_xlsx_post_slash_alias_v094(
+    request: Request,
+    file: UploadFile = File(...),
+    update_existing: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    return await admin_import_hub_xlsx_v093(
+        request=request,
+        file=file,
+        update_existing=update_existing,
+        db=db,
+    )
+
+
+@router.get("/admin/import/xlsx")
+def admin_import_xlsx_short_alias_v094():
+    return RedirectResponse("/admin/import/hub-xlsx", status_code=307)
+
+
+@router.get("/api/import/hub-xlsx/summary")
+def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
+    return api_admin_summary_v094(db=db)
 

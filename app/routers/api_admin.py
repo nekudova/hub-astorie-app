@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "0.9.3-xlsx-sheet-import",
+        "version": "0.9.4-import-hardening",
         "message": "Admin Core + Visible Sections Fix běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }

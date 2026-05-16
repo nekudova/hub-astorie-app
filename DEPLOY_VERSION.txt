@@ -1,12 +1,14 @@
-HUB ASTORIE APP v0.9.3-xlsx-sheet-import
+HUB ASTORIE APP v0.9.4-import-hardening
 
-Přidáno:
-- Import přímo z XLSX exportu stávajícího Google Sheetu
-- Nová stránka /admin/import/hub-xlsx
-- Bezpečný režim: existující číselníkové záznamy se nepřepisují
-- Volitelný režim aktualizace existujících číselníkových záznamů
-- Importuje: Poradci, Sekce, Podsekce, Specialisté, Partneři, Kontakty, Odkazy, Produkty, Provize, TIPy
-- API kontrola očekávaných listů: /api/import/hub-xlsx/expected-sheets
+Opraveno / doplněno:
+- /api/admin/summary
+- /api/import/hub-xlsx/status
+- POST /api/import/hub-xlsx
+- aliasy /admin/import/hub-xlsx/
+- loader při importu
+- deaktivace tlačítka při importu
+- kontrolní odkazy po importu
+- programátorské podklady k importu ve složce migration/
 
 Důležité:
-Importer nemění původní Google Sheet. Načítá XLSX do nové databáze aplikace.
+Původní Google Sheet se nepřepisuje. Import zapisuje pouze do nové databáze aplikace.

@@ -10,4 +10,4 @@ router = APIRouter(tags=["health"])
 @router.get("/health")
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"ok": True, "app": settings.app_name, "db": True, "version": "0.9.3-xlsx-sheet-import"}
+    return {"ok": True, "app": settings.app_name, "db": True, "version": "0.9.4-import-hardening"}

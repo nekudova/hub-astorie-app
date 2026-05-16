@@ -9,7 +9,8 @@
 
 <section class="card section-space">
   <h2>Nahrát XLSX</h2>
-  <form method="post" action="/admin/import/hub-xlsx" enctype="multipart/form-data" class="admin-form-grid">
+
+  <form id="xlsxImportForm" method="post" action="/admin/import/hub-xlsx" enctype="multipart/form-data" class="admin-form-grid">
     <div class="span-2">
       <label>Excel / XLSX soubor</label>
       <input type="file" name="file" accept=".xlsx" required>
@@ -23,15 +24,25 @@
     <label class="mini-check span-2">
       <input type="checkbox" name="update_existing" value="1">
       Aktualizovat existující číselníkové záznamy v nové databázi
-      <br><small>Doporučuji zapnout až po prvním testovacím importu.</small>
+      <br><small>Doporučuji zapnout až po prvním úspěšném testovacím importu.</small>
     </label>
 
     <div class="span-2 form-actions">
-      <button class="btn orange">Importovat XLSX do nové aplikace</button>
+      <button id="xlsxImportBtn" class="btn orange" type="submit">Importovat XLSX do nové aplikace</button>
       <a class="btn soft" href="/api/import/hub-xlsx/expected-sheets" target="_blank">Kontrola očekávaných listů</a>
+      <a class="btn soft" href="/api/admin/summary" target="_blank">Kontrolní summary</a>
     </div>
   </form>
 </section>
+
+<div id="importOverlay" class="import-overlay" style="display:none;">
+  <div class="import-modal">
+    <div class="import-spinner"></div>
+    <h2>Import probíhá…</h2>
+    <p>Nezavírejte okno a neklikejte znovu na import.</p>
+    <p class="muted">U většího XLSX souboru může zpracování chvíli trvat.</p>
+  </div>
+</div>
 
 {% if result %}
 <section class="card section-space">
@@ -68,6 +79,12 @@
     <h3>Chyby / upozornění</h3>
     <pre>{{ result.errors }}</pre>
   {% endif %}
+
+  <p>
+    <a class="btn soft" href="/api/admin/summary" target="_blank">Otevřít kontrolní summary</a>
+    <a class="btn soft" href="/admin/tips">Centrální TIPy</a>
+    <a class="btn soft" href="/admin/partners">Partneři</a>
+  </p>
 </section>
 {% endif %}
 
@@ -85,4 +102,22 @@
     <li>Historické TIPy</li>
   </ul>
 </section>
+
+<script>
+(function(){
+  const form = document.getElementById('xlsxImportForm');
+  const btn = document.getElementById('xlsxImportBtn');
+  const overlay = document.getElementById('importOverlay');
+
+  if (!form) return;
+
+  form.addEventListener('submit', function(){
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Importuji…';
+    }
+    if (overlay) overlay.style.display = 'flex';
+  });
+})();
+</script>
 {% endblock %}
