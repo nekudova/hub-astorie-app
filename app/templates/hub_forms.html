@@ -1,36 +1,24 @@
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Formuláře</h1>
-  <p class="page-subtitle">První napojení formulářů na partnera. Výpovědi a další dokumenty budou brát data z číselníku partnerů.</p>
+    <h1>Formuláře</h1>
+    <p class="page-subtitle">Výpovědi, retenční formuláře a PDF generátory.</p>
 
-  <div class="portal-grid">
-    <div class="portal-card">
-      <span class="portal-letter">V</span>
-      <h3>Výpověď pojistné smlouvy</h3>
-      <p>Vybere se partner a systém použije IČO, DS, e-mail a adresu.</p>
-      <a class="btn dark" href="/admin/terminations">Otevřít modul</a>
-    </div>
-    <div class="portal-card">
-      <span class="portal-letter">P</span>
-      <h3>Plná moc FO / PO</h3>
-      <p>Připraveno pro napojení na šablony a historii vydaných dokumentů.</p>
-      <a class="btn dark" href="/admin/form-bridge">Napojení formulářů</a>
-    </div>
-  </div>
+    <div class="hub-grid three">
+        <div class="dashboard-box">
+            <h3>Připraveno pro další vývoj</h3>
+            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
+        </div>
 
-  <h2>Partneři připravení pro formuláře</h2>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Partner</th><th>IČO</th><th>DS</th><th>E-mail</th><th>Adresa</th></tr></thead>
-      <tbody>
-        {% for p in partners %}
-        <tr><td>{{ p.name }}</td><td>{{ p.ico }}</td><td>{{ p.data_box }}</td><td>{{ p.registry_email }}</td><td>{{ p.address_full }}</td></tr>
-        {% else %}
-        <tr><td colspan="5">Žádní partneři.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+        <div class="dashboard-box">
+            <h3>v0.8 architektura</h3>
+            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Stabilní migrace</h3>
+            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

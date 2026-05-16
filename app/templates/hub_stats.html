@@ -1,26 +1,24 @@
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Statistiky & soutěž</h1>
-  <div class="kpi-row">
-    <div class="kpi"><span>Odesláno</span><strong>{{ stats.total or 0 }}</strong></div>
-    <div class="kpi"><span>Sjednáno</span><strong>{{ stats.won or 0 }}</strong></div>
-    <div class="kpi"><span>V řešení</span><strong>{{ stats.open or 0 }}</strong></div>
-    <div class="kpi"><span>Potenciál</span><strong>{{ stats.potential_amount or 0 }}</strong></div>
-  </div>
+    <h1>Statistiky</h1>
+    <p class="page-subtitle">Moje TIPy, aktivita a soutěže.</p>
 
-  <h2>Efektivita podle specialistů</h2>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Specialista</th><th>Počet TIPů</th><th>Sjednáno</th></tr></thead>
-      <tbody>
-        {% for r in by_specialist %}
-        <tr><td>{{ r.specialist_name }}</td><td>{{ r.count }}</td><td>{{ r.won }}</td></tr>
-        {% else %}
-        <tr><td colspan="3">Zatím nejsou data.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="hub-grid three">
+        <div class="dashboard-box">
+            <h3>Připraveno pro další vývoj</h3>
+            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>v0.8 architektura</h3>
+            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Stabilní migrace</h3>
+            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

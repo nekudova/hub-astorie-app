@@ -821,3 +821,13 @@ tr.is-selected {
 .page-toolbar.compact {
   margin-bottom: 16px;
 }
+
+/* v0.7.2 admin visible section hint */
+.visible-section-hint {
+  background: #fff7f3;
+  border: 1px solid rgba(252,76,2,.25);
+  color: #7c2d12;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-weight: 900;
+}

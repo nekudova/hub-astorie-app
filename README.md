@@ -308,3 +308,17 @@ Opraveno:
 
 Přidáno:
 - Výchozí sekce: Flotily, Majetek, Život, Podnikatelé, Penze, Úvěry, Obnova, Investice, Zlato, Zvíře.
+
+
+## v0.8.0 Visible Sections Fix
+
+Opraveno:
+- Sekce jsou nově viditelné přímo v poradenské části `/hub/new-tip` jako dlaždice.
+- Výchozí sekce se automaticky doplní při otevření Nového TIPu.
+- Není nutné ručně čekat na profil specialisty, aby byly sekce vidět.
+- Přidán kontrolní endpoint `/api/taxonomy/visible-sections`.
+
+Přidáno:
+- Dlaždice sekcí v Nový TIP.
+- Chytré filtrování podsekcí podle vybrané sekce.
+- Chytré filtrování specialistů podle sekce/podsekce.

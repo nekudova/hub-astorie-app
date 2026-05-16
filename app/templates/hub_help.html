@@ -1,14 +1,24 @@
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Nápověda</h1>
-  <p class="page-subtitle">Základní provozní nápověda k novému Python HUBu.</p>
+    <h1>Nápověda</h1>
+    <p class="page-subtitle">Metodiky, návody, onboarding a FAQ.</p>
 
-  <div class="help-list">
-    <div><strong>Nový TIP</strong><br>Vyberte sekci, podsekci, specialistu a vyplňte klienta.</div>
-    <div><strong>Moje TIPy</strong><br>Přehled odeslaných TIPů a jejich stavů.</div>
-    <div><strong>Partneři</strong><br>Centrální číselník partnerů, kontaktů, odkazů a produktů.</div>
-    <div><strong>Formuláře</strong><br>Budoucí generování dokumentů nad daty partnera.</div>
-  </div>
+    <div class="hub-grid three">
+        <div class="dashboard-box">
+            <h3>Připraveno pro další vývoj</h3>
+            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>v0.8 architektura</h3>
+            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Stabilní migrace</h3>
+            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

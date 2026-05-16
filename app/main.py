@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "0.7.1-specialist-profile-sections-fix"
+APP_VERSION = "0.8.0-adviser-modules"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v0.7.1 Specialist Profile Sections Fix is loaded",
+        "status": "v0.8.0 Visible Sections Fix is loaded",
     }
 
 

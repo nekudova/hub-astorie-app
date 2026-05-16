@@ -1,24 +1,24 @@
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Kontakty</h1>
-  <p class="page-subtitle">Fulltextové hledání v kontaktech partnerů.</p>
-  <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat jméno, partnera, telefon, e-mail, region…">
-    <button class="btn orange">Hledat</button>
-  </form>
+    <h1>Kontakty</h1>
+    <p class="page-subtitle">Centrální kontaktní databáze specialistů a partnerů.</p>
 
-  <div class="contact-grid">
-    {% for c in rows %}
-      <div class="contact-card">
-        <h3>{{ c.full_name }}</h3>
-        <p><strong>{{ c.partner_name or c.partner_code }}</strong></p>
-        <p>{{ c.role or c.contact_type or '' }} · {{ c.territory or '' }}</p>
-        <p>{{ c.phone or '' }}<br>{{ c.email or '' }}</p>
-      </div>
-    {% else %}
-      <div class="empty-state">Žádné kontakty.</div>
-    {% endfor %}
-  </div>
+    <div class="hub-grid three">
+        <div class="dashboard-box">
+            <h3>Připraveno pro další vývoj</h3>
+            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>v0.8 architektura</h3>
+            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Stabilní migrace</h3>
+            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

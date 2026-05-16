@@ -1,54 +1,24 @@
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Partneři</h1>
-  <p class="page-subtitle">Vyhledejte partnera a otevřete detail: kontakty, odkazy, produkty a registrační údaje.</p>
-  <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, IČO, DS, e-mail…">
-    <button class="btn orange">Hledat</button>
-  </form>
+    <h1>Partneři</h1>
+    <p class="page-subtitle">Vyhledávání partnerů, kontaktů, produktů a odkazů.</p>
 
-  <div class="partner-layout">
-    <div class="partner-list">
-      {% for p in partners %}
-        <a class="{{ 'active' if selected == p.partner_code else '' }}" href="/hub/partners?selected={{ p.partner_code }}&q={{ q }}">
-          <strong>{{ p.name }}</strong>
-          <span>{{ p.partner_code }} · {{ p.ico or '' }}</span>
-        </a>
-      {% else %}
-        <div class="empty-state">Žádní partneři.</div>
-      {% endfor %}
-    </div>
-
-    <div class="partner-detail">
-      {% if partner %}
-        <h2>{{ partner.name }}</h2>
-        <p><strong>IČO:</strong> {{ partner.ico or '—' }} · <strong>DS:</strong> {{ partner.data_box or '—' }} · <strong>E-mail:</strong> {{ partner.registry_email or '—' }}</p>
-        <p><strong>Adresa:</strong> {{ partner.address_full or '—' }}</p>
-
-        <div class="tab-row">
-          <a class="{{ 'active' if tab == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts">Kontakty</a>
-          <a class="{{ 'active' if tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links">Odkazy</a>
-          <a class="{{ 'active' if tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products">Produkty</a>
+    <div class="hub-grid three">
+        <div class="dashboard-box">
+            <h3>Připraveno pro další vývoj</h3>
+            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
         </div>
 
-        {% if tab == 'links' %}
-          {% for l in links %}
-            <div class="detail-item"><strong>{{ l.title }}</strong><br><a href="{{ l.url }}" target="_blank">{{ l.url }}</a><br>{{ l.category or '' }}</div>
-          {% else %}<div class="empty-state">Bez odkazů.</div>{% endfor %}
-        {% elif tab == 'products' %}
-          {% for pr in products %}
-            <div class="detail-item"><strong>{{ pr.product_name }}</strong><br>{{ pr.area or '' }} / {{ pr.subarea or '' }}<br>{{ pr.note or '' }}</div>
-          {% else %}<div class="empty-state">Bez produktů.</div>{% endfor %}
-        {% else %}
-          {% for c in contacts %}
-            <div class="detail-item"><strong>{{ c.full_name }}</strong> {% if c.is_vip or c.is_top %}<span class="status ok">TOP</span>{% endif %}<br>{{ c.role or c.contact_type or '' }} · {{ c.territory or '' }}<br>{{ c.phone or '' }} · {{ c.email or '' }}</div>
-          {% else %}<div class="empty-state">Bez kontaktů.</div>{% endfor %}
-        {% endif %}
-      {% else %}
-        <div class="empty-state">Vyberte partnera vlevo.</div>
-      {% endif %}
+        <div class="dashboard-box">
+            <h3>v0.8 architektura</h3>
+            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Stabilní migrace</h3>
+            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
