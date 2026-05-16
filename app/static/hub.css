@@ -788,7 +788,7 @@ tr.is-selected {
 }
 
 
-/* v0.7.1 Specialist Profile & Sections Fix */
+/* v0.8.1 Specialist Profile & Sections Fix */
 .taxonomy-chip-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -822,7 +822,7 @@ tr.is-selected {
   margin-bottom: 16px;
 }
 
-/* v0.7.2 admin visible section hint */
+/* v0.8.1 admin visible section hint */
 .visible-section-hint {
   background: #fff7f3;
   border: 1px solid rgba(252,76,2,.25);

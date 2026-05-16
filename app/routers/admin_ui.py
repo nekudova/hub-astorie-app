@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.7.2",
+        "version": "v0.8.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1808,7 +1808,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.7.1 Specialist Profile & Sections Fix
+# v0.8.1 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2007,7 +2007,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.7.2 Visible Sections Fix
+# v0.8.1 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2077,7 +2077,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.7.2-visible-sections-fix",
+        "version": "0.8.1-adviser-modules-version-force",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }

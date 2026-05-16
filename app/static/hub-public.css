@@ -339,7 +339,7 @@
 }
 
 
-/* v0.7.2 visible sections in New TIP */
+/* v0.8.1 visible sections in New TIP */
 .section-tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

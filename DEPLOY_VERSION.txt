@@ -1,17 +1,14 @@
-HUB ASTORIE APP v0.8.0-adviser-modules
+HUB ASTORIE APP 0.8.1-adviser-modules-version-force
 
-Přidány nové HUB moduly:
-- /hub/new-tip
-- /hub/my-tips
-- /hub/calculators
-- /hub/partners
-- /hub/contacts
-- /hub/forms
-- /hub/stats
-- /hub/help
-
-Všechny moduly nyní mají:
-- vlastní routu
-- vlastní šablonu
-- napojení do menu
-- připravenou architekturu pro další vývoj
+Opravný balíček:
+- vynucená změna verzí ve všech textových souborech
+- kontrola, zda Render skutečně nasadil nový ZIP
+- zachované moduly:
+  /hub/new-tip
+  /hub/my-tips
+  /hub/calculators
+  /hub/partners
+  /hub/contacts
+  /hub/forms
+  /hub/stats
+  /hub/help
