@@ -1,6 +1,6 @@
 # Import skutečného souboru Aktivní_29032026_ASTORIE HUB.xlsx
 
-Verze v0.9.5 umí nahrát přímo XLSX export ze stávajícího Google Sheetu.
+Verze v0.9.6 umí nahrát přímo XLSX export ze stávajícího Google Sheetu.
 
 ## Důležité
 
@@ -10,7 +10,7 @@ Verze v0.9.5 umí nahrát přímo XLSX export ze stávajícího Google Sheetu.
 
 ## Postup
 
-1. Nasaďte ZIP v0.9.5.
+1. Nasaďte ZIP v0.9.6.
 2. Otevřete `/admin/import/hub-xlsx`.
 3. Nahrajte soubor `Aktivní_29032026_ASTORIE HUB.xlsx`.
 4. Nechte nezaškrtnuté „Aktualizovat existující číselníkové záznamy“ pro první test.

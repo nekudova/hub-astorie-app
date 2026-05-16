@@ -1,13 +1,13 @@
-HUB ASTORIE APP v0.9.5-import-transaction-fix
+HUB ASTORIE APP v0.9.6-import-index-fix
 
-Opraveno:
-- PostgreSQL chyba current transaction is aborted / InFailedSqlTransaction
-- bezpečné doplnění sloupců tabulky specialists
-- bezpečné vytvoření indexu ux_specialists_import_key
-- přípravné importní SQL bloky mají vlastní commit/rollback
+Definitivní oprava importu:
+- odstraněna inline tvorba indexu specialists uvnitř importní transakce
+- přidáno čištění transakce před importem
+- přidán opravný endpoint /api/import/hub-xlsx/repair-schema
+- pokud index specialists nejde vytvořit, import pokračuje dál
 
 Po nasazení:
-1) /version = 0.9.5-import-transaction-fix
-2) /api/admin/summary
+1) /version = 0.9.6-import-index-fix
+2) /api/import/hub-xlsx/repair-schema
 3) /admin/import/hub-xlsx
-4) první import bez zaškrtnutí aktualizace existujících číselníků
+4) import spustit bez zaškrtnutí aktualizace existujících záznamů
