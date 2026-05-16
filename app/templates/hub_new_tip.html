@@ -1,15 +1,25 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
   <h1>Nový TIP</h1>
-  <p class="page-subtitle">Vyberte oblast z dlaždic. Podsekce a specialisté se načtou podle vybrané sekce.</p>
+  <p class="page-subtitle">Sekce, podsekce a specialisté jsou načtené z administrace.</p>
 
   <form method="post" action="/hub/tips/create" class="hub-form">
     <input type="hidden" name="section_code" id="section_code">
     <input type="hidden" name="subsection_code" id="subsection_code_hidden">
+    <input type="hidden" name="specialist_email" id="specialist_email">
+    <input type="hidden" name="specialist_name" id="specialist_name">
 
     <div class="hub-card inner">
-      <h2>Vyberte oblast</h2>
+      <div class="section-head-row">
+        <div>
+          <h2>Vyberte oblast</h2>
+          <p class="page-subtitle">Oblasti odpovídají sekcím nastaveným v administraci.</p>
+        </div>
+        <a class="mini-link" href="/api/hub/taxonomy-status" target="_blank">kontrola dat</a>
+      </div>
+
       <div class="section-tile-grid">
         {% for s in sections %}
           <button type="button" class="section-tile" data-section="{{ s.section_code }}" onclick="selectSectionTile(this)">
@@ -18,9 +28,7 @@
             <small>{{ s.section_code }}</small>
           </button>
         {% else %}
-          <div class="empty-state">
-            Sekce zatím nejsou načtené. V administraci otevřete Sekce / podsekce a klikněte na „Doplnit výchozí sekce“.
-          </div>
+          <div class="empty-state">V administraci zatím nejsou aktivní sekce.</div>
         {% endfor %}
       </div>
 
@@ -39,23 +47,25 @@
 
     <div class="hub-card inner">
       <h2>Specialista</h2>
-      <p class="page-subtitle">Po výběru oblasti/podsekce se zobrazí odpovídající specialisté.</p>
-      <input type="hidden" name="specialist_email" id="specialist_email">
-      <input type="hidden" name="specialist_name" id="specialist_name">
+      <p class="page-subtitle">Zobrazí se jen aktivní a dostupní specialisté pro vybranou oblast.</p>
+
       <div class="specialist-grid" id="specialist_grid">
         {% for s in specialists %}
           <button type="button" class="specialist-card"
-                  data-section="{{ s.section_code }}" data-subsection="{{ s.subsection_code }}"
-                  data-email="{{ s.email }}" data-name="{{ s.specialist_name }}"
+                  data-section="{{ s.section_code or '' }}"
+                  data-subsection="{{ s.subsection_code or '' }}"
+                  data-email="{{ s.email or '' }}"
+                  data-name="{{ s.specialist_name or '' }}"
                   onclick="selectSpecialist(this)" style="display:none;">
             <strong>{{ s.specialist_name }}</strong>
             <span>{{ s.role_description or 'Specialista' }}</span>
+            <span>{{ s.section_name or s.section_code }}{% if s.subsection_name %} / {{ s.subsection_name }}{% endif %}</span>
             <span>{{ s.region or 'ČR' }}</span>
             <span>{{ s.email }}</span>
             <em>IF/PS: {{ s.if_share or '—' }} / {{ s.ps_share or '—' }}</em>
           </button>
         {% else %}
-          <div class="empty-state">Zatím nejsou založení specialisté.</div>
+          <div class="empty-state">Zatím nejsou založení dostupní specialisté.</div>
         {% endfor %}
       </div>
       <div class="empty-subsection-note" id="empty_specialist_note">Vyberte oblast, aby se zobrazili specialisté.</div>
@@ -83,17 +93,16 @@
     </div>
   </form>
 </div>
-{% endblock %}
-{% block scripts %}
+
 <script>
 function selectSectionTile(btn){
   document.querySelectorAll(".section-tile").forEach(b => b.classList.remove("selected"));
   btn.classList.add("selected");
-
   const section = btn.dataset.section || "";
   document.getElementById("section_code").value = section;
   document.getElementById("subsection_code_hidden").value = "";
-
+  document.getElementById("specialist_email").value = "";
+  document.getElementById("specialist_name").value = "";
   let anySub = false;
   document.querySelectorAll(".subsection-chip").forEach(chip => {
     const visible = chip.dataset.section === section;
@@ -101,34 +110,31 @@ function selectSectionTile(btn){
     chip.classList.remove("selected");
     if(visible) anySub = true;
   });
-
   document.getElementById("empty_subsection_note").style.display = anySub ? "none" : "";
   filterHubSpecialists();
 }
-
 function selectSubsectionChip(btn){
   document.querySelectorAll(".subsection-chip").forEach(b => b.classList.remove("selected"));
   btn.classList.add("selected");
   document.getElementById("subsection_code_hidden").value = btn.dataset.subsection || "";
+  document.getElementById("specialist_email").value = "";
+  document.getElementById("specialist_name").value = "";
   filterHubSpecialists();
 }
-
 function filterHubSpecialists(){
   const section = document.getElementById("section_code").value;
   const subsection = document.getElementById("subsection_code_hidden").value;
   let any = false;
-
   document.querySelectorAll(".specialist-card").forEach(card => {
     const secOk = !section || card.dataset.section === section;
     const subOk = !subsection || !card.dataset.subsection || card.dataset.subsection === subsection;
     const show = secOk && subOk && !!section;
     card.style.display = show ? "" : "none";
+    card.classList.remove("selected");
     if(show) any = true;
   });
-
   document.getElementById("empty_specialist_note").style.display = any ? "none" : "";
 }
-
 function selectSpecialist(btn){
   document.querySelectorAll(".specialist-card").forEach(b => b.classList.remove("selected"));
   btn.classList.add("selected");

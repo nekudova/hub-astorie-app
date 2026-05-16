@@ -21,7 +21,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.8.4",
+        "version": "v0.8.5",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1810,7 +1810,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.8.4 Specialist Profile & Sections Fix
+# v0.8.5 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2009,7 +2009,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.8.4 Visible Sections Fix
+# v0.8.5 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2079,7 +2079,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.8.4-hub-data-bridge",
+        "version": "0.8.5-tip-admin-data-flow",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2098,7 +2098,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.8.4 – bezpečné tabulky pro TIPy.
+    v0.8.5 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2157,18 +2157,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.8.4-hub-data-bridge",
+            "version": "0.8.5-tip-admin-data-flow",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.8.4-hub-data-bridge", "error": str(e)}
+        return {"ok": False, "version": "0.8.5-tip-admin-data-flow", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.8.4 Adviser HUB routes fix
+# v0.8.5 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2185,7 +2185,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.8.4-hub-data-bridge",
+        "version": "0.8.5-tip-admin-data-flow",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2207,7 +2207,7 @@ def hub_home_v083():
     return RedirectResponse("/hub/new-tip", status_code=302)
 
 
-@router.get("/hub/new-tip", response_class=HTMLResponse)
+@router.get("/hub/new-tip-old-v085", response_class=HTMLResponse)
 def hub_new_tip_v083(request: Request, db: Session = Depends(get_db)):
     ensure_user_hub_tables_v082_(db)
     ensure_hub_taxonomy_v083_(db)
@@ -2247,7 +2247,7 @@ def hub_new_tip_v083(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.post("/hub/tips/create")
+@router.post("/hub/tips/create-old-v085")
 def hub_create_tip_v083(
     section_code: str = Form(""),
     subsection_code: str = Form(""),
@@ -2297,7 +2297,7 @@ def hub_create_tip_v083(
     return RedirectResponse("/hub/my-tips?created=1", status_code=303)
 
 
-@router.get("/hub/my-tips", response_class=HTMLResponse)
+@router.get("/hub/my-tips-old-v085", response_class=HTMLResponse)
 def hub_my_tips_v083(
     request: Request,
     q: str = "",
@@ -2405,7 +2405,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v0.8.4 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v0.8.5 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2712,7 +2712,251 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "0.8.4-hub-data-bridge",
+        "version": "0.8.5-tip-admin-data-flow",
         "tables": result,
+    }
+
+
+
+
+# -------------------------------------------------------------------
+# v0.8.5 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# -------------------------------------------------------------------
+
+def ensure_tips_columns_v085_(db: Session):
+    ensure_user_hub_tables_v082_(db)
+    alters = [
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS section_code TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS subsection_code TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS section_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS subsection_name TEXT NOT NULL DEFAULT ''",
+    ]
+    for stmt in alters:
+        db.execute(text(stmt))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_section ON tips (section_code)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_subsection ON tips (subsection_code)"))
+    db.commit()
+
+
+def get_hub_taxonomy_v085_(db: Session):
+    ensure_hub_taxonomy_v083_(db)
+    sections = fetch_all_safe_v084_(db, """
+        SELECT section_code, section_name, icon, COALESCE(image_url, '') AS image_url, sort_order
+        FROM hub_sections
+        WHERE COALESCE(is_active, TRUE) = TRUE
+        ORDER BY sort_order, section_name
+    """)
+    subsections = fetch_all_safe_v084_(db, """
+        SELECT subsection_code, subsection_name, section_code, sort_order
+        FROM hub_subsections
+        WHERE COALESCE(is_active, TRUE) = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)
+    return sections, subsections
+
+
+def get_specialists_for_hub_v085_(db: Session):
+    try:
+        ensure_specialists_table_(db)
+    except Exception:
+        return []
+    return fetch_all_safe_v084_(db, """
+        SELECT s.*,
+               COALESCE(hs.section_name, s.section_code) AS section_name,
+               COALESCE(hss.subsection_name, s.subsection_code) AS subsection_name
+        FROM specialists s
+        LEFT JOIN hub_sections hs ON hs.section_code = s.section_code
+        LEFT JOIN hub_subsections hss ON hss.subsection_code = s.subsection_code
+        WHERE COALESCE(s.is_active, TRUE) = TRUE
+          AND COALESCE(s.available, TRUE) = TRUE
+        ORDER BY hs.sort_order, hss.sort_order, s.specialist_name
+        LIMIT 500
+    """)
+
+
+@router.get("/hub/new-tip", response_class=HTMLResponse)
+def hub_new_tip_v085(request: Request, db: Session = Depends(get_db)):
+    ensure_tips_columns_v085_(db)
+    sections, subsections = get_hub_taxonomy_v085_(db)
+    specialists = get_specialists_for_hub_v085_(db)
+    return hub_render_v083_(request, "hub_new_tip.html", {
+        "active": "new_tip",
+        "sections": sections,
+        "subsections": subsections,
+        "specialists": specialists,
+    })
+
+
+@router.post("/hub/tips/create")
+def hub_create_tip_v085(
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    specialist_email: str = Form(""),
+    specialist_name: str = Form(""),
+    client_name: str = Form(...),
+    client_phone: str = Form(""),
+    client_identifier: str = Form(""),
+    potential_amount: str = Form(""),
+    adviser_note: str = Form(""),
+    policy_no: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_tips_columns_v085_(db)
+    user = hub_user_context_v083_()
+
+    section = fetch_one_safe_v084_(db, """
+        SELECT section_code, section_name
+        FROM hub_sections
+        WHERE upper(section_code) = upper(:code)
+        LIMIT 1
+    """, {"code": section_code})
+
+    subsection = fetch_one_safe_v084_(db, """
+        SELECT subsection_code, subsection_name
+        FROM hub_subsections
+        WHERE upper(subsection_code) = upper(:code)
+        LIMIT 1
+    """, {"code": subsection_code})
+
+    amount = None
+    if potential_amount:
+        try:
+            amount = Decimal(str(potential_amount).replace(" ", "").replace("Kč", "").replace(",", "."))
+        except Exception:
+            amount = None
+
+    if not specialist_name and specialist_email:
+        spec = fetch_one_safe_v084_(db, """
+            SELECT specialist_name
+            FROM specialists
+            WHERE lower(email) = lower(:email)
+            LIMIT 1
+        """, {"email": specialist_email})
+        if spec:
+            specialist_name = spec["specialist_name"]
+
+    tip_id = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO tips
+          (id, adviser_original_id, adviser_name, adviser_email,
+           section_code, subsection_code, section_name, subsection_name,
+           specialist_name, specialist_email,
+           client_name, client_phone, client_identifier, potential_amount,
+           adviser_note, status, policy_no)
+        VALUES
+          (:id, :advisor_id, :advisor_name, :advisor_email,
+           :section_code, :subsection_code, :section_name, :subsection_name,
+           :specialist_name, :specialist_email,
+           :client_name, :client_phone, :client_identifier, :potential_amount,
+           :adviser_note, 'Nový', :policy_no)
+    """), {
+        "id": tip_id,
+        "advisor_id": user["advisor_id"],
+        "advisor_name": user["name"],
+        "advisor_email": user["email"],
+        "section_code": section_code,
+        "subsection_code": subsection_code,
+        "section_name": section["section_name"] if section else section_code,
+        "subsection_name": subsection["subsection_name"] if subsection else subsection_code,
+        "specialist_name": specialist_name,
+        "specialist_email": specialist_email,
+        "client_name": client_name,
+        "client_phone": client_phone,
+        "client_identifier": client_identifier,
+        "potential_amount": amount,
+        "adviser_note": adviser_note,
+        "policy_no": policy_no,
+    })
+    db.commit()
+    try:
+        safe_audit(db, user["email"], "CREATE", "tips", tip_id, {}, {
+            "client_name": client_name,
+            "section_code": section_code,
+            "subsection_code": subsection_code,
+            "specialist_email": specialist_email,
+        }, "Poradce založil nový TIP")
+    except Exception:
+        pass
+    return RedirectResponse("/hub/my-tips?created=1", status_code=303)
+
+
+@router.get("/hub/my-tips", response_class=HTMLResponse)
+def hub_my_tips_v085(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    section: str = "",
+    created: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tips_columns_v085_(db)
+    user = hub_user_context_v083_()
+    sections, _ = get_hub_taxonomy_v085_(db)
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE COALESCE(adviser_original_id, '') = :advisor_id
+    """
+    params = {"advisor_id": user["advisor_id"]}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(adviser_note, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+    if section:
+        sql += " AND upper(section_code) = upper(:section)"
+        params["section"] = section
+
+    sql += " ORDER BY created_at DESC LIMIT 300"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status ILIKE 'sjednáno') AS won,
+          COUNT(*) FILTER (WHERE status ILIKE 'storno') AS lost,
+          COUNT(*) FILTER (WHERE status NOT ILIKE 'sjednáno' AND status NOT ILIKE 'storno') AS open
+        FROM tips
+        WHERE COALESCE(adviser_original_id, '') = :advisor_id
+    """), {"advisor_id": user["advisor_id"]}).mappings().first()
+
+    return hub_render_v083_(request, "hub_my_tips.html", {
+        "active": "my_tips",
+        "rows": rows,
+        "stats": stats,
+        "sections": sections,
+        "q": q,
+        "status": status,
+        "section": section,
+        "created": created,
+    })
+
+
+@router.get("/api/hub/taxonomy-status")
+def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
+    sections, subsections = get_hub_taxonomy_v085_(db)
+    specialists = get_specialists_for_hub_v085_(db)
+    return {
+        "ok": True,
+        "version": "0.8.5-tip-admin-data-flow",
+        "sections_count": len(sections),
+        "subsections_count": len(subsections),
+        "specialists_count": len(specialists),
+        "sections": [dict(s) for s in sections],
+        "subsections": [dict(s) for s in subsections],
     }
 

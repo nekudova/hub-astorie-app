@@ -1,12 +1,12 @@
-HUB ASTORIE APP v0.8.4-hub-data-bridge
+HUB ASTORIE APP v0.8.5-tip-admin-data-flow
 
 Přidáno:
-- propojení /hub/partners na admin tabulku partners
-- propojení /hub/contacts na partner_contacts
-- propojení /hub/calculators na partner_links a commission_rates
-- propojení /hub/forms na partners
-- propojení /hub/help na partner_links
-- diagnostika /api/hub/data-status
+- Nový TIP načítá sekce/podsekce z administrace
+- Nový TIP načítá dostupné specialisty z administrace
+- Ukládání TIPu ukládá i sekci, podsekci a jejich názvy
+- Moje TIPy umí filtrovat podle sekce
+- Moje TIPy zobrazují sekci/podsekci u každého TIPu
+- diagnostika /api/hub/taxonomy-status
 
 Cíl:
-Uživatelská část už nesmí být jen placeholder. Má zobrazovat data z administrace.
+Poradenská část už vidí data založená v administraci.
