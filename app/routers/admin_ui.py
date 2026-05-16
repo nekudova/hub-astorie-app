@@ -1,3 +1,5 @@
+from decimal import Decimal
+import uuid
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import text
@@ -19,7 +21,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.8.2",
+        "version": "v0.8.3",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1808,7 +1810,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.8.2 Specialist Profile & Sections Fix
+# v0.8.3 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2007,7 +2009,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.8.2 Visible Sections Fix
+# v0.8.3 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2077,7 +2079,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.8.2-tips-loading-fix",
+        "version": "0.8.3-hub-routes-fix",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2091,58 +2093,12 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 
 
-# -------------------------------------------------------------------
-# v0.8 Adviser HUB modules
-# -------------------------------------------------------------------
-
-@router.get("/hub/calculators", response_class=HTMLResponse)
-def hub_calculators(request: Request):
-    return templates.TemplateResponse("hub_calculators.html", {
-        "request": request,
-        "version": "0.8.0"
-    })
-
-@router.get("/hub/partners", response_class=HTMLResponse)
-def hub_partners(request: Request):
-    return templates.TemplateResponse("hub_partners.html", {
-        "request": request,
-        "version": "0.8.0"
-    })
-
-@router.get("/hub/contacts", response_class=HTMLResponse)
-def hub_contacts(request: Request):
-    return templates.TemplateResponse("hub_contacts.html", {
-        "request": request,
-        "version": "0.8.0"
-    })
-
-@router.get("/hub/forms", response_class=HTMLResponse)
-def hub_forms(request: Request):
-    return templates.TemplateResponse("hub_forms.html", {
-        "request": request,
-        "version": "0.8.0"
-    })
-
-@router.get("/hub/stats", response_class=HTMLResponse)
-def hub_stats(request: Request):
-    return templates.TemplateResponse("hub_stats.html", {
-        "request": request,
-        "version": "0.8.0"
-    })
-
-@router.get("/hub/help", response_class=HTMLResponse)
-def hub_help(request: Request):
-    return templates.TemplateResponse("hub_help.html", {
-        "request": request,
-        "version": "0.8.0"
-    })
-
 
 
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.8.2 – bezpečné tabulky pro TIPy.
+    v0.8.3 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2201,9 +2157,246 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.8.2-tips-loading-fix",
+            "version": "0.8.3-hub-routes-fix",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.8.2-tips-loading-fix", "error": str(e)}
+        return {"ok": False, "version": "0.8.3-hub-routes-fix", "error": str(e)}
+
+
+
+
+# -------------------------------------------------------------------
+# v0.8.3 Adviser HUB routes fix
+# -------------------------------------------------------------------
+
+def hub_user_context_v083_():
+    return {
+        "advisor_id": "501",
+        "name": "Nekudová Dagmar",
+        "email": "nekudova@astorieas.cz",
+        "phone": "737 233 888",
+        "role": "IF",
+    }
+
+
+def hub_render_v083_(request: Request, template_name: str, context: dict):
+    base = {
+        "request": request,
+        "app_name": "HUB ASTORIE",
+        "version": "0.8.3-hub-routes-fix",
+        "user": hub_user_context_v083_(),
+    }
+    base.update(context)
+    return request.app.state.templates.TemplateResponse(template_name, base)
+
+
+def ensure_hub_taxonomy_v083_(db: Session):
+    try:
+        ensure_visible_hub_sections_(db)
+    except Exception:
+        try:
+            seed_default_hub_taxonomy_(db)
+        except Exception:
+            pass
+
+
+@router.get("/hub")
+def hub_home_v083():
+    return RedirectResponse("/hub/new-tip", status_code=302)
+
+
+@router.get("/hub/new-tip", response_class=HTMLResponse)
+def hub_new_tip_v083(request: Request, db: Session = Depends(get_db)):
+    ensure_user_hub_tables_v082_(db)
+    ensure_hub_taxonomy_v083_(db)
+
+    sections = db.execute(text("""
+        SELECT section_code, section_name, icon
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+
+    subsections = db.execute(text("""
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)).mappings().all()
+
+    try:
+        ensure_specialists_table_(db)
+        specialists = db.execute(text("""
+            SELECT *
+            FROM specialists
+            WHERE is_active = TRUE
+              AND available = TRUE
+            ORDER BY specialist_name, section_code, subsection_code
+            LIMIT 200
+        """)).mappings().all()
+    except Exception:
+        specialists = []
+
+    return hub_render_v083_(request, "hub_new_tip.html", {
+        "active": "new_tip",
+        "sections": sections,
+        "subsections": subsections,
+        "specialists": specialists,
+    })
+
+
+@router.post("/hub/tips/create")
+def hub_create_tip_v083(
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    specialist_email: str = Form(""),
+    specialist_name: str = Form(""),
+    client_name: str = Form(...),
+    client_phone: str = Form(""),
+    client_identifier: str = Form(""),
+    potential_amount: str = Form(""),
+    adviser_note: str = Form(""),
+    policy_no: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_user_hub_tables_v082_(db)
+    user = hub_user_context_v083_()
+
+    amount = None
+    if potential_amount:
+        try:
+            amount = Decimal(str(potential_amount).replace(" ", "").replace("Kč", "").replace(",", "."))
+        except Exception:
+            amount = None
+
+    tip_id = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO tips
+          (id, adviser_original_id, adviser_name, adviser_email, specialist_name, specialist_email,
+           client_name, client_phone, client_identifier, potential_amount, adviser_note, status, policy_no)
+        VALUES
+          (:id, :advisor_id, :advisor_name, :advisor_email, :specialist_name, :specialist_email,
+           :client_name, :client_phone, :client_identifier, :potential_amount, :adviser_note, 'Nový', :policy_no)
+    """), {
+        "id": tip_id,
+        "advisor_id": user["advisor_id"],
+        "advisor_name": user["name"],
+        "advisor_email": user["email"],
+        "specialist_name": specialist_name,
+        "specialist_email": specialist_email,
+        "client_name": client_name,
+        "client_phone": client_phone,
+        "client_identifier": client_identifier,
+        "potential_amount": amount,
+        "adviser_note": f"[Sekce: {section_code}; Podsekce: {subsection_code}]\n{adviser_note}",
+        "policy_no": policy_no,
+    })
+    db.commit()
+    return RedirectResponse("/hub/my-tips?created=1", status_code=303)
+
+
+@router.get("/hub/my-tips", response_class=HTMLResponse)
+def hub_my_tips_v083(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    created: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_user_hub_tables_v082_(db)
+    user = hub_user_context_v083_()
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE COALESCE(adviser_original_id, '') = :advisor_id
+    """
+    params = {"advisor_id": user["advisor_id"]}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(adviser_note, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    sql += " ORDER BY created_at DESC LIMIT 300"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status ILIKE 'sjednáno') AS won,
+          COUNT(*) FILTER (WHERE status ILIKE 'storno') AS lost,
+          COUNT(*) FILTER (WHERE status NOT ILIKE 'sjednáno' AND status NOT ILIKE 'storno') AS open
+        FROM tips
+        WHERE COALESCE(adviser_original_id, '') = :advisor_id
+    """), {"advisor_id": user["advisor_id"]}).mappings().first()
+
+    return hub_render_v083_(request, "hub_my_tips.html", {
+        "active": "my_tips",
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+        "created": created,
+    })
+
+
+@router.get("/hub/calculators", response_class=HTMLResponse)
+def hub_calculators_v083(request: Request, db: Session = Depends(get_db)):
+    return hub_render_v083_(request, "hub_calculators.html", {"active": "calculators", "links": [], "rates": [], "q": ""})
+
+
+@router.get("/hub/partners", response_class=HTMLResponse)
+def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: str = "contacts", db: Session = Depends(get_db)):
+    return hub_render_v083_(request, "hub_partners.html", {
+        "active": "partners", "partners": [], "partner": None,
+        "contacts": [], "links": [], "products": [], "q": q, "selected": selected, "tab": tab
+    })
+
+
+@router.get("/hub/contacts", response_class=HTMLResponse)
+def hub_contacts_v083(request: Request, q: str = "", db: Session = Depends(get_db)):
+    return hub_render_v083_(request, "hub_contacts.html", {"active": "contacts", "rows": [], "q": q})
+
+
+@router.get("/hub/forms", response_class=HTMLResponse)
+def hub_forms_v083(request: Request, db: Session = Depends(get_db)):
+    return hub_render_v083_(request, "hub_forms.html", {"active": "forms", "partners": []})
+
+
+@router.get("/hub/stats", response_class=HTMLResponse)
+def hub_stats_v083(request: Request, db: Session = Depends(get_db)):
+    ensure_user_hub_tables_v082_(db)
+    user = hub_user_context_v083_()
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status ILIKE 'sjednáno') AS won,
+          COUNT(*) FILTER (WHERE status ILIKE 'storno') AS lost,
+          COUNT(*) FILTER (WHERE status NOT ILIKE 'sjednáno' AND status NOT ILIKE 'storno') AS open,
+          COALESCE(SUM(final_volume), 0) AS final_volume,
+          COALESCE(SUM(potential_amount), 0) AS potential_amount
+        FROM tips
+        WHERE adviser_original_id = :advisor_id
+    """), {"advisor_id": user["advisor_id"]}).mappings().first()
+
+    return hub_render_v083_(request, "hub_stats.html", {"active": "stats", "stats": stats, "by_specialist": []})
+
+
+@router.get("/hub/help", response_class=HTMLResponse)
+def hub_help_v083(request: Request):
+    return hub_render_v083_(request, "hub_help.html", {"active": "help"})
+

@@ -1,8 +1,8 @@
-HUB ASTORIE APP v0.8.2-tips-loading-fix
+HUB ASTORIE APP v0.8.3-hub-routes-fix
 
 Oprava:
-- bezpečná tabulka tips
-- doplnění chybějících sloupců tips
-- indexy pro rychlé načítání TIPů
-- diagnostika /api/tips/status
-- zachované HUB moduly
+- odstraněny špatné v0.8 routy s neexistující proměnnou templates
+- znovu bezpečně napojeno /hub/new-tip
+- znovu bezpečně napojeno /hub/my-tips
+- zachované /hub/calculators, /hub/partners, /hub/contacts, /hub/forms, /hub/stats, /hub/help
+- bezpečná tabulka tips z v0.8.2 zachována
