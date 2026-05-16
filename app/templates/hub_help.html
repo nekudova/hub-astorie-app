@@ -1,24 +1,27 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-    <h1>Nápověda</h1>
-    <p class="page-subtitle">Metodiky, návody, onboarding a FAQ.</p>
+  <h1>Nápověda</h1>
+  <p class="page-subtitle">První datové napojení nápovědy na odkazy/metodiky z administrace.</p>
 
-    <div class="hub-grid three">
-        <div class="dashboard-box">
-            <h3>Připraveno pro další vývoj</h3>
-            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
-        </div>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat v odkazech, metodikách a nápovědě…">
+    <button class="btn orange">Hledat</button>
+  </form>
 
-        <div class="dashboard-box">
-            <h3>v0.8 architektura</h3>
-            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
-        </div>
-
-        <div class="dashboard-box">
-            <h3>Stabilní migrace</h3>
-            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
-        </div>
-    </div>
+  <div class="portal-grid">
+    {% for l in links %}
+      <div class="portal-card">
+        <span class="portal-letter">?</span>
+        <h3>{{ l.title }}</h3>
+        <p>{{ l.category or '' }}</p>
+        <p class="muted">{{ l.note or '' }}</p>
+        <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
+      </div>
+    {% else %}
+      <div class="empty-state">Zatím nejsou vložené žádné odkazy/metodiky pro nápovědu.</div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

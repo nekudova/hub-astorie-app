@@ -1,24 +1,48 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-    <h1>Formuláře</h1>
-    <p class="page-subtitle">Výpovědi, retenční formuláře a PDF generátory.</p>
+  <h1>Formuláře</h1>
+  <p class="page-subtitle">Formuláře používají data partnerů z administrace. Základ pro výpovědi a další dokumenty.</p>
 
-    <div class="hub-grid three">
-        <div class="dashboard-box">
-            <h3>Připraveno pro další vývoj</h3>
-            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
-        </div>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera pro formulář…">
+    <button class="btn orange">Hledat</button>
+  </form>
 
-        <div class="dashboard-box">
-            <h3>v0.8 architektura</h3>
-            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
-        </div>
-
-        <div class="dashboard-box">
-            <h3>Stabilní migrace</h3>
-            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
-        </div>
+  <div class="portal-grid">
+    <div class="portal-card">
+      <span class="portal-letter">V</span>
+      <h3>Výpověď pojistné smlouvy</h3>
+      <p>Partner se vybere z číselníku a systém použije IČO, DS, e-mail a adresu.</p>
+      <a class="btn dark" href="/admin/terminations">Otevřít modul</a>
     </div>
+    <div class="portal-card">
+      <span class="portal-letter">P</span>
+      <h3>Plná moc FO / PO</h3>
+      <p>Připraveno pro další fázi generování dokumentů.</p>
+      <a class="btn dark" href="/admin/form-bridge">Napojení formulářů</a>
+    </div>
+  </div>
+
+  <h2>Partneři připravení pro formuláře</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Partner</th><th>IČO</th><th>Datová schránka</th><th>E-mail</th><th>Adresa</th></tr></thead>
+      <tbody>
+        {% for p in partners %}
+        <tr>
+          <td><strong>{{ p.name }}</strong><br><span class="muted">{{ p.partner_code }}</span></td>
+          <td>{{ p.ico or '' }}</td>
+          <td>{{ p.data_box or '' }}</td>
+          <td>{{ p.registry_email or '' }}</td>
+          <td>{{ p.address_full or p.street or '' }} {{ p.city or '' }} {{ p.zip_code or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Zatím není žádný aktivní partner připravený pro formuláře.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

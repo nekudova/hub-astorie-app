@@ -21,7 +21,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.8.3",
+        "version": "v0.8.4",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1810,7 +1810,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.8.3 Specialist Profile & Sections Fix
+# v0.8.4 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2009,7 +2009,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.8.3 Visible Sections Fix
+# v0.8.4 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2079,7 +2079,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.8.3-hub-routes-fix",
+        "version": "0.8.4-hub-data-bridge",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2098,7 +2098,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.8.3 – bezpečné tabulky pro TIPy.
+    v0.8.4 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2157,18 +2157,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.8.3-hub-routes-fix",
+            "version": "0.8.4-hub-data-bridge",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.8.3-hub-routes-fix", "error": str(e)}
+        return {"ok": False, "version": "0.8.4-hub-data-bridge", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.8.3 Adviser HUB routes fix
+# v0.8.4 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2185,7 +2185,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.8.3-hub-routes-fix",
+        "version": "0.8.4-hub-data-bridge",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2354,12 +2354,12 @@ def hub_my_tips_v083(
     })
 
 
-@router.get("/hub/calculators", response_class=HTMLResponse)
+@router.get("/hub/calculators-old-v083", response_class=HTMLResponse)
 def hub_calculators_v083(request: Request, db: Session = Depends(get_db)):
     return hub_render_v083_(request, "hub_calculators.html", {"active": "calculators", "links": [], "rates": [], "q": ""})
 
 
-@router.get("/hub/partners", response_class=HTMLResponse)
+@router.get("/hub/partners-old-v083", response_class=HTMLResponse)
 def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: str = "contacts", db: Session = Depends(get_db)):
     return hub_render_v083_(request, "hub_partners.html", {
         "active": "partners", "partners": [], "partner": None,
@@ -2367,17 +2367,17 @@ def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: st
     })
 
 
-@router.get("/hub/contacts", response_class=HTMLResponse)
+@router.get("/hub/contacts-old-v083", response_class=HTMLResponse)
 def hub_contacts_v083(request: Request, q: str = "", db: Session = Depends(get_db)):
     return hub_render_v083_(request, "hub_contacts.html", {"active": "contacts", "rows": [], "q": q})
 
 
-@router.get("/hub/forms", response_class=HTMLResponse)
+@router.get("/hub/forms-old-v083", response_class=HTMLResponse)
 def hub_forms_v083(request: Request, db: Session = Depends(get_db)):
     return hub_render_v083_(request, "hub_forms.html", {"active": "forms", "partners": []})
 
 
-@router.get("/hub/stats", response_class=HTMLResponse)
+@router.get("/hub/stats-old-v083", response_class=HTMLResponse)
 def hub_stats_v083(request: Request, db: Session = Depends(get_db)):
     ensure_user_hub_tables_v082_(db)
     user = hub_user_context_v083_()
@@ -2396,7 +2396,323 @@ def hub_stats_v083(request: Request, db: Session = Depends(get_db)):
     return hub_render_v083_(request, "hub_stats.html", {"active": "stats", "stats": stats, "by_specialist": []})
 
 
-@router.get("/hub/help", response_class=HTMLResponse)
+@router.get("/hub/help-old-v083", response_class=HTMLResponse)
 def hub_help_v083(request: Request):
     return hub_render_v083_(request, "hub_help.html", {"active": "help"})
+
+
+
+
+
+# -------------------------------------------------------------------
+# v0.8.4 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# -------------------------------------------------------------------
+
+def table_exists_v084_(db: Session, table_name: str) -> bool:
+    try:
+        return bool(db.execute(text("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = :table_name
+            )
+        """), {"table_name": table_name}).scalar())
+    except Exception:
+        return False
+
+
+def column_exists_v084_(db: Session, table_name: str, column_name: str) -> bool:
+    try:
+        return bool(db.execute(text("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = :table_name
+                  AND column_name = :column_name
+            )
+        """), {"table_name": table_name, "column_name": column_name}).scalar())
+    except Exception:
+        return False
+
+
+def fetch_all_safe_v084_(db: Session, sql: str, params: dict | None = None):
+    try:
+        return db.execute(text(sql), params or {}).mappings().all()
+    except Exception:
+        return []
+
+
+def fetch_one_safe_v084_(db: Session, sql: str, params: dict | None = None):
+    try:
+        return db.execute(text(sql), params or {}).mappings().first()
+    except Exception:
+        return None
+
+
+@router.get("/hub/partners", response_class=HTMLResponse)
+def hub_partners_v084(
+    request: Request,
+    q: str = "",
+    selected: str = "",
+    tab: str = "contacts",
+    db: Session = Depends(get_db),
+):
+    # Partner data z admin číselníku – uživatelský HUB už neukazuje placeholder.
+    partners = []
+    partner = None
+    contacts = []
+    links = []
+    products = []
+
+    if table_exists_v084_(db, "partners"):
+        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        params = {}
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(partner_code, '')) LIKE :q OR
+                lower(COALESCE(name, '')) LIKE :q OR
+                lower(COALESCE(ico, '')) LIKE :q OR
+                lower(COALESCE(data_box, '')) LIKE :q OR
+                lower(COALESCE(registry_email, '')) LIKE :q OR
+                lower(COALESCE(city, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        partners = fetch_all_safe_v084_(db, f"""
+            SELECT *
+            FROM partners
+            {where}
+            ORDER BY name
+            LIMIT 500
+        """, params)
+
+        if not selected and partners:
+            selected = partners[0]["partner_code"]
+
+        if selected:
+            partner = fetch_one_safe_v084_(db, """
+                SELECT *
+                FROM partners
+                WHERE upper(partner_code) = upper(:code)
+                LIMIT 1
+            """, {"code": selected})
+
+    if selected and table_exists_v084_(db, "partner_contacts"):
+        contacts = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM partner_contacts
+            WHERE upper(partner_code) = upper(:code)
+              AND COALESCE(is_active, TRUE) = TRUE
+            ORDER BY COALESCE(is_vip, FALSE) DESC, COALESCE(is_top, FALSE) DESC, full_name
+            LIMIT 300
+        """, {"code": selected})
+
+    if selected and table_exists_v084_(db, "partner_links"):
+        links = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM partner_links
+            WHERE upper(partner_code) = upper(:code)
+              AND COALESCE(is_active, TRUE) = TRUE
+            ORDER BY category, title
+            LIMIT 300
+        """, {"code": selected})
+
+    if selected and table_exists_v084_(db, "partner_products"):
+        products = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM partner_products
+            WHERE upper(partner_code) = upper(:code)
+              AND COALESCE(is_active, TRUE) = TRUE
+            ORDER BY area, subarea, product_name
+            LIMIT 300
+        """, {"code": selected})
+
+    return hub_render_v083_(request, "hub_partners.html", {
+        "active": "partners",
+        "partners": partners,
+        "partner": partner,
+        "contacts": contacts,
+        "links": links,
+        "products": products,
+        "q": q,
+        "selected": selected or "",
+        "tab": tab,
+    })
+
+
+@router.get("/hub/contacts", response_class=HTMLResponse)
+def hub_contacts_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
+    rows = []
+    if table_exists_v084_(db, "partner_contacts"):
+        params = {}
+        where = "WHERE COALESCE(c.is_active, TRUE) = TRUE"
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(c.full_name, '')) LIKE :q OR
+                lower(COALESCE(c.email, '')) LIKE :q OR
+                lower(COALESCE(c.phone, '')) LIKE :q OR
+                lower(COALESCE(c.role, '')) LIKE :q OR
+                lower(COALESCE(c.territory, '')) LIKE :q OR
+                lower(COALESCE(p.name, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        rows = fetch_all_safe_v084_(db, f"""
+            SELECT c.*, p.name AS partner_name
+            FROM partner_contacts c
+            LEFT JOIN partners p ON p.partner_code = c.partner_code
+            {where}
+            ORDER BY COALESCE(c.is_vip, FALSE) DESC, p.name, c.full_name
+            LIMIT 500
+        """, params)
+
+    return hub_render_v083_(request, "hub_contacts.html", {
+        "active": "contacts",
+        "rows": rows,
+        "q": q,
+    })
+
+
+@router.get("/hub/calculators", response_class=HTMLResponse)
+def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
+    links = []
+    rates = []
+
+    if table_exists_v084_(db, "partner_links"):
+        params = {}
+        where = """
+            WHERE COALESCE(l.is_active, TRUE) = TRUE
+              AND (
+                lower(COALESCE(l.category, '')) LIKE '%kalk%'
+                OR lower(COALESCE(l.title, '')) LIKE '%kalk%'
+                OR lower(COALESCE(l.note, '')) LIKE '%kalk%'
+                OR lower(COALESCE(l.url, '')) LIKE '%kalk%'
+              )
+        """
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(l.title, '')) LIKE :q OR
+                lower(COALESCE(p.name, '')) LIKE :q OR
+                lower(COALESCE(l.category, '')) LIKE :q OR
+                lower(COALESCE(l.url, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        links = fetch_all_safe_v084_(db, f"""
+            SELECT l.*, p.name AS partner_name
+            FROM partner_links l
+            LEFT JOIN partners p ON p.partner_code = l.partner_code
+            {where}
+            ORDER BY COALESCE(p.name, ''), l.title
+            LIMIT 300
+        """, params)
+
+    if table_exists_v084_(db, "commission_rates"):
+        rates = fetch_all_safe_v084_(db, """
+            SELECT *
+            FROM commission_rates
+            WHERE COALESCE(is_active, TRUE) = TRUE
+            ORDER BY partner_name, section_code, subsection_code
+            LIMIT 300
+        """)
+
+    return hub_render_v083_(request, "hub_calculators.html", {
+        "active": "calculators",
+        "links": links,
+        "rates": rates,
+        "q": q,
+    })
+
+
+@router.get("/hub/forms", response_class=HTMLResponse)
+def hub_forms_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
+    partners = []
+    if table_exists_v084_(db, "partners"):
+        params = {}
+        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(name, '')) LIKE :q OR
+                lower(COALESCE(partner_code, '')) LIKE :q OR
+                lower(COALESCE(ico, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        partners = fetch_all_safe_v084_(db, f"""
+            SELECT partner_code, name, ico, data_box, registry_email, address_full, street, city, zip_code
+            FROM partners
+            {where}
+            ORDER BY name
+            LIMIT 500
+        """, params)
+
+    return hub_render_v083_(request, "hub_forms.html", {
+        "active": "forms",
+        "partners": partners,
+        "q": q,
+    })
+
+
+@router.get("/hub/help", response_class=HTMLResponse)
+def hub_help_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
+    # V této fázi použijeme FAQ/odkazy z partnerů jako první datový základ nápovědy.
+    faqs = []
+    links = []
+
+    if table_exists_v084_(db, "partner_links"):
+        params = {}
+        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(title, '')) LIKE :q OR
+                lower(COALESCE(note, '')) LIKE :q OR
+                lower(COALESCE(category, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        links = fetch_all_safe_v084_(db, f"""
+            SELECT *
+            FROM partner_links
+            {where}
+            ORDER BY category, title
+            LIMIT 200
+        """, params)
+
+    return hub_render_v083_(request, "hub_help.html", {
+        "active": "help",
+        "q": q,
+        "faqs": faqs,
+        "links": links,
+    })
+
+
+@router.get("/api/hub/data-status")
+def api_hub_data_status_v084(db: Session = Depends(get_db)):
+    tables = ["partners", "partner_contacts", "partner_links", "partner_products", "hub_sections", "hub_subsections", "specialists", "tips"]
+    result = {}
+    for t in tables:
+        exists = table_exists_v084_(db, t)
+        count = None
+        error = None
+        if exists:
+            try:
+                count = db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
+            except Exception as e:
+                error = str(e)
+        result[t] = {"exists": exists, "count": count, "error": error}
+
+    return {
+        "ok": True,
+        "version": "0.8.4-hub-data-bridge",
+        "tables": result,
+    }
 

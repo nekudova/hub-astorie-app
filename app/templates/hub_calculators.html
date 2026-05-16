@@ -1,24 +1,50 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-    <h1>Kalkulačky</h1>
-    <p class="page-subtitle">Rozcestník kalkulaček partnerů a ASTORIE.</p>
+  <h1>Kalkulačky</h1>
+  <p class="page-subtitle">Načítá odkazy typu kalkulačka z administrace odkazů partnerů.</p>
 
-    <div class="hub-grid three">
-        <div class="dashboard-box">
-            <h3>Připraveno pro další vývoj</h3>
-            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
-        </div>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat kalkulačku, partnera, kategorii…">
+    <button class="btn orange">Hledat</button>
+  </form>
 
-        <div class="dashboard-box">
-            <h3>v0.8 architektura</h3>
-            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
-        </div>
+  <div class="portal-grid">
+    {% for l in links %}
+      <div class="portal-card">
+        <span class="portal-letter">{{ (l.partner_name or l.partner_code or 'A')[0] }}</span>
+        <h3>{{ l.title }}</h3>
+        <p>{{ l.partner_name or l.partner_code }}</p>
+        <p class="muted">{{ l.category or '' }}</p>
+        <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
+      </div>
+    {% else %}
+      <div class="empty-state">Zatím nejsou vložené odkazy na kalkulačky. V adminu přidejte odkaz s kategorií/názvem obsahujícím „kalkulačka“.</div>
+    {% endfor %}
+  </div>
+</div>
 
-        <div class="dashboard-box">
-            <h3>Stabilní migrace</h3>
-            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
-        </div>
-    </div>
+<div class="hub-card">
+  <h2>Sazebník</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Sekce</th><th>Podsekce</th><th>Partner</th><th>Typ</th><th>Produkt</th><th>Sazba</th></tr></thead>
+      <tbody>
+        {% for r in rates %}
+        <tr>
+          <td>{{ r.section_code }}</td>
+          <td>{{ r.subsection_code }}</td>
+          <td>{{ r.partner_name }}</td>
+          <td>{{ r.base_type or '' }}</td>
+          <td>{{ r.product_type or '' }}</td>
+          <td>{{ r.rate_percent or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">Sazebník zatím není naplněn.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

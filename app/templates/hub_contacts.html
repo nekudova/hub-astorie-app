@@ -1,24 +1,27 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-    <h1>Kontakty</h1>
-    <p class="page-subtitle">Centrální kontaktní databáze specialistů a partnerů.</p>
+  <h1>Kontakty</h1>
+  <p class="page-subtitle">Kontakty se načítají z administrace kontaktů partnerů.</p>
 
-    <div class="hub-grid three">
-        <div class="dashboard-box">
-            <h3>Připraveno pro další vývoj</h3>
-            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
-        </div>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat jméno, partnera, telefon, e-mail, region…">
+    <button class="btn orange">Hledat</button>
+  </form>
 
-        <div class="dashboard-box">
-            <h3>v0.8 architektura</h3>
-            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
-        </div>
-
-        <div class="dashboard-box">
-            <h3>Stabilní migrace</h3>
-            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
-        </div>
-    </div>
+  <div class="contact-grid">
+    {% for c in rows %}
+      <div class="contact-card">
+        <h3>{{ c.full_name }}</h3>
+        <p><strong>{{ c.partner_name or c.partner_code }}</strong></p>
+        <p>{{ c.role or c.contact_type or '' }}{% if c.territory %} · {{ c.territory }}{% endif %}</p>
+        <p>{{ c.phone or '' }}<br>{{ c.email or '' }}</p>
+        {% if c.is_vip or c.is_top %}<span class="status ok">TOP / VIP</span>{% endif %}
+      </div>
+    {% else %}
+      <div class="empty-state">Zatím nejsou zadané žádné kontakty nebo neodpovídají filtru.</div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

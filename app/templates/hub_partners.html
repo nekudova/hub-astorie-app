@@ -1,24 +1,76 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-    <h1>Partneři</h1>
-    <p class="page-subtitle">Vyhledávání partnerů, kontaktů, produktů a odkazů.</p>
+  <h1>Partneři</h1>
+  <p class="page-subtitle">Data jsou načtená z administrace partnerů. Vyberte partnera vlevo a zobrazí se detail, kontakty, odkazy a produkty.</p>
 
-    <div class="hub-grid three">
-        <div class="dashboard-box">
-            <h3>Připraveno pro další vývoj</h3>
-            <p>Tento modul je nyní součástí HUBu a má vlastní routu.</p>
-        </div>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, kód, IČO, DS, e-mail…">
+    <button class="btn orange">Hledat</button>
+  </form>
 
-        <div class="dashboard-box">
-            <h3>v0.8 architektura</h3>
-            <p>Napojení na databázi, fulltext a workflow bude následovat.</p>
-        </div>
-
-        <div class="dashboard-box">
-            <h3>Stabilní migrace</h3>
-            <p>Modul je připraven bez zásahu do stávajících funkcí.</p>
-        </div>
+  <div class="partner-layout">
+    <div class="partner-list">
+      {% for p in partners %}
+        <a class="{{ 'active' if selected == p.partner_code else '' }}" href="/hub/partners?selected={{ p.partner_code }}&q={{ q }}">
+          <strong>{{ p.name }}</strong>
+          <span>{{ p.partner_code }}{% if p.ico %} · IČO {{ p.ico }}{% endif %}</span>
+        </a>
+      {% else %}
+        <div class="empty-state">V adminu zatím není žádný aktivní partner nebo partner neodpovídá filtru.</div>
+      {% endfor %}
     </div>
+
+    <div class="partner-detail">
+      {% if partner %}
+        <h2>{{ partner.name }}</h2>
+        <p><strong>Kód:</strong> {{ partner.partner_code }} · <strong>IČO:</strong> {{ partner.ico or '—' }} · <strong>DS:</strong> {{ partner.data_box or '—' }}</p>
+        <p><strong>E-mail / podatelna:</strong> {{ partner.registry_email or '—' }}</p>
+        <p><strong>Adresa:</strong> {{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</p>
+
+        <div class="tab-row">
+          <a class="{{ 'active' if tab == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts">Kontakty</a>
+          <a class="{{ 'active' if tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links">Odkazy</a>
+          <a class="{{ 'active' if tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products">Produkty</a>
+        </div>
+
+        {% if tab == 'links' %}
+          {% for l in links %}
+            <div class="detail-item">
+              <strong>{{ l.title }}</strong><br>
+              <span class="muted">{{ l.category or '' }}</span><br>
+              <a href="{{ l.url }}" target="_blank">{{ l.url }}</a>
+            </div>
+          {% else %}
+            <div class="empty-state">U partnera nejsou zadané odkazy.</div>
+          {% endfor %}
+        {% elif tab == 'products' %}
+          {% for pr in products %}
+            <div class="detail-item">
+              <strong>{{ pr.product_name }}</strong><br>
+              {{ pr.area or '' }}{% if pr.subarea %} / {{ pr.subarea }}{% endif %}<br>
+              <span class="muted">{{ pr.note or '' }}</span>
+            </div>
+          {% else %}
+            <div class="empty-state">U partnera nejsou zadané produkty.</div>
+          {% endfor %}
+        {% else %}
+          {% for c in contacts %}
+            <div class="detail-item">
+              <strong>{{ c.full_name }}</strong>
+              {% if c.is_vip or c.is_top %}<span class="status ok">TOP / VIP</span>{% endif %}<br>
+              {{ c.role or c.contact_type or '' }}{% if c.territory %} · {{ c.territory }}{% endif %}<br>
+              {{ c.phone or '' }}{% if c.email %} · {{ c.email }}{% endif %}
+            </div>
+          {% else %}
+            <div class="empty-state">U partnera nejsou zadané kontakty.</div>
+          {% endfor %}
+        {% endif %}
+      {% else %}
+        <div class="empty-state">Vyberte partnera ze seznamu.</div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

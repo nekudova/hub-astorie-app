@@ -1,8 +1,12 @@
-HUB ASTORIE APP v0.8.3-hub-routes-fix
+HUB ASTORIE APP v0.8.4-hub-data-bridge
 
-Oprava:
-- odstraněny špatné v0.8 routy s neexistující proměnnou templates
-- znovu bezpečně napojeno /hub/new-tip
-- znovu bezpečně napojeno /hub/my-tips
-- zachované /hub/calculators, /hub/partners, /hub/contacts, /hub/forms, /hub/stats, /hub/help
-- bezpečná tabulka tips z v0.8.2 zachována
+Přidáno:
+- propojení /hub/partners na admin tabulku partners
+- propojení /hub/contacts na partner_contacts
+- propojení /hub/calculators na partner_links a commission_rates
+- propojení /hub/forms na partners
+- propojení /hub/help na partner_links
+- diagnostika /api/hub/data-status
+
+Cíl:
+Uživatelská část už nesmí být jen placeholder. Má zobrazovat data z administrace.
