@@ -27,7 +27,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.0.1",
+        "version": "v1.0.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1816,7 +1816,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v1.0.1 Specialist Profile & Sections Fix
+# v1.0.2 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2015,7 +2015,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v1.0.1 Visible Sections Fix
+# v1.0.2 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2085,7 +2085,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2104,7 +2104,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v1.0.1 – bezpečné tabulky pro TIPy.
+    v1.0.2 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2163,18 +2163,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "1.0.1-import-relationship-fix",
+            "version": "1.0.2-uuid-relationship-fix",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "1.0.1-import-relationship-fix", "error": str(e)}
+        return {"ok": False, "version": "1.0.2-uuid-relationship-fix", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v1.0.1 Adviser HUB routes fix
+# v1.0.2 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2191,7 +2191,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2411,7 +2411,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v1.0.2 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2718,7 +2718,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "tables": result,
     }
 
@@ -2726,7 +2726,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v1.0.2 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2958,7 +2958,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -2969,14 +2969,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 Partner autocomplete & Forms data source
+# v1.0.2 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "1.0.1-import-relationship-fix", "items": []}
+        return {"ok": True, "version": "1.0.2-uuid-relationship-fix", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3007,7 +3007,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "items": [dict(r) for r in rows],
     }
 
@@ -3016,7 +3016,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "1.0.1-import-relationship-fix", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "1.0.2-uuid-relationship-fix", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3026,7 +3026,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "1.0.1-import-relationship-fix", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "1.0.2-uuid-relationship-fix", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3064,7 +3064,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3080,7 +3080,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3140,7 +3140,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v1.0.1 Operational TIP Workflow
+# v1.0.2 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3314,7 +3314,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
     })
 
 
@@ -3334,7 +3334,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
     })
 
 
@@ -3561,7 +3561,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
     })
 
 
@@ -3677,7 +3677,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "stats": dict(stats or {}),
     }
 
@@ -3686,7 +3686,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v1.0.2 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3845,7 +3845,7 @@ def hub_tip_unified_specialist_update_v091(
 
 
 # -------------------------------------------------------------------
-# v1.0.1 XLSX importer – import přímo ze staženého Google Sheetu
+# v1.0.2 XLSX importer – import přímo ze staženého Google Sheetu
 # -------------------------------------------------------------------
 
 def xlsx_cell_to_str_v093_(value):
@@ -3941,7 +3941,7 @@ def xlsx_pick_v093_(row, *keys, default=""):
 def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     """
     Bezpečný UPSERT pro XLSX import.
-    v1.0.1: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
+    v1.0.2: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
     nemají vždy serverový DEFAULT pro id a raw SQL nepoužije SQLAlchemy default.
     """
     uuid_tables = {
@@ -3960,7 +3960,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     if table in uuid_tables and "id" not in data:
         data["id"] = str(uuid.uuid4())
 
-    # v1.0.1: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
+    # v1.0.2: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
     # Proto timestampy doplňujeme přímo do importních dat.
     timestamp_tables = {
         "users",
@@ -3983,7 +3983,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
         if "updated_at" not in data:
             data["updated_at"] = datetime.utcnow()
 
-    # v1.0.1: tabulka subsections má v produkci povinný section_id.
+    # v1.0.2: tabulka subsections má v produkci povinný section_id.
     # Excel/import pracuje se section_code, proto ID dohledáme před UPSERTem.
     if table == "subsections" and "section_id" not in data:
         section_code = str(data.get("section_code") or "").strip()
@@ -4156,7 +4156,7 @@ def import_hub_xlsx_data_v093_(db, wb, update_existing=False):
             result["errors"].append(f"Podsekce: {exc}")
 
     # Specialisté
-    # v1.0.1: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
+    # v1.0.2: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
     for row in xlsx_rows_v093_(wb, "Specialisté"):
         result["specialists"]["rows"] += 1
         try:
@@ -4405,7 +4405,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
     })
 
 
@@ -4422,7 +4422,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "1.0.1-import-relationship-fix",
+            "version": "1.0.2-uuid-relationship-fix",
         })
 
     raw = await file.read()
@@ -4437,7 +4437,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
     })
 
 
@@ -4445,7 +4445,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -4468,7 +4468,7 @@ def api_import_hub_xlsx_expected_sheets_v093():
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import hardening endpoints
+# v1.0.2 import hardening endpoints
 # - chybějící /api/admin/summary
 # - aliasy pro import route
 # - JSON upload endpoint
@@ -4529,7 +4529,7 @@ def api_admin_summary_v094(db: Session = Depends(get_db)):
     ]
     return {
         "ok": True,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
         "counts": {t: safe_count_table_v094_(db, t) for t in tables},
     }
@@ -4551,14 +4551,14 @@ def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
         """)
         return {
             "ok": True,
-            "version": "1.0.1-import-relationship-fix",
+            "version": "1.0.2-uuid-relationship-fix",
             "running": False,
             "last_job": dict(last_job) if last_job else None,
         }
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.0.1-import-relationship-fix",
+            "version": "1.0.2-uuid-relationship-fix",
             "running": False,
             "error": str(exc),
         }
@@ -4581,12 +4581,12 @@ async def api_import_hub_xlsx_upload_v094(
         result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
         result["ok"] = len(result.get("errors", [])) == 0
         result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
-        result["version"] = "1.0.1-import-relationship-fix"
+        result["version"] = "1.0.2-uuid-relationship-fix"
         return result
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.0.1-import-relationship-fix",
+            "version": "1.0.2-uuid-relationship-fix",
             "errors": [str(exc)],
         }
 
@@ -4626,7 +4626,7 @@ def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import transaction fix
+# v1.0.2 import transaction fix
 # Oprava: current transaction is aborted před CREATE UNIQUE INDEX
 # -------------------------------------------------------------------
 
@@ -4717,7 +4717,7 @@ ensure_xlsx_import_structures_v093_ = ensure_xlsx_import_structures_v095_
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import index fix
+# v1.0.2 import index fix
 # Definitivní oprava: odstranění inline CREATE UNIQUE INDEX z importní transakce
 # a bezpečné čištění transakce před vlastním importem.
 # -------------------------------------------------------------------
@@ -4870,7 +4870,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
     errors = ensure_xlsx_import_structures_v096_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Importní struktury byly zkontrolovány a opraveny. Původní Google Sheet se nemění.",
         "errors": errors,
     }
@@ -4880,7 +4880,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import user id fix
+# v1.0.2 import user id fix
 # Oprava: users.id nemá serverový default a raw SQL insert bez id padal.
 # -------------------------------------------------------------------
 
@@ -4935,7 +4935,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
     errors = repair_uuid_defaults_v097_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Opraveny UUID defaulty pro users a další hlavní tabulky. Import zároveň posílá id explicitně.",
         "errors": errors,
     }
@@ -4944,7 +4944,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import timestamps fix
+# v1.0.2 import timestamps fix
 # Oprava: users.created_at / users.updated_at NOT NULL při importu poradců
 # -------------------------------------------------------------------
 
@@ -4980,7 +4980,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
     errors = repair_users_timestamps_v098_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Opraveny created_at/updated_at defaulty pro users. Import poradců nyní posílá timestampy explicitně.",
         "errors": errors,
     }
@@ -4988,7 +4988,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import schema canonical fix
+# v1.0.2 import schema canonical fix
 # Profesionální oprava: sjednocení schématu všech importních tabulek před importem.
 # -------------------------------------------------------------------
 
@@ -5232,7 +5232,7 @@ def api_import_repair_all_v099(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Kompletní oprava importního schématu dokončena. Opraveny created_at/updated_at a chybějící importní sloupce.",
         "errors": errors,
     }
@@ -5254,7 +5254,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.0.1 full import schema fix
+# v1.0.2 full import schema fix
 # Jednorázová profesionální oprava importního schématu:
 # doplní přesně ty sloupce, které import reálně používá.
 # -------------------------------------------------------------------
@@ -5594,7 +5594,7 @@ def api_import_repair_database_v100(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Databáze byla sjednocena pro import XLSX. Doplněny sloupce sections/subsections/partners a další importní tabulky.",
         "errors": errors,
     }
@@ -5625,7 +5625,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.0.1 import relationship fix
+# v1.0.2 import relationship fix
 # Oprava vazeb: subsections.section_id se dopočítá ze sections.section_code.
 # Přidán preflight, který odhalí základní problémy před importem.
 # -------------------------------------------------------------------
@@ -5720,7 +5720,7 @@ def v101_fix_relationships(db: Session):
                 SET section_id = s.id
                 FROM sections s
                 WHERE ss.section_code = s.section_code
-                  AND (ss.section_id IS NULL OR ss.section_id = '')
+                  AND ss.section_id IS NULL
             """)
             if err:
                 errors.append(f"subsections section_id update: {err}")
@@ -5753,7 +5753,7 @@ def v101_preflight_database(db: Session):
             missing = db.execute(text("""
                 SELECT COUNT(*)
                 FROM subsections
-                WHERE section_id IS NULL OR section_id = ''
+                WHERE section_id IS NULL
             """)).scalar()
             db.commit()
             if int(missing or 0) > 0:
@@ -5774,7 +5774,7 @@ def api_import_repair_relationships_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Opraveny vazby pro import. Subsections.section_id se doplňuje podle sections.section_code.",
         "errors": errors,
         "preflight_issues": issues,
@@ -5787,7 +5787,7 @@ def api_import_preflight_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.0.1-import-relationship-fix",
+        "version": "1.0.2-uuid-relationship-fix",
         "message": "Předimportní kontrola databáze.",
         "errors": errors,
         "issues": issues,
@@ -5807,4 +5807,64 @@ try:
     import_hub_xlsx_data_v093_ = import_hub_xlsx_data_v101_
 except Exception:
     pass
+
+
+
+# -------------------------------------------------------------------
+# v1.0.2 uuid relationship fix endpoint
+# -------------------------------------------------------------------
+
+@router.get("/api/import/hub-xlsx/repair-uuid-relationships")
+def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
+    errors = []
+    try:
+        if globals().get("v101_fix_relationships"):
+            res = v101_fix_relationships(db)
+            if isinstance(res, list):
+                errors.extend([str(x) for x in res if x])
+    except Exception as exc:
+        errors.append(f"v101_fix_relationships: {exc}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    try:
+        db.rollback()
+        db.execute(text("""
+            UPDATE subsections ss
+            SET section_id = s.id
+            FROM sections s
+            WHERE ss.section_code = s.section_code
+              AND ss.section_id IS NULL
+        """))
+        db.commit()
+    except Exception as exc:
+        errors.append(f"subsections UUID section_id update: {exc}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    issues = []
+    try:
+        db.rollback()
+        missing = db.execute(text("SELECT COUNT(*) FROM subsections WHERE section_id IS NULL")).scalar()
+        db.commit()
+        if int(missing or 0) > 0:
+            issues.append(f"Podsekce bez section_id: {missing}")
+    except Exception as exc:
+        issues.append(f"Kontrola section_id selhala: {exc}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    return {
+        "ok": len(errors) == 0 and len(issues) == 0,
+        "version": "1.0.2-uuid-relationship-fix",
+        "message": "Opravena UUID vazba subsections.section_id bez neplatného porovnání s prázdným řetězcem.",
+        "errors": errors,
+        "issues": issues,
+    }
 

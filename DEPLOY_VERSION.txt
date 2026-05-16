@@ -1,9 +1,6 @@
-HUB ASTORIE APP v1.0.1-import-relationship-fix
+HUB ASTORIE APP v1.0.2-uuid-relationship-fix
 
-Rychlá profesionální oprava importu:
-- subsections.section_id se doplňuje podle sections.section_code
-- oprava existujících vazeb
-- preflight kontrola před importem
-- endpointy:
-  /api/import/hub-xlsx/repair-relationships
-  /api/import/hub-xlsx/preflight
+Opraveno:
+- section_id je UUID, proto se už nikdy neporovnává s prázdným řetězcem
+- vazba subsections.section_id se doplňuje jen přes IS NULL
+- endpoint /api/import/hub-xlsx/repair-uuid-relationships
