@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.7.1",
+        "version": "v0.7.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -43,6 +43,10 @@ def home():
 @router.get("/admin", response_class=HTMLResponse)
 @router.get("/admin/", response_class=HTMLResponse)
 def admin_dashboard(request: Request, db: Session = Depends(get_db)):
+    try:
+        ensure_visible_hub_sections_(db)
+    except Exception:
+        pass
     counts = {
         "users": db.query(User).count(),
         "sections": db.query(Section).count(),
@@ -1567,7 +1571,7 @@ def sections_page(
     q: str = "",
     db: Session = Depends(get_db),
 ):
-    seed_default_hub_taxonomy_(db)
+    ensure_visible_hub_sections_(db)
 
     sql = "SELECT * FROM hub_sections WHERE 1=1"
     params = {}
@@ -1997,4 +2001,139 @@ def my_specialist_availability_v071(
     except Exception:
         pass
     return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+
+
+
+
+
+# -------------------------------------------------------------------
+# v0.7.2 Visible Sections Fix
+# -------------------------------------------------------------------
+
+def ensure_visible_hub_sections_(db: Session):
+    """
+    Zajistí, že poradenská část HUBu vždy uvidí základní sekce.
+    Nedestruktivní: nic nemaže a existující sekce nepřepisuje.
+    """
+    try:
+        seed_default_hub_taxonomy_(db)
+    except NameError:
+        ensure_taxonomy_tables_(db)
+        defaults_sections = [
+            ("FLOTILY", "Flotily", "🚗", 10),
+            ("MAJETEK", "Majetek", "🏡", 20),
+            ("ZIVOT", "Život", "❤️", 30),
+            ("PODNIKATELE", "Podnikatelé", "🏢", 40),
+            ("PENZE", "Penze", "💼", 50),
+            ("UVERY", "Úvěry", "🏦", 60),
+            ("OBNOVA", "Obnova", "♻️", 70),
+            ("INVESTICE", "Investice", "📈", 80),
+            ("ZLATO", "Zlato", "💰", 90),
+            ("ZVIRE", "Zvíře", "🐕", 100),
+        ]
+        defaults_subsections = [
+            ("FLOTILY", "FLOTILY_FIREMNI", "Firemní flotily", 10),
+            ("FLOTILY", "AUTODOPRAVCI", "Autodopravci", 20),
+            ("MAJETEK", "DOMACNOSTI", "Domácnosti", 10),
+            ("MAJETEK", "NEMOVITOSTI", "Nemovitosti", 20),
+            ("ZIVOT", "ZIVOTNI_POJISTENI", "Životní pojištění", 10),
+            ("PODNIKATELE", "PODNIKATELSKA_RIZIKA", "Podnikatelská rizika", 10),
+            ("PENZE", "DPS", "Doplňkové penzijní spoření", 10),
+            ("UVERY", "HYPOTEKY", "Hypotéky", 10),
+            ("OBNOVA", "RETENCE", "Obnova / retence", 10),
+            ("INVESTICE", "INVESTICE_OBECNE", "Investice", 10),
+            ("ZLATO", "INVESTICNI_ZLATO", "Investiční zlato", 10),
+            ("ZVIRE", "POJISTENI_ZVIRAT", "Pojištění zvířat", 10),
+        ]
+        for code, name, icon, order in defaults_sections:
+            db.execute(text("""
+                INSERT INTO hub_sections (section_code, section_name, icon, sort_order, is_active)
+                VALUES (:code, :name, :icon, :sort_order, TRUE)
+                ON CONFLICT (section_code) DO NOTHING
+            """), {"code": code, "name": name, "icon": icon, "sort_order": order})
+        for section_code, sub_code, sub_name, order in defaults_subsections:
+            db.execute(text("""
+                INSERT INTO hub_subsections (section_code, subsection_code, subsection_name, sort_order, is_active)
+                VALUES (:section_code, :sub_code, :sub_name, :sort_order, TRUE)
+                ON CONFLICT (subsection_code) DO NOTHING
+            """), {"section_code": section_code, "sub_code": sub_code, "sub_name": sub_name, "sort_order": order})
+        db.commit()
+
+
+@router.get("/api/taxonomy/visible-sections")
+def api_visible_sections_v072(db: Session = Depends(get_db)):
+    ensure_visible_hub_sections_(db)
+    sections = db.execute(text("""
+        SELECT section_code, section_name, icon, image_url
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+    subsections = db.execute(text("""
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)).mappings().all()
+    return {
+        "ok": True,
+        "version": "0.7.2-visible-sections-fix",
+        "sections": [dict(s) for s in sections],
+        "subsections": [dict(s) for s in subsections],
+    }
+
+
+@router.post("/admin/sections/force-visible-defaults")
+def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
+    ensure_visible_hub_sections_(db)
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+
+
+# -------------------------------------------------------------------
+# v0.8 Adviser HUB modules
+# -------------------------------------------------------------------
+
+@router.get("/hub/calculators", response_class=HTMLResponse)
+def hub_calculators(request: Request):
+    return templates.TemplateResponse("hub_calculators.html", {
+        "request": request,
+        "version": "0.8.0"
+    })
+
+@router.get("/hub/partners", response_class=HTMLResponse)
+def hub_partners(request: Request):
+    return templates.TemplateResponse("hub_partners.html", {
+        "request": request,
+        "version": "0.8.0"
+    })
+
+@router.get("/hub/contacts", response_class=HTMLResponse)
+def hub_contacts(request: Request):
+    return templates.TemplateResponse("hub_contacts.html", {
+        "request": request,
+        "version": "0.8.0"
+    })
+
+@router.get("/hub/forms", response_class=HTMLResponse)
+def hub_forms(request: Request):
+    return templates.TemplateResponse("hub_forms.html", {
+        "request": request,
+        "version": "0.8.0"
+    })
+
+@router.get("/hub/stats", response_class=HTMLResponse)
+def hub_stats(request: Request):
+    return templates.TemplateResponse("hub_stats.html", {
+        "request": request,
+        "version": "0.8.0"
+    })
+
+@router.get("/hub/help", response_class=HTMLResponse)
+def hub_help(request: Request):
+    return templates.TemplateResponse("hub_help.html", {
+        "request": request,
+        "version": "0.8.0"
+    })
 
