@@ -1,0 +1,61 @@
+
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/import/legacy-tips">← Zpět na import</a></p>
+
+<h1 class="page-title">Náhled importu TIPů</h1>
+<p class="page-subtitle">
+  Detekovaný oddělovač: <strong>{{ delimiter }}</strong> · Počet řádků v souboru: <strong>{{ total }}</strong>
+</p>
+
+<section class="card section-space">
+  <h2>Detekované sloupce</h2>
+  <p>
+    {% for f in fieldnames %}
+      <span class="pill">{{ f }}</span>
+    {% else %}
+      Nebyly detekovány žádné sloupce.
+    {% endfor %}
+  </p>
+</section>
+
+<section class="card table-card section-space">
+  <div class="table-head">Prvních 20 řádků po namapování</div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Klient</th><th>Poradce</th><th>E-mail poradce</th><th>Specialista</th><th>E-mail specialista</th>
+          <th>Sekce</th><th>Podsekce</th><th>Stav</th><th>Smlouva</th><th>Potenciál</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in preview %}
+          <tr>
+            <td>{{ r.client_name }}</td>
+            <td>{{ r.adviser_name }}</td>
+            <td>{{ r.adviser_email }}</td>
+            <td>{{ r.specialist_name }}</td>
+            <td>{{ r.specialist_email }}</td>
+            <td>{{ r.section_name }}</td>
+            <td>{{ r.subsection_name }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.policy_no }}</td>
+            <td>{{ r.potential_amount }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="10">Soubor neobsahuje čitelné řádky.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card section-space">
+  <h2>Co dál</h2>
+  <p>
+    Pokud náhled odpovídá realitě, vraťte se zpět a spusťte ostrý import. Pokud jsou sloupce prázdné,
+    je potřeba upravit názvy sloupců podle vzoru.
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,88 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Import ze stávajícího HUB Excelu</h1>
+<p class="page-subtitle">
+  Import je určený pro soubor stažený ze stávající Google tabulky ASTORIE HUB.
+  Původní Google Sheet se tímto nijak neupravuje.
+</p>
+
+<section class="card section-space">
+  <h2>Nahrát XLSX</h2>
+  <form method="post" action="/admin/import/hub-xlsx" enctype="multipart/form-data" class="admin-form-grid">
+    <div class="span-2">
+      <label>Excel / XLSX soubor</label>
+      <input type="file" name="file" accept=".xlsx" required>
+    </div>
+
+    <div class="span-2 visible-section-hint">
+      <strong>Bezpečný výchozí režim:</strong> existující záznamy v nové databázi se nepřepisují.
+      Pokud je záznam podle kódu/ID už založený, přeskočí se.
+    </div>
+
+    <label class="mini-check span-2">
+      <input type="checkbox" name="update_existing" value="1">
+      Aktualizovat existující číselníkové záznamy v nové databázi
+      <br><small>Doporučuji zapnout až po prvním testovacím importu.</small>
+    </label>
+
+    <div class="span-2 form-actions">
+      <button class="btn orange">Importovat XLSX do nové aplikace</button>
+      <a class="btn soft" href="/api/import/hub-xlsx/expected-sheets" target="_blank">Kontrola očekávaných listů</a>
+    </div>
+  </form>
+</section>
+
+{% if result %}
+<section class="card section-space">
+  <h2>Výsledek importu</h2>
+  {% if result.ok %}
+    <div class="success-box">Import doběhl.</div>
+  {% else %}
+    <div class="error-box">Import doběhl s chybami nebo se nepodařil.</div>
+  {% endif %}
+
+  <p><strong>Režim:</strong> {{ result.mode or '—' }}</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Oblast</th><th>Řádků v listu</th><th>Nově vloženo</th><th>Přeskočeno / existovalo</th></tr>
+      </thead>
+      <tbody>
+        {% for key, val in result.items() %}
+          {% if val is mapping and key != 'errors' %}
+          <tr>
+            <td>{{ key }}</td>
+            <td>{{ val.rows }}</td>
+            <td>{{ val.created }}</td>
+            <td>{{ val.updated_or_skipped }}</td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if result.errors %}
+    <h3>Chyby / upozornění</h3>
+    <pre>{{ result.errors }}</pre>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card section-space">
+  <h2>Co import načítá</h2>
+  <ul>
+    <li>Poradci / uživatelé</li>
+    <li>Sekce a podsekce</li>
+    <li>Specialisté včetně dostupnosti</li>
+    <li>Partneři a údaje pro výpovědi</li>
+    <li>Kontakty partnerů</li>
+    <li>Odkazy a online kalkulačky</li>
+    <li>Produkty partnerů</li>
+    <li>Provizní sazby</li>
+    <li>Historické TIPy</li>
+  </ul>
+</section>
+{% endblock %}

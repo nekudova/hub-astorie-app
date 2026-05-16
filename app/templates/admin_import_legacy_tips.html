@@ -7,7 +7,27 @@
 </p>
 
 <section class="card section-space">
-  <h2>Nahrát CSV</h2>
+  <h2>1) Příprava CSV</h2>
+  <p>
+    Nejbezpečnější postup je nejdříve stáhnout vzor a upravit export ze staré aplikace do stejné struktury.
+  </p>
+  <p>
+    <a class="btn soft" href="/admin/import/legacy-tips-template">Stáhnout vzor CSV</a>
+    <a class="btn soft" href="/admin/import/legacy-tips-help">Návod k importu</a>
+    <a class="btn soft" href="/api/import/legacy-tips/expected-columns" target="_blank">Technický mapping sloupců</a>
+  </p>
+</section>
+
+<section class="card section-space">
+  <h2>2) Kontrola souboru před ostrým importem</h2>
+  <form method="post" action="/admin/import/legacy-tips-preview" enctype="multipart/form-data" class="admin-form-grid">
+    <div><label>CSV soubor ke kontrole</label><input type="file" name="file" accept=".csv,text/csv" required></div>
+    <div class="form-actions"><button class="btn soft">Zobrazit náhled importu</button></div>
+  </form>
+</section>
+
+<section class="card section-space">
+  <h2>3) Ostrý import CSV</h2>
   <form method="post" action="/admin/import/legacy-tips" enctype="multipart/form-data" class="admin-form-grid">
     <div><label>Zdroj importu</label><input name="source_name" value="Stávající HUB ASTORIE"></div>
     <div><label>CSV soubor</label><input type="file" name="file" accept=".csv,text/csv" required></div>
@@ -15,7 +35,8 @@
   </form>
 
   <div class="visible-section-hint">
-    Doporučené sloupce: Klient, Poradce, E-mail poradce, Specialista, E-mail specialista, Stav, Sekce, Podsekce, Smlouva, Poznámka, Potenciál.
+    Doporučené sloupce: ID, Klient, Kontakt klienta, RČ/IČO, Poradce, E-mail poradce, ID poradce,
+    Specialista, E-mail specialista, Sekce, Podsekce, Stav, Smlouva, Potenciál, Poznámka, Datum.
   </div>
 </section>
 

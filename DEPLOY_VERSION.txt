@@ -1,14 +1,12 @@
-HUB ASTORIE APP v0.9.1-unified-tip-inbox
+HUB ASTORIE APP v0.9.3-xlsx-sheet-import
 
 Přidáno:
-- jedna společná obrazovka Moje TIPy podle stávající aplikace
-- záložky:
-  1) Moje odeslané
-  2) K vyřízení pro mě
-  3) Zpracované / Archiv
-- jednotný detail TIPu pro poradce i specialistu
-- specialista může z detailu rovnou aktualizovat stav, zprávu pro tipaře, interní poznámku a konečnou zprávu
-- zachována BO centrální evidence /admin/tips
+- Import přímo z XLSX exportu stávajícího Google Sheetu
+- Nová stránka /admin/import/hub-xlsx
+- Bezpečný režim: existující číselníkové záznamy se nepřepisují
+- Volitelný režim aktualizace existujících číselníkových záznamů
+- Importuje: Poradci, Sekce, Podsekce, Specialisté, Partneři, Kontakty, Odkazy, Produkty, Provize, TIPy
+- API kontrola očekávaných listů: /api/import/hub-xlsx/expected-sheets
 
-Cíl:
-Přiblížit UX stávající aplikaci a sjednotit práci s TIPy na jedné obrazovce.
+Důležité:
+Importer nemění původní Google Sheet. Načítá XLSX do nové databáze aplikace.

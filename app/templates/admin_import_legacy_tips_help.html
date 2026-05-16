@@ -1,0 +1,50 @@
+
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/import/legacy-tips">← Zpět na import</a></p>
+
+<h1 class="page-title">Návod k importu TIPů</h1>
+
+<section class="card section-space">
+  <h2>Co teď importujeme</h2>
+  <p>
+    V této fázi importujeme především historické TIPy ze stávající aplikace, aby bylo možné testovat:
+    přehled Moje TIPy, frontu specialisty, centrální evidenci BO, archiv a stavový workflow.
+  </p>
+</section>
+
+<section class="card section-space">
+  <h2>Doporučený postup</h2>
+  <ol>
+    <li>Ve staré aplikaci / Google Sheets vyexportujte TIPy do CSV.</li>
+    <li>Stáhněte si vzor CSV z nové aplikace.</li>
+    <li>Upravte názvy sloupců podle vzoru, nebo použijte podporované aliasy.</li>
+    <li>Nejdříve spusťte náhled importu.</li>
+    <li>Teprve potom proveďte ostrý import.</li>
+    <li>Ověřte výsledek v /admin/tips a /hub/my-tips.</li>
+  </ol>
+</section>
+
+<section class="card section-space">
+  <h2>Minimální sloupce</h2>
+  <p>
+    Pro použitelné testování doporučuji minimálně:
+    Klient, Poradce, E-mail poradce, Specialista, E-mail specialista, Stav, Sekce, Podsekce, Poznámka.
+  </p>
+</section>
+
+<section class="card section-space">
+  <h2>Stavy</h2>
+  <p>
+    Import převádí běžné názvy stavů na: Nový, V řešení, Sjednáno, Storno, Archiv.
+  </p>
+</section>
+
+<section class="card section-space">
+  <h2>Důležité</h2>
+  <p>
+    Import je v této verzi nedestruktivní. Neaktualizuje staré záznamy, ale přidává nové řádky do nové databáze.
+    To je bezpečné pro první testování migrace.
+  </p>
+</section>
+{% endblock %}

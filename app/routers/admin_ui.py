@@ -1,3 +1,4 @@
+from io import BytesIO
 from datetime import datetime
 import io
 import csv
@@ -24,7 +25,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.9.1",
+        "version": "v0.9.3",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1813,7 +1814,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.9.1 Specialist Profile & Sections Fix
+# v0.9.3 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2012,7 +2013,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.9.1 Visible Sections Fix
+# v0.9.3 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2082,7 +2083,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2101,7 +2102,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.9.1 – bezpečné tabulky pro TIPy.
+    v0.9.3 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2160,18 +2161,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.9.1-unified-tip-inbox",
+            "version": "0.9.3-xlsx-sheet-import",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.9.1-unified-tip-inbox", "error": str(e)}
+        return {"ok": False, "version": "0.9.3-xlsx-sheet-import", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.9.1 Adviser HUB routes fix
+# v0.9.3 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2188,7 +2189,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2408,7 +2409,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v0.9.1 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v0.9.3 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2715,7 +2716,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "tables": result,
     }
 
@@ -2723,7 +2724,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.1 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v0.9.3 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2955,7 +2956,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -2966,14 +2967,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.1 Partner autocomplete & Forms data source
+# v0.9.3 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "0.9.1-unified-tip-inbox", "items": []}
+        return {"ok": True, "version": "0.9.3-xlsx-sheet-import", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3004,7 +3005,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "items": [dict(r) for r in rows],
     }
 
@@ -3013,7 +3014,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "0.9.1-unified-tip-inbox", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "0.9.3-xlsx-sheet-import", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3023,7 +3024,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "0.9.1-unified-tip-inbox", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "0.9.3-xlsx-sheet-import", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3061,7 +3062,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3077,7 +3078,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3137,7 +3138,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v0.9.1 Operational TIP Workflow
+# v0.9.3 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3311,7 +3312,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
     })
 
 
@@ -3331,7 +3332,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
     })
 
 
@@ -3558,7 +3559,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
     })
 
 
@@ -3674,7 +3675,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "0.9.1-unified-tip-inbox",
+        "version": "0.9.3-xlsx-sheet-import",
         "stats": dict(stats or {}),
     }
 
@@ -3683,7 +3684,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.1 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v0.9.3 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3836,4 +3837,552 @@ def hub_tip_unified_specialist_update_v091(
         final_report=final_report,
         db=db,
     )
+
+
+
+
+
+# -------------------------------------------------------------------
+# v0.9.3 XLSX importer – import přímo ze staženého Google Sheetu
+# -------------------------------------------------------------------
+
+def xlsx_cell_to_str_v093_(value):
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value).strip()
+
+
+def xlsx_bool_v093_(value):
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"ano", "a", "true", "1", "yes", "aktivni", "aktivní"}
+
+
+def xlsx_num_v093_(value, default=0):
+    try:
+        if value is None or value == "":
+            return default
+        return int(float(str(value).replace(",", ".").replace(" ", "")))
+    except Exception:
+        return default
+
+
+def xlsx_decimal_v093_(value):
+    if value is None or value == "":
+        return None
+    try:
+        return Decimal(str(value).replace("Kč", "").replace(",-", "").replace(" ", "").replace(",", "."))
+    except Exception:
+        return None
+
+
+def xlsx_norm_header_v093_(value):
+    value = str(value or "").strip().lower()
+    repl = {
+        "á": "a", "č": "c", "ď": "d", "é": "e", "ě": "e", "í": "i",
+        "ň": "n", "ó": "o", "ř": "r", "š": "s", "ť": "t", "ú": "u",
+        "ů": "u", "ý": "y", "ž": "z",
+    }
+    for a, b in repl.items():
+        value = value.replace(a, b)
+    for ch in [" ", "-", ".", "/", "\\", "(", ")", "[", "]", ":", ";"]:
+        value = value.replace(ch, "_")
+    while "__" in value:
+        value = value.replace("__", "_")
+    return value.strip("_")
+
+
+def xlsx_rows_v093_(wb, sheet_name):
+    if sheet_name not in wb.sheetnames:
+        return []
+    ws = wb[sheet_name]
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return []
+    headers = [xlsx_norm_header_v093_(h) for h in rows[0]]
+    out = []
+    for row in rows[1:]:
+        item = {}
+        empty = True
+        for i, h in enumerate(headers):
+            if not h:
+                continue
+            val = row[i] if i < len(row) else None
+            if val not in (None, ""):
+                empty = False
+            item[h] = val
+        if not empty:
+            out.append(item)
+    return out
+
+
+def xlsx_pick_v093_(row, *keys, default=""):
+    for key in keys:
+        k = xlsx_norm_header_v093_(key)
+        if k in row and row[k] not in (None, ""):
+            return row[k]
+    return default
+
+
+def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
+    columns = list(data.keys())
+    params = {k: data[k] for k in columns}
+    col_sql = ", ".join(columns)
+    val_sql = ", ".join([f":{c}" for c in columns])
+
+    if update_existing:
+        set_sql = ", ".join([f"{c}=EXCLUDED.{c}" for c in columns if c != conflict_col])
+        sql = f"""
+            INSERT INTO {table} ({col_sql})
+            VALUES ({val_sql})
+            ON CONFLICT ({conflict_col}) DO UPDATE SET {set_sql}
+        """
+    else:
+        sql = f"""
+            INSERT INTO {table} ({col_sql})
+            VALUES ({val_sql})
+            ON CONFLICT ({conflict_col}) DO NOTHING
+        """
+    res = db.execute(text(sql), params)
+    return res.rowcount or 0
+
+
+def ensure_xlsx_import_structures_v093_(db):
+    ensure_tip_workflow_v090_(db)
+    ensure_visible_hub_sections_(db)
+    ensure_specialists_table_(db)
+
+    # Starší DB mohou mít užší tabulky. Tady je pouze bezpečné rozšíření.
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS risks TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS client_type TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS keywords TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS priority INTEGER NOT NULL DEFAULT 100"))
+    db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS original_note TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS business_type TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS area TEXT NOT NULL DEFAULT ''"))
+    db.commit()
+
+
+def import_hub_xlsx_data_v093_(db, wb, update_existing=False):
+    ensure_xlsx_import_structures_v093_(db)
+
+    result = {
+        "users": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "sections": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "subsections": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "specialists": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "partners": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "contacts": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "links": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "products": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "commission_rates": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "terminations_partners": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "tips": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "errors": [],
+    }
+
+    # Poradci -> users
+    for row in xlsx_rows_v093_(wb, "Poradci"):
+        result["users"]["rows"] += 1
+        try:
+            advisor_id = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_poradce"))
+            email = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email")).lower()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno"))
+            if not advisor_id or not email or not name:
+                continue
+            data = {
+                "advisor_id": advisor_id,
+                "name": name,
+                "email": email,
+                "phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Telefon")),
+                "role": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Role", default="IF")) or "IF",
+                "password_hash": hash_password(xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Heslo", default="1234")) or "1234"),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", default="ANO")),
+                "must_change_password": True,
+            }
+            created = xlsx_upsert_v093_(db, "users", "advisor_id", data, update_existing)
+            result["users"]["created"] += created
+            result["users"]["updated_or_skipped"] += 0 if created else 1
+        except Exception as exc:
+            result["errors"].append(f"Poradci: {exc}")
+
+    # Sekce -> hub_sections + sections
+    for row in xlsx_rows_v093_(wb, "Sekce"):
+        result["sections"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_sekce")).upper()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev sekce", "Název sekce"))
+            if not code or not name:
+                continue
+            data_hub = {
+                "section_code": code,
+                "section_name": name,
+                "icon": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Ikona")),
+                "sort_order": xlsx_num_v093_(xlsx_pick_v093_(row, "Poradi", "Pořadí"), 100),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Popis")),
+            }
+            created = xlsx_upsert_v093_(db, "hub_sections", "section_code", data_hub, update_existing)
+            result["sections"]["created"] += created
+            result["sections"]["updated_or_skipped"] += 0 if created else 1
+
+            data_core = {
+                "section_code": code,
+                "name": name,
+                "icon": data_hub["icon"],
+                "sort_order": data_hub["sort_order"],
+                "is_active": data_hub["is_active"],
+            }
+            xlsx_upsert_v093_(db, "sections", "section_code", data_core, update_existing)
+        except Exception as exc:
+            result["errors"].append(f"Sekce: {exc}")
+
+    # Podsekce -> hub_subsections + subsections
+    for row in xlsx_rows_v093_(wb, "Podsekce"):
+        result["subsections"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_podsekce")).upper()
+            section_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Sekce_ID")).upper()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev podsekce", "Název podsekce"))
+            if not code or not section_code or not name:
+                continue
+            data_hub = {
+                "subsection_code": code,
+                "section_code": section_code,
+                "subsection_name": name,
+                "sort_order": xlsx_num_v093_(xlsx_pick_v093_(row, "Poradi", "Pořadí"), 100),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Popis")),
+            }
+            created = xlsx_upsert_v093_(db, "hub_subsections", "subsection_code", data_hub, update_existing)
+            result["subsections"]["created"] += created
+            result["subsections"]["updated_or_skipped"] += 0 if created else 1
+
+            data_core = {
+                "subsection_code": code,
+                "section_code": section_code,
+                "name": name,
+                "sort_order": data_hub["sort_order"],
+                "is_active": data_hub["is_active"],
+            }
+            xlsx_upsert_v093_(db, "subsections", "subsection_code", data_core, update_existing)
+        except Exception as exc:
+            result["errors"].append(f"Podsekce: {exc}")
+
+    # Specialisté
+    db.execute(text("""
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_specialists_import_key
+        ON specialists (advisor_id, section_code, subsection_code, email)
+    """))
+    db.commit()
+
+    for row in xlsx_rows_v093_(wb, "Specialisté"):
+        result["specialists"]["rows"] += 1
+        try:
+            advisor_id = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_poradce"))
+            section_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_sekce")).upper()
+            subsection_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_podsekce")).upper()
+            email = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email")).lower()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno", "Jméno"))
+            if not advisor_id or not section_code or not email or not name:
+                continue
+
+            data = {
+                "advisor_id": advisor_id,
+                "specialist_name": name,
+                "email": email,
+                "phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Telefon")),
+                "section_code": section_code,
+                "subsection_code": subsection_code,
+                "role_description": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Role")),
+                "region": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Region")),
+                "if_share": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "IF_podil", "IF podíl")),
+                "ps_share": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "PS_podil", "PS podíl")),
+                "available": xlsx_bool_v093_(xlsx_pick_v093_(row, "Dostupny", "Dostupný", "Aktivni", default="ANO")),
+                "unavailable_reason": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Duvod nedostupnosti", "Důvod nedostupnosti")),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+            }
+            cols = list(data.keys())
+            params = data
+            sql = f"""
+                INSERT INTO specialists ({", ".join(cols)})
+                VALUES ({", ".join([":" + c for c in cols])})
+                ON CONFLICT (advisor_id, section_code, subsection_code, email)
+                DO {"UPDATE SET " + ", ".join([c + "=EXCLUDED." + c for c in cols if c not in ["advisor_id","section_code","subsection_code","email"]]) if update_existing else "NOTHING"}
+            """
+            created = db.execute(text(sql), params).rowcount or 0
+            result["specialists"]["created"] += created
+            result["specialists"]["updated_or_skipped"] += 0 if created else 1
+        except Exception as exc:
+            result["errors"].append(f"Specialisté: {exc}")
+
+    # Import_Partners + Vypovedi_Pojistovny
+    for sheet_name in ["Import_Partners", "Vypovedi_Pojistovny"]:
+        for row in xlsx_rows_v093_(wb, sheet_name):
+            result["partners" if sheet_name == "Import_Partners" else "terminations_partners"]["rows"] += 1
+            try:
+                code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID")).upper()
+                name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev", "Název"))
+                if not code or not name:
+                    continue
+                data = {
+                    "partner_code": code,
+                    "name": name,
+                    "address_full": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Adresa")),
+                    "registry_email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email_podatelna", "Email", "E-mail")),
+                    "data_box": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Datova_schranka", "Datová schránka")),
+                    "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                    "source": "xlsx_import",
+                    "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                }
+                created = xlsx_upsert_v093_(db, "partners", "partner_code", data, update_existing)
+                key = "partners" if sheet_name == "Import_Partners" else "terminations_partners"
+                result[key]["created"] += created
+                result[key]["updated_or_skipped"] += 0 if created else 1
+            except Exception as exc:
+                result["errors"].append(f"{sheet_name}: {exc}")
+
+    # Kontakty
+    for row in xlsx_rows_v093_(wb, "Import_Partner_Contacts"):
+        result["contacts"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID")).upper()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno", "Jméno"))
+            role = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Role"))
+            if not code or (not name and not role):
+                continue
+            db.execute(text("""
+                INSERT INTO partner_contacts
+                (partner_code, full_name, role, phone, email, specialization, territory, is_top, is_vip, note, original_note, is_active)
+                VALUES
+                (:partner_code, :full_name, :role, :phone, :email, :specialization, :territory, :is_top, :is_vip, :note, :original_note, TRUE)
+            """), {
+                "partner_code": code,
+                "full_name": name or role,
+                "role": role,
+                "phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Telefon")),
+                "email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email")),
+                "specialization": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Specikace", "Specifikace")),
+                "territory": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Region")),
+                "is_top": xlsx_bool_v093_(xlsx_pick_v093_(row, "TOP")),
+                "is_vip": xlsx_bool_v093_(xlsx_pick_v093_(row, "VIP")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                "original_note": "Import_Partner_Contacts",
+            })
+            result["contacts"]["created"] += 1
+        except Exception as exc:
+            result["contacts"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Kontakty: {exc}")
+
+    # Odkazy partnerů + online kalkulačky + odkazy ASTORIE
+    for sheet_name, is_global in [("Import_Partner_Links", False), ("Import_Online kalkulacky_Links", False), ("Import_Astorie_Links", True)]:
+        for row in xlsx_rows_v093_(wb, sheet_name):
+            result["links"]["rows"] += 1
+            try:
+                code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID", default="ASTORIE")).upper()
+                title = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev", "Název"))
+                url = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "URL"))
+                if is_global and not code:
+                    code = "ASTORIE"
+                if not code or not title or not url:
+                    continue
+                db.execute(text("""
+                    INSERT INTO partner_links
+                    (partner_code, title, url, category, note, visibility, is_active)
+                    VALUES
+                    (:partner_code, :title, :url, :category, :note, :visibility, TRUE)
+                """), {
+                    "partner_code": code,
+                    "title": title,
+                    "url": url,
+                    "category": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ", "Kategorie")),
+                    "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                    "visibility": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Viditelnost")),
+                })
+                result["links"]["created"] += 1
+            except Exception as exc:
+                result["links"]["updated_or_skipped"] += 1
+                result["errors"].append(f"{sheet_name}: {exc}")
+
+    # Produkty
+    for row in xlsx_rows_v093_(wb, "Import_Products"):
+        result["products"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID")).upper()
+            product = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Produkt"))
+            if not code or not product:
+                continue
+            db.execute(text("""
+                INSERT INTO partner_products
+                (partner_code, area, subarea, product_name, note, risks, client_type, keywords, priority, is_active)
+                VALUES
+                (:partner_code, :area, :subarea, :product_name, :note, :risks, :client_type, :keywords, :priority, :is_active)
+            """), {
+                "partner_code": code,
+                "area": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Oblast")),
+                "subarea": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Podoblast")),
+                "product_name": product,
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                "risks": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Rizika")),
+                "client_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ_klienta")),
+                "keywords": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Klicova_slova")),
+                "priority": xlsx_num_v093_(xlsx_pick_v093_(row, "Priorita"), 100),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+            })
+            result["products"]["created"] += 1
+        except Exception as exc:
+            result["products"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Produkty: {exc}")
+
+    # Provize
+    for row in xlsx_rows_v093_(wb, "Provize_TIPHub"):
+        result["commission_rates"]["rows"] += 1
+        try:
+            section_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_sekce")).upper()
+            partner = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner"))
+            if not section_code or not partner:
+                continue
+            db.execute(text("""
+                INSERT INTO commission_rates
+                (section_code, subsection_code, partner_name, base_type, product_type, rate_percent, priority, is_active, business_type, area)
+                VALUES
+                (:section_code, :subsection_code, :partner_name, :base_type, :product_type, :rate_percent, :priority, TRUE, :business_type, :area)
+            """), {
+                "section_code": section_code,
+                "subsection_code": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_podsekce")).upper(),
+                "partner_name": partner,
+                "base_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ_pojistneho")),
+                "product_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ_obchodu")),
+                "rate_percent": xlsx_decimal_v093_(xlsx_pick_v093_(row, "Sazba_provize_%")),
+                "priority": xlsx_num_v093_(xlsx_pick_v093_(row, "Priorita"), 100),
+                "business_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Druh obchodu")),
+                "area": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Oblast")),
+            })
+            result["commission_rates"]["created"] += 1
+        except Exception as exc:
+            result["commission_rates"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Provize_TIPHub: {exc}")
+
+    # TIPy
+    for row in xlsx_rows_v093_(wb, "Tipy"):
+        result["tips"]["rows"] += 1
+        try:
+            client = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno Klienta", "Jméno Klienta"))
+            if not client:
+                continue
+            tip_id = str(uuid.uuid4())
+            db.execute(text("""
+                INSERT INTO tips
+                (id, adviser_original_id, adviser_name, adviser_email,
+                 specialist_name, specialist_email, client_name, client_phone, client_identifier,
+                 potential_amount, adviser_note, status, policy_no, final_volume, specialist_feedback,
+                 section_code, subsection_code, section_name, subsection_name,
+                 imported_source, imported_original_id, adviser_last_message, final_report, last_update_at)
+                VALUES
+                (:id, :adviser_original_id, :adviser_name, :adviser_email,
+                 :specialist_name, :specialist_email, :client_name, :client_phone, :client_identifier,
+                 :potential_amount, :adviser_note, :status, :policy_no, :final_volume, :specialist_feedback,
+                 :section_code, :subsection_code, :section_name, :subsection_name,
+                 'xlsx_Aktivni_29032026_ASTORIE_HUB', :imported_original_id, :adviser_last_message, :final_report, now())
+            """), {
+                "id": tip_id,
+                "adviser_original_id": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID Poradce")),
+                "adviser_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno Poradce", "Jméno Poradce")),
+                "adviser_email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email Poradce")).lower(),
+                "specialist_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno Specialisty", "Jméno Specialisty")),
+                "specialist_email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email Specialisty")).lower(),
+                "client_name": client,
+                "client_phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Kontakt Klienta")),
+                "client_identifier": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Identifikace RČ IČO Datum nar", "Identifikace (RČ/IČO/Datum nar.)")),
+                "potential_amount": xlsx_decimal_v093_(xlsx_pick_v093_(row, "Potencial", "Potenciál")),
+                "adviser_note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                "status": normalize_tip_status_v090_(xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Stav", default="Nový"))),
+                "policy_no": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Cislo smlouvy", "Číslo smlouvy")),
+                "final_volume": xlsx_decimal_v093_(xlsx_pick_v093_(row, "Vyse obchodu", "Výše obchodu")),
+                "specialist_feedback": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Vyjadreni specialisty", "Vyjádření specialisty")),
+                "section_code": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID Sekce")).upper(),
+                "subsection_code": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID Podsekce")).upper(),
+                "section_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev Sekce", "Název Sekce")),
+                "subsection_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev Podsekce", "Název Podsekce")),
+                "imported_original_id": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Datum vytvoření", "Datum vytvoreni")),
+                "adviser_last_message": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Vyjadreni specialisty", "Vyjádření specialisty")),
+                "final_report": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Vyjadreni specialisty", "Vyjádření specialisty")),
+            })
+            result["tips"]["created"] += 1
+        except Exception as exc:
+            result["tips"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Tipy: {exc}")
+
+    db.commit()
+    return result
+
+
+@router.get("/admin/import/hub-xlsx", response_class=HTMLResponse)
+def admin_import_hub_xlsx_page_v093(request: Request):
+    return render(request, "admin_import_hub_xlsx.html", {
+        "active": "import",
+        "result": None,
+        "version": "0.9.3-xlsx-sheet-import",
+    })
+
+
+@router.post("/admin/import/hub-xlsx", response_class=HTMLResponse)
+async def admin_import_hub_xlsx_v093(
+    request: Request,
+    file: UploadFile = File(...),
+    update_existing: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    try:
+        from openpyxl import load_workbook
+    except Exception as exc:
+        return render(request, "admin_import_hub_xlsx.html", {
+            "active": "import",
+            "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
+            "version": "0.9.3-xlsx-sheet-import",
+        })
+
+    raw = await file.read()
+    try:
+        wb = load_workbook(BytesIO(raw), data_only=True, read_only=True)
+        result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
+        result["ok"] = len(result.get("errors", [])) == 0
+        result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
+    except Exception as exc:
+        result = {"ok": False, "errors": [str(exc)]}
+
+    return render(request, "admin_import_hub_xlsx.html", {
+        "active": "import",
+        "result": result,
+        "version": "0.9.3-xlsx-sheet-import",
+    })
+
+
+@router.get("/api/import/hub-xlsx/expected-sheets")
+def api_import_hub_xlsx_expected_sheets_v093():
+    return {
+        "ok": True,
+        "version": "0.9.3-xlsx-sheet-import",
+        "mode_default": "safe_insert_only",
+        "sheets": [
+            "Poradci",
+            "Sekce",
+            "Podsekce",
+            "Specialisté",
+            "Import_Partners",
+            "Vypovedi_Pojistovny",
+            "Import_Partner_Contacts",
+            "Import_Partner_Links",
+            "Import_Online kalkulacky_Links",
+            "Import_Astorie_Links",
+            "Import_Products",
+            "Provize_TIPHub",
+            "Tipy",
+        ],
+        "note": "Importer nemění původní Google Sheet. Načítá XLSX do nové databáze aplikace.",
+    }
 
