@@ -1,15 +1,8 @@
-HUB ASTORIE APP v0.9.9-import-schema-canonical-fix
+HUB ASTORIE APP v1.0.0-full-import-schema-fix
 
-Profesionální oprava importu:
-- sjednocení schématu všech importních tabulek před importem
-- doplnění created_at/updated_at napříč tabulkami
-- doplnění chybějících sloupců pro sekce, podsekce, partnery, kontakty, odkazy, produkty, provize a TIPy
-- endpoint /api/import/hub-xlsx/repair-all
-- automatická oprava schématu před XLSX importem
-
-Postup:
-1) /version = 0.9.9-import-schema-canonical-fix
-2) /api/import/hub-xlsx/repair-all
-3) /api/admin/summary
-4) /admin/import/hub-xlsx
-5) import bez zaškrtnutí aktualizace existujících číselníků
+Jednorázová profesionální oprava importu:
+- sjednocuje schéma sections/subsections/partners a dalších importních tabulek
+- doplňuje created_at/updated_at tam, kde v DB chybí
+- doplňuje id a business sloupce podle importu
+- import si opravu spustí automaticky před nahráním XLSX
+- servisní endpoint: /api/import/hub-xlsx/repair-database

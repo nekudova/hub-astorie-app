@@ -27,7 +27,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.9.9",
+        "version": "v1.0.0",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1816,7 +1816,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.9.9 Specialist Profile & Sections Fix
+# v1.0.0 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2015,7 +2015,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.9.9 Visible Sections Fix
+# v1.0.0 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2085,7 +2085,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2104,7 +2104,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.9.9 – bezpečné tabulky pro TIPy.
+    v1.0.0 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2163,18 +2163,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.9.9-import-schema-canonical-fix",
+            "version": "1.0.0-full-import-schema-fix",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.9.9-import-schema-canonical-fix", "error": str(e)}
+        return {"ok": False, "version": "1.0.0-full-import-schema-fix", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.9.9 Adviser HUB routes fix
+# v1.0.0 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2191,7 +2191,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2411,7 +2411,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v1.0.0 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2718,7 +2718,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "tables": result,
     }
 
@@ -2726,7 +2726,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v1.0.0 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2958,7 +2958,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -2969,14 +2969,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 Partner autocomplete & Forms data source
+# v1.0.0 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "0.9.9-import-schema-canonical-fix", "items": []}
+        return {"ok": True, "version": "1.0.0-full-import-schema-fix", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3007,7 +3007,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "items": [dict(r) for r in rows],
     }
 
@@ -3016,7 +3016,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "0.9.9-import-schema-canonical-fix", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "1.0.0-full-import-schema-fix", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3026,7 +3026,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "0.9.9-import-schema-canonical-fix", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "1.0.0-full-import-schema-fix", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3064,7 +3064,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3080,7 +3080,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3140,7 +3140,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v0.9.9 Operational TIP Workflow
+# v1.0.0 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3314,7 +3314,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
     })
 
 
@@ -3334,7 +3334,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
     })
 
 
@@ -3561,7 +3561,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
     })
 
 
@@ -3677,7 +3677,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "stats": dict(stats or {}),
     }
 
@@ -3686,7 +3686,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v1.0.0 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3845,7 +3845,7 @@ def hub_tip_unified_specialist_update_v091(
 
 
 # -------------------------------------------------------------------
-# v0.9.9 XLSX importer – import přímo ze staženého Google Sheetu
+# v1.0.0 XLSX importer – import přímo ze staženého Google Sheetu
 # -------------------------------------------------------------------
 
 def xlsx_cell_to_str_v093_(value):
@@ -3941,7 +3941,7 @@ def xlsx_pick_v093_(row, *keys, default=""):
 def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     """
     Bezpečný UPSERT pro XLSX import.
-    v0.9.9: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
+    v1.0.0: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
     nemají vždy serverový DEFAULT pro id a raw SQL nepoužije SQLAlchemy default.
     """
     uuid_tables = {
@@ -3960,7 +3960,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     if table in uuid_tables and "id" not in data:
         data["id"] = str(uuid.uuid4())
 
-    # v0.9.9: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
+    # v1.0.0: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
     # Proto timestampy doplňujeme přímo do importních dat.
     timestamp_tables = {
         "users",
@@ -4140,7 +4140,7 @@ def import_hub_xlsx_data_v093_(db, wb, update_existing=False):
             result["errors"].append(f"Podsekce: {exc}")
 
     # Specialisté
-    # v0.9.9: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
+    # v1.0.0: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
     for row in xlsx_rows_v093_(wb, "Specialisté"):
         result["specialists"]["rows"] += 1
         try:
@@ -4389,7 +4389,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
     })
 
 
@@ -4406,7 +4406,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "0.9.9-import-schema-canonical-fix",
+            "version": "1.0.0-full-import-schema-fix",
         })
 
     raw = await file.read()
@@ -4421,7 +4421,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
     })
 
 
@@ -4429,7 +4429,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -4452,7 +4452,7 @@ def api_import_hub_xlsx_expected_sheets_v093():
 
 
 # -------------------------------------------------------------------
-# v0.9.9 import hardening endpoints
+# v1.0.0 import hardening endpoints
 # - chybějící /api/admin/summary
 # - aliasy pro import route
 # - JSON upload endpoint
@@ -4513,7 +4513,7 @@ def api_admin_summary_v094(db: Session = Depends(get_db)):
     ]
     return {
         "ok": True,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
         "counts": {t: safe_count_table_v094_(db, t) for t in tables},
     }
@@ -4535,14 +4535,14 @@ def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
         """)
         return {
             "ok": True,
-            "version": "0.9.9-import-schema-canonical-fix",
+            "version": "1.0.0-full-import-schema-fix",
             "running": False,
             "last_job": dict(last_job) if last_job else None,
         }
     except Exception as exc:
         return {
             "ok": False,
-            "version": "0.9.9-import-schema-canonical-fix",
+            "version": "1.0.0-full-import-schema-fix",
             "running": False,
             "error": str(exc),
         }
@@ -4565,12 +4565,12 @@ async def api_import_hub_xlsx_upload_v094(
         result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
         result["ok"] = len(result.get("errors", [])) == 0
         result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
-        result["version"] = "0.9.9-import-schema-canonical-fix"
+        result["version"] = "1.0.0-full-import-schema-fix"
         return result
     except Exception as exc:
         return {
             "ok": False,
-            "version": "0.9.9-import-schema-canonical-fix",
+            "version": "1.0.0-full-import-schema-fix",
             "errors": [str(exc)],
         }
 
@@ -4610,7 +4610,7 @@ def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 import transaction fix
+# v1.0.0 import transaction fix
 # Oprava: current transaction is aborted před CREATE UNIQUE INDEX
 # -------------------------------------------------------------------
 
@@ -4701,7 +4701,7 @@ ensure_xlsx_import_structures_v093_ = ensure_xlsx_import_structures_v095_
 
 
 # -------------------------------------------------------------------
-# v0.9.9 import index fix
+# v1.0.0 import index fix
 # Definitivní oprava: odstranění inline CREATE UNIQUE INDEX z importní transakce
 # a bezpečné čištění transakce před vlastním importem.
 # -------------------------------------------------------------------
@@ -4854,7 +4854,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
     errors = ensure_xlsx_import_structures_v096_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "message": "Importní struktury byly zkontrolovány a opraveny. Původní Google Sheet se nemění.",
         "errors": errors,
     }
@@ -4864,7 +4864,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 import user id fix
+# v1.0.0 import user id fix
 # Oprava: users.id nemá serverový default a raw SQL insert bez id padal.
 # -------------------------------------------------------------------
 
@@ -4919,7 +4919,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
     errors = repair_uuid_defaults_v097_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "message": "Opraveny UUID defaulty pro users a další hlavní tabulky. Import zároveň posílá id explicitně.",
         "errors": errors,
     }
@@ -4928,7 +4928,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 import timestamps fix
+# v1.0.0 import timestamps fix
 # Oprava: users.created_at / users.updated_at NOT NULL při importu poradců
 # -------------------------------------------------------------------
 
@@ -4964,7 +4964,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
     errors = repair_users_timestamps_v098_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "message": "Opraveny created_at/updated_at defaulty pro users. Import poradců nyní posílá timestampy explicitně.",
         "errors": errors,
     }
@@ -4972,7 +4972,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.9 import schema canonical fix
+# v1.0.0 import schema canonical fix
 # Profesionální oprava: sjednocení schématu všech importních tabulek před importem.
 # -------------------------------------------------------------------
 
@@ -5213,10 +5213,10 @@ def repair_import_schema_canonical_v099_(db: Session):
 
 @router.get("/api/import/hub-xlsx/repair-all")
 def api_import_repair_all_v099(db: Session = Depends(get_db)):
-    errors = repair_import_schema_canonical_v099_(db)
+    errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "0.9.9-import-schema-canonical-fix",
+        "version": "1.0.0-full-import-schema-fix",
         "message": "Kompletní oprava importního schématu dokončena. Opraveny created_at/updated_at a chybějící importní sloupce.",
         "errors": errors,
     }
@@ -5225,7 +5225,7 @@ def api_import_repair_all_v099(db: Session = Depends(get_db)):
 try:
     _previous_import_hub_xlsx_data_before_v099 = import_hub_xlsx_data_v093_
     def import_hub_xlsx_data_v099_(db, wb, update_existing=False):
-        repair_errors = repair_import_schema_canonical_v099_(db)
+        repair_errors = v100_fix_all_import_tables(db)
         result = _previous_import_hub_xlsx_data_before_v099(db, wb, update_existing=update_existing)
         if repair_errors:
             result.setdefault("warnings", []).extend(repair_errors)
@@ -5233,3 +5233,374 @@ try:
     import_hub_xlsx_data_v093_ = import_hub_xlsx_data_v099_
 except Exception:
     pass
+
+
+
+
+# -------------------------------------------------------------------
+# v1.0.0 full import schema fix
+# Jednorázová profesionální oprava importního schématu:
+# doplní přesně ty sloupce, které import reálně používá.
+# -------------------------------------------------------------------
+
+def v100_exec(db: Session, sql: str, params: dict | None = None):
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    try:
+        db.execute(text(sql), params or {})
+        db.commit()
+        return None
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return str(exc)
+
+
+def v100_table_exists(db: Session, table_name: str) -> bool:
+    err = None
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    try:
+        exists = db.execute(text("""
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name = :table_name
+            )
+        """), {"table_name": table_name}).scalar()
+        db.commit()
+        return bool(exists)
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return False
+
+
+def v100_col_exists(db: Session, table_name: str, column_name: str) -> bool:
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    try:
+        exists = db.execute(text("""
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = :table_name
+                  AND column_name = :column_name
+            )
+        """), {"table_name": table_name, "column_name": column_name}).scalar()
+        db.commit()
+        return bool(exists)
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return False
+
+
+def v100_add_col(db: Session, table: str, column: str, definition: str):
+    if not v100_table_exists(db, table):
+        return None
+    if v100_col_exists(db, table, column):
+        return None
+    return v100_exec(db, f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def v100_fix_timestamps(db: Session, table: str, errors: list[str]):
+    if not v100_table_exists(db, table):
+        return
+
+    for col in ["created_at", "updated_at"]:
+        err = v100_add_col(db, table, col, "TIMESTAMPTZ DEFAULT NOW()")
+        if err:
+            errors.append(f"{table}.{col} add: {err}")
+
+        if v100_col_exists(db, table, col):
+            err = v100_exec(db, f"UPDATE {table} SET {col} = NOW() WHERE {col} IS NULL")
+            if err:
+                errors.append(f"{table}.{col} update: {err}")
+
+            err = v100_exec(db, f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT NOW()")
+            if err:
+                errors.append(f"{table}.{col} default: {err}")
+
+
+def v100_fix_all_import_tables(db: Session):
+    errors = []
+
+    # Nejdřív vytvořit / zajistit starší tabulky, pokud existují původní ensure funkce.
+    for fn_name in [
+        "ensure_tip_workflow_v090_",
+        "ensure_visible_hub_sections_",
+        "ensure_specialists_table_",
+        "ensure_specialists_import_schema_v096_",
+        "repair_uuid_defaults_v097_",
+        "repair_users_timestamps_v098_",
+    ]:
+        fn = globals().get(fn_name)
+        if fn:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            try:
+                res = fn(db)
+                if isinstance(res, list):
+                    errors.extend([str(x) for x in res if x])
+                db.commit()
+            except Exception as exc:
+                errors.append(f"{fn_name}: {exc}")
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
+
+    # Tabulky, do kterých XLSX import skutečně zapisuje podle logů a importních funkcí.
+    canonical = {
+        "users": {
+            "id": "TEXT",
+            "advisor_id": "TEXT",
+            "name": "TEXT",
+            "email": "TEXT DEFAULT ''",
+            "phone": "TEXT DEFAULT ''",
+            "role": "TEXT DEFAULT 'advisor'",
+            "password_hash": "TEXT DEFAULT ''",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "must_change_password": "BOOLEAN DEFAULT TRUE",
+        },
+        "sections": {
+            "id": "TEXT",
+            "section_code": "TEXT",
+            "name": "TEXT",
+            "icon": "TEXT DEFAULT ''",
+            "sort_order": "INTEGER DEFAULT 100",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+        },
+        "subsections": {
+            "id": "TEXT",
+            "subsection_code": "TEXT",
+            "section_code": "TEXT",
+            "name": "TEXT",
+            "sort_order": "INTEGER DEFAULT 100",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+        },
+        "hub_sections": {
+            "id": "TEXT",
+            "section_code": "TEXT",
+            "section_name": "TEXT",
+            "name": "TEXT",
+            "icon": "TEXT DEFAULT ''",
+            "sort_order": "INTEGER DEFAULT 100",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "note": "TEXT DEFAULT ''",
+        },
+        "hub_subsections": {
+            "id": "TEXT",
+            "subsection_code": "TEXT",
+            "section_code": "TEXT",
+            "subsection_name": "TEXT",
+            "name": "TEXT",
+            "sort_order": "INTEGER DEFAULT 100",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "note": "TEXT DEFAULT ''",
+        },
+        "specialists": {
+            "id": "TEXT",
+            "advisor_id": "TEXT DEFAULT ''",
+            "specialist_name": "TEXT DEFAULT ''",
+            "name": "TEXT DEFAULT ''",
+            "email": "TEXT DEFAULT ''",
+            "phone": "TEXT DEFAULT ''",
+            "section_code": "TEXT DEFAULT ''",
+            "subsection_code": "TEXT DEFAULT ''",
+            "role_description": "TEXT DEFAULT ''",
+            "region": "TEXT DEFAULT ''",
+            "if_share": "TEXT DEFAULT ''",
+            "ps_share": "TEXT DEFAULT ''",
+            "available": "BOOLEAN DEFAULT TRUE",
+            "unavailable_reason": "TEXT DEFAULT ''",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "note": "TEXT DEFAULT ''",
+        },
+        "partners": {
+            "id": "TEXT",
+            "partner_code": "TEXT",
+            "name": "TEXT",
+            "ico": "TEXT DEFAULT ''",
+            "dic": "TEXT DEFAULT ''",
+            "data_box": "TEXT DEFAULT ''",
+            "registry_email": "TEXT DEFAULT ''",
+            "address_full": "TEXT DEFAULT ''",
+            "street": "TEXT DEFAULT ''",
+            "city": "TEXT DEFAULT ''",
+            "zip_code": "TEXT DEFAULT ''",
+            "legal_form": "TEXT DEFAULT ''",
+            "note": "TEXT DEFAULT ''",
+            "source": "TEXT DEFAULT ''",
+            "status": "TEXT DEFAULT 'aktivní'",
+            "is_vip": "BOOLEAN DEFAULT FALSE",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+        },
+        "partner_contacts": {
+            "id": "TEXT",
+            "partner_code": "TEXT",
+            "contact_name": "TEXT",
+            "name": "TEXT DEFAULT ''",
+            "role_description": "TEXT DEFAULT ''",
+            "region": "TEXT DEFAULT ''",
+            "email": "TEXT DEFAULT ''",
+            "phone": "TEXT DEFAULT ''",
+            "specialization": "TEXT DEFAULT ''",
+            "is_vip": "BOOLEAN DEFAULT FALSE",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "note": "TEXT DEFAULT ''",
+            "original_note": "TEXT DEFAULT ''",
+        },
+        "partner_links": {
+            "id": "TEXT",
+            "partner_code": "TEXT",
+            "link_name": "TEXT",
+            "name": "TEXT DEFAULT ''",
+            "url": "TEXT",
+            "category": "TEXT DEFAULT ''",
+            "visibility": "TEXT DEFAULT ''",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "note": "TEXT DEFAULT ''",
+        },
+        "partner_products": {
+            "id": "TEXT",
+            "partner_code": "TEXT",
+            "area": "TEXT DEFAULT ''",
+            "subarea": "TEXT DEFAULT ''",
+            "product_name": "TEXT",
+            "name": "TEXT DEFAULT ''",
+            "risks": "TEXT DEFAULT ''",
+            "client_type": "TEXT DEFAULT ''",
+            "keywords": "TEXT DEFAULT ''",
+            "priority": "INTEGER DEFAULT 100",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+            "note": "TEXT DEFAULT ''",
+        },
+        "commission_rates": {
+            "id": "TEXT",
+            "partner_code": "TEXT DEFAULT ''",
+            "section_code": "TEXT DEFAULT ''",
+            "subsection_code": "TEXT DEFAULT ''",
+            "business_type": "TEXT DEFAULT ''",
+            "area": "TEXT DEFAULT ''",
+            "if_rate": "TEXT DEFAULT ''",
+            "ps_rate": "TEXT DEFAULT ''",
+            "note": "TEXT DEFAULT ''",
+            "is_active": "BOOLEAN DEFAULT TRUE",
+        },
+        "tips": {
+            "id": "TEXT",
+            "client_name": "TEXT DEFAULT ''",
+            "client_contact": "TEXT DEFAULT ''",
+            "client_identifier": "TEXT DEFAULT ''",
+            "advisor_id": "TEXT DEFAULT ''",
+            "advisor_name": "TEXT DEFAULT ''",
+            "advisor_email": "TEXT DEFAULT ''",
+            "specialist_id": "TEXT DEFAULT ''",
+            "specialist_name": "TEXT DEFAULT ''",
+            "section_code": "TEXT DEFAULT ''",
+            "subsection_code": "TEXT DEFAULT ''",
+            "potential": "TEXT DEFAULT ''",
+            "status": "TEXT DEFAULT 'nový'",
+            "description": "TEXT DEFAULT ''",
+            "specialist_feedback": "TEXT DEFAULT ''",
+            "final_volume": "NUMERIC",
+        },
+        "audit_log": {
+            "id": "TEXT",
+            "user_email": "TEXT DEFAULT ''",
+            "action": "TEXT DEFAULT ''",
+            "entity": "TEXT DEFAULT ''",
+            "entity_id": "TEXT DEFAULT ''",
+            "detail": "TEXT DEFAULT ''",
+        },
+    }
+
+    for table, cols in canonical.items():
+        if not v100_table_exists(db, table):
+            continue
+
+        for col, definition in cols.items():
+            err = v100_add_col(db, table, col, definition)
+            if err:
+                errors.append(f"{table}.{col}: {err}")
+
+        v100_fix_timestamps(db, table, errors)
+
+        if v100_col_exists(db, table, "id"):
+            # Nevnucujeme NOT NULL, jen doplníme default tam, kde PostgreSQL podporuje pgcrypto.
+            v100_exec(db, "CREATE EXTENSION IF NOT EXISTS pgcrypto")
+            v100_exec(db, f"UPDATE {table} SET id = gen_random_uuid()::text WHERE id IS NULL")
+            v100_exec(db, f"ALTER TABLE {table} ALTER COLUMN id SET DEFAULT gen_random_uuid()::text")
+
+    # Unikátní indexy jen tam, kde sloupce opravdu existují.
+    index_specs = [
+        ("sections", "ux_sections_section_code", "section_code"),
+        ("subsections", "ux_subsections_subsection_code", "subsection_code"),
+        ("hub_sections", "ux_hub_sections_section_code", "section_code"),
+        ("hub_subsections", "ux_hub_subsections_subsection_code", "subsection_code"),
+        ("partners", "ux_partners_partner_code", "partner_code"),
+        ("users", "ux_users_advisor_id", "advisor_id"),
+    ]
+    for table, idx, col in index_specs:
+        if v100_table_exists(db, table) and v100_col_exists(db, table, col):
+            err = v100_exec(db, f"CREATE UNIQUE INDEX IF NOT EXISTS {idx} ON {table} ({col})")
+            if err:
+                # index neblokuje import
+                errors.append(f"{idx}: {err}")
+
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    return [e for e in errors if e]
+
+
+@router.get("/api/import/hub-xlsx/repair-database")
+def api_import_repair_database_v100(db: Session = Depends(get_db)):
+    errors = v100_fix_all_import_tables(db)
+    return {
+        "ok": len(errors) == 0,
+        "version": "1.0.0-full-import-schema-fix",
+        "message": "Databáze byla sjednocena pro import XLSX. Doplněny sloupce sections/subsections/partners a další importní tabulky.",
+        "errors": errors,
+    }
+
+
+@router.get("/api/import/hub-xlsx/repair-all-v100")
+def api_import_repair_all_v100(db: Session = Depends(get_db)):
+    return api_import_repair_database_v100(db=db)
+
+
+# Přesměrovat import tak, aby si schéma opravil automaticky před nahráním XLSX.
+try:
+    _previous_import_hub_xlsx_data_before_v100 = import_hub_xlsx_data_v093_
+
+    def import_hub_xlsx_data_v100_(db, wb, update_existing=False):
+        repair_errors = v100_fix_all_import_tables(db)
+        result = _previous_import_hub_xlsx_data_before_v100(db, wb, update_existing=update_existing)
+        if repair_errors:
+            result.setdefault("warnings", []).extend(repair_errors)
+        return result
+
+    import_hub_xlsx_data_v093_ = import_hub_xlsx_data_v100_
+except Exception:
+    pass
+
