@@ -1,14 +1,13 @@
-HUB ASTORIE APP v0.9.4-import-hardening
+HUB ASTORIE APP v0.9.5-import-transaction-fix
 
-Opraveno / doplněno:
-- /api/admin/summary
-- /api/import/hub-xlsx/status
-- POST /api/import/hub-xlsx
-- aliasy /admin/import/hub-xlsx/
-- loader při importu
-- deaktivace tlačítka při importu
-- kontrolní odkazy po importu
-- programátorské podklady k importu ve složce migration/
+Opraveno:
+- PostgreSQL chyba current transaction is aborted / InFailedSqlTransaction
+- bezpečné doplnění sloupců tabulky specialists
+- bezpečné vytvoření indexu ux_specialists_import_key
+- přípravné importní SQL bloky mají vlastní commit/rollback
 
-Důležité:
-Původní Google Sheet se nepřepisuje. Import zapisuje pouze do nové databáze aplikace.
+Po nasazení:
+1) /version = 0.9.5-import-transaction-fix
+2) /api/admin/summary
+3) /admin/import/hub-xlsx
+4) první import bez zaškrtnutí aktualizace existujících číselníků

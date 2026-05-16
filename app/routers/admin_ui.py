@@ -26,7 +26,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.9.4",
+        "version": "v0.9.5",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1815,7 +1815,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.9.4 Specialist Profile & Sections Fix
+# v0.9.5 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2014,7 +2014,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.9.4 Visible Sections Fix
+# v0.9.5 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2084,7 +2084,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2103,7 +2103,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v0.9.4 – bezpečné tabulky pro TIPy.
+    v0.9.5 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2162,18 +2162,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "0.9.4-import-hardening",
+            "version": "0.9.5-import-transaction-fix",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "0.9.4-import-hardening", "error": str(e)}
+        return {"ok": False, "version": "0.9.5-import-transaction-fix", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v0.9.4 Adviser HUB routes fix
+# v0.9.5 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2190,7 +2190,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2410,7 +2410,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v0.9.4 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v0.9.5 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2717,7 +2717,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "tables": result,
     }
 
@@ -2725,7 +2725,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.4 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v0.9.5 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2957,7 +2957,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -2968,14 +2968,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.4 Partner autocomplete & Forms data source
+# v0.9.5 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "0.9.4-import-hardening", "items": []}
+        return {"ok": True, "version": "0.9.5-import-transaction-fix", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3006,7 +3006,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "items": [dict(r) for r in rows],
     }
 
@@ -3015,7 +3015,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "0.9.4-import-hardening", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "0.9.5-import-transaction-fix", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3025,7 +3025,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "0.9.4-import-hardening", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "0.9.5-import-transaction-fix", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3063,7 +3063,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3079,7 +3079,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3139,7 +3139,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v0.9.4 Operational TIP Workflow
+# v0.9.5 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3313,7 +3313,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
     })
 
 
@@ -3333,7 +3333,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
     })
 
 
@@ -3560,7 +3560,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
     })
 
 
@@ -3676,7 +3676,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "stats": dict(stats or {}),
     }
 
@@ -3685,7 +3685,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v0.9.4 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v0.9.5 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3844,7 +3844,7 @@ def hub_tip_unified_specialist_update_v091(
 
 
 # -------------------------------------------------------------------
-# v0.9.4 XLSX importer – import přímo ze staženého Google Sheetu
+# v0.9.5 XLSX importer – import přímo ze staženého Google Sheetu
 # -------------------------------------------------------------------
 
 def xlsx_cell_to_str_v093_(value):
@@ -4327,7 +4327,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
     })
 
 
@@ -4344,7 +4344,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "0.9.4-import-hardening",
+            "version": "0.9.5-import-transaction-fix",
         })
 
     raw = await file.read()
@@ -4359,7 +4359,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
     })
 
 
@@ -4367,7 +4367,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -4390,7 +4390,7 @@ def api_import_hub_xlsx_expected_sheets_v093():
 
 
 # -------------------------------------------------------------------
-# v0.9.4 import hardening endpoints
+# v0.9.5 import hardening endpoints
 # - chybějící /api/admin/summary
 # - aliasy pro import route
 # - JSON upload endpoint
@@ -4451,7 +4451,7 @@ def api_admin_summary_v094(db: Session = Depends(get_db)):
     ]
     return {
         "ok": True,
-        "version": "0.9.4-import-hardening",
+        "version": "0.9.5-import-transaction-fix",
         "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
         "counts": {t: safe_count_table_v094_(db, t) for t in tables},
     }
@@ -4473,14 +4473,14 @@ def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
         """)
         return {
             "ok": True,
-            "version": "0.9.4-import-hardening",
+            "version": "0.9.5-import-transaction-fix",
             "running": False,
             "last_job": dict(last_job) if last_job else None,
         }
     except Exception as exc:
         return {
             "ok": False,
-            "version": "0.9.4-import-hardening",
+            "version": "0.9.5-import-transaction-fix",
             "running": False,
             "error": str(exc),
         }
@@ -4503,12 +4503,12 @@ async def api_import_hub_xlsx_upload_v094(
         result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
         result["ok"] = len(result.get("errors", [])) == 0
         result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
-        result["version"] = "0.9.4-import-hardening"
+        result["version"] = "0.9.5-import-transaction-fix"
         return result
     except Exception as exc:
         return {
             "ok": False,
-            "version": "0.9.4-import-hardening",
+            "version": "0.9.5-import-transaction-fix",
             "errors": [str(exc)],
         }
 
@@ -4542,4 +4542,95 @@ def admin_import_xlsx_short_alias_v094():
 @router.get("/api/import/hub-xlsx/summary")
 def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
     return api_admin_summary_v094(db=db)
+
+
+
+
+
+# -------------------------------------------------------------------
+# v0.9.5 import transaction fix
+# Oprava: current transaction is aborted před CREATE UNIQUE INDEX
+# -------------------------------------------------------------------
+
+def ensure_specialists_table_columns_v095_(db):
+    """
+    Starší DB může mít tabulku specialists založenou s jinou strukturou.
+    Importér potřebuje tyto sloupce. Každý ALTER je chráněný rollbackem,
+    aby jedna chyba neshodila celou transakci.
+    """
+    try:
+        ensure_specialists_table_(db)
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    statements = [
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS advisor_id TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS specialist_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS phone TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS section_code TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS subsection_code TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS role_description TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS if_share TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS ps_share TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS available BOOLEAN NOT NULL DEFAULT TRUE",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS unavailable_reason TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE",
+        "ALTER TABLE specialists ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT ''",
+    ]
+
+    for stmt in statements:
+        try:
+            db.execute(text(stmt))
+            db.commit()
+        except Exception:
+            db.rollback()
+
+    try:
+        db.execute(text("""
+            CREATE UNIQUE INDEX IF NOT EXISTS ux_specialists_import_key
+            ON specialists (advisor_id, section_code, subsection_code, email)
+        """))
+        db.commit()
+    except Exception:
+        db.rollback()
+
+
+def ensure_xlsx_import_structures_v095_(db):
+    """
+    Robustní verze přípravy struktur pro XLSX import.
+    Každý blok se commituje/rollbackuje samostatně, aby PostgreSQL nezůstal
+    ve stavu InFailedSqlTransaction.
+    """
+    for fn in [ensure_tip_workflow_v090_, ensure_visible_hub_sections_, ensure_specialists_table_columns_v095_]:
+        try:
+            fn(db)
+            db.commit()
+        except Exception:
+            db.rollback()
+
+    statements = [
+        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS risks TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS client_type TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS keywords TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS priority INTEGER NOT NULL DEFAULT 100",
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS original_note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS business_type TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS area TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS final_volume NUMERIC",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_feedback TEXT NOT NULL DEFAULT ''",
+    ]
+    for stmt in statements:
+        try:
+            db.execute(text(stmt))
+            db.commit()
+        except Exception:
+            db.rollback()
+
+
+# Přesměrování původní funkce na robustní verzi.
+ensure_xlsx_import_structures_v093_ = ensure_xlsx_import_structures_v095_
 
