@@ -1,15 +1,6 @@
-HUB ASTORIE APP v0.9.7-import-user-id-fix
+HUB ASTORIE APP v0.9.8-import-timestamps-fix
 
 Opraveno:
-- users.id NotNullViolation při importu Poradců
-- explicitní UUID id pro raw SQL insert/upsert
-- převod Excel ID 501.0 -> 501
-- endpoint /api/import/hub-xlsx/repair-users
-- doplnění serverových DEFAULT gen_random_uuid() pro UUID tabulky
-
-Po nasazení:
-1) /version = 0.9.7-import-user-id-fix
-2) /api/import/hub-xlsx/repair-users
-3) /api/import/hub-xlsx/repair-schema
-4) /admin/import/hub-xlsx
-5) import bez zaškrtnutí aktualizace existujících číselníků
+- users.created_at / users.updated_at NOT NULL chyba při importu poradců
+- INSERT do users nyní posílá created_at a updated_at
+- přidán endpoint /api/import/hub-xlsx/repair-users-timestamps

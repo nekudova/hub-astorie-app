@@ -9,7 +9,7 @@
 
 <section class="card section-space">
   <h2>Nahrát XLSX</h2>
-  <div class="success-box"><strong>Oprava v0.9.7:</strong> import opravuje users.id, normalizuje Excel ID typu 501.0 na 501 a chrání transakce.</div>
+  <div class="success-box"><strong>Oprava v0.9.8:</strong> import opravuje users.id, normalizuje Excel ID typu 501.0 na 501 a chrání transakce.</div>
 
   <form id="xlsxImportForm" method="post" action="/admin/import/hub-xlsx" enctype="multipart/form-data" class="admin-form-grid">
     <div class="span-2">
@@ -32,6 +32,7 @@
       <button id="xlsxImportBtn" class="btn orange" type="submit">Importovat XLSX do nové aplikace</button>
       <a class="btn soft" href="/api/import/hub-xlsx/expected-sheets" target="_blank">Kontrola očekávaných listů</a>
       <a class="btn soft" href="/api/admin/summary" target="_blank">Kontrolní summary</a>
+      <a class="btn soft" href="/api/import/hub-xlsx/repair-users-timestamps" target="_blank">Opravit timestampy users</a>
       <a class="btn soft" href="/api/import/hub-xlsx/repair-schema" target="_blank">Opravit importní struktury</a>
       <a class="btn soft" href="/api/import/hub-xlsx/repair-users" target="_blank">Opravit users.id</a>
     </div>

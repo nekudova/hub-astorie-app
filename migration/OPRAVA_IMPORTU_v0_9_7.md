@@ -1,4 +1,4 @@
-# HUB ASTORIE – v0.9.7 import-user-id-fix
+# HUB ASTORIE – v0.9.8 import-user-id-fix
 
 ## Opraveno
 Import padal na:
@@ -14,7 +14,7 @@ SQLAlchemy model má Python default `uuid.uuid4`, ale raw SQL `INSERT INTO users
 - Import po chybě provádí rollback, aby se nezablokovala další část importu.
 
 ## Postup
-1. Nasadit v0.9.7.
+1. Nasadit v0.9.8.
 2. Ověřit `/version`.
 3. Otevřít `/api/import/hub-xlsx/repair-users`.
 4. Otevřít `/api/import/hub-xlsx/repair-schema`.
