@@ -1,13 +1,15 @@
-HUB ASTORIE APP v0.9.6-import-index-fix
+HUB ASTORIE APP v0.9.7-import-user-id-fix
 
-Definitivní oprava importu:
-- odstraněna inline tvorba indexu specialists uvnitř importní transakce
-- přidáno čištění transakce před importem
-- přidán opravný endpoint /api/import/hub-xlsx/repair-schema
-- pokud index specialists nejde vytvořit, import pokračuje dál
+Opraveno:
+- users.id NotNullViolation při importu Poradců
+- explicitní UUID id pro raw SQL insert/upsert
+- převod Excel ID 501.0 -> 501
+- endpoint /api/import/hub-xlsx/repair-users
+- doplnění serverových DEFAULT gen_random_uuid() pro UUID tabulky
 
 Po nasazení:
-1) /version = 0.9.6-import-index-fix
-2) /api/import/hub-xlsx/repair-schema
-3) /admin/import/hub-xlsx
-4) import spustit bez zaškrtnutí aktualizace existujících záznamů
+1) /version = 0.9.7-import-user-id-fix
+2) /api/import/hub-xlsx/repair-users
+3) /api/import/hub-xlsx/repair-schema
+4) /admin/import/hub-xlsx
+5) import bez zaškrtnutí aktualizace existujících číselníků

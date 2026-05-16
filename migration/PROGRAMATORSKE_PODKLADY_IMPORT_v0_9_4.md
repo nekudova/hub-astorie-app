@@ -1,4 +1,4 @@
-# ASTORIE HUB – programátorské podklady pro import XLSX v0.9.6
+# ASTORIE HUB – programátorské podklady pro import XLSX v0.9.7
 
 ## Cíl
 Zprovoznit bezpečný import dat ze staženého Google Sheetu do nové PostgreSQL databáze aplikace HUB ASTORIE.
@@ -33,7 +33,7 @@ Stránka `/admin/import/hub-xlsx` obsahuje:
 - odkaz na kontrolní `/api/admin/summary`
 
 ## Kontrola po deploy
-1. `/version` musí vrátit `0.9.6-import-index-fix`
+1. `/version` musí vrátit `0.9.7-import-user-id-fix`
 2. `/api/admin/summary` musí vrátit JSON s `ok: true`
 3. `/api/import/hub-xlsx/expected-sheets` musí vrátit seznam listů
 4. `/admin/import/hub-xlsx` musí zobrazit formulář pro upload
