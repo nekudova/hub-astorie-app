@@ -19,7 +19,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v0.8.1",
+        "version": "v0.8.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1808,7 +1808,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v0.8.1 Specialist Profile & Sections Fix
+# v0.8.2 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2007,7 +2007,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v0.8.1 Visible Sections Fix
+# v0.8.2 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2077,7 +2077,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "0.8.1-adviser-modules-version-force",
+        "version": "0.8.2-tips-loading-fix",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2137,3 +2137,73 @@ def hub_help(request: Request):
         "version": "0.8.0"
     })
 
+
+
+
+def ensure_user_hub_tables_v082_(db: Session):
+    """
+    v0.8.2 – bezpečné tabulky pro TIPy.
+    Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
+    """
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS tips (
+            id TEXT PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            adviser_original_id TEXT NOT NULL DEFAULT '',
+            adviser_name TEXT NOT NULL DEFAULT '',
+            adviser_email TEXT NOT NULL DEFAULT '',
+            specialist_name TEXT NOT NULL DEFAULT '',
+            specialist_email TEXT NOT NULL DEFAULT '',
+            client_name TEXT NOT NULL DEFAULT '',
+            client_phone TEXT NOT NULL DEFAULT '',
+            client_identifier TEXT NOT NULL DEFAULT '',
+            potential_amount NUMERIC(14,2),
+            adviser_note TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'Nový',
+            policy_no TEXT NOT NULL DEFAULT '',
+            final_volume NUMERIC(14,2),
+            specialist_feedback TEXT NOT NULL DEFAULT ''
+        )
+    """))
+
+    # Bezpečné doplnění sloupců pro případy, kdy už tabulka existuje ze starší verze.
+    alters = [
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_original_id TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_email TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_email TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS client_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS client_phone TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS client_identifier TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS potential_amount NUMERIC(14,2)",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Nový'",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS policy_no TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS final_volume NUMERIC(14,2)",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_feedback TEXT NOT NULL DEFAULT ''",
+    ]
+    for stmt in alters:
+        db.execute(text(stmt))
+
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_adviser ON tips (adviser_original_id)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_status ON tips (status)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_created ON tips (created_at DESC)"))
+    db.commit()
+
+
+@router.get("/api/tips/status")
+def api_tips_status_v082(db: Session = Depends(get_db)):
+    try:
+        ensure_user_hub_tables_v082_(db)
+        count = db.execute(text("SELECT COUNT(*) FROM tips")).scalar()
+        latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
+        return {
+            "ok": True,
+            "version": "0.8.2-tips-loading-fix",
+            "count": count,
+            "latest": [dict(r) for r in latest],
+        }
+    except Exception as e:
+        return {"ok": False, "version": "0.8.2-tips-loading-fix", "error": str(e)}

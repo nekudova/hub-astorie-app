@@ -1,14 +1,8 @@
-HUB ASTORIE APP 0.8.1-adviser-modules-version-force
+HUB ASTORIE APP v0.8.2-tips-loading-fix
 
-Opravný balíček:
-- vynucená změna verzí ve všech textových souborech
-- kontrola, zda Render skutečně nasadil nový ZIP
-- zachované moduly:
-  /hub/new-tip
-  /hub/my-tips
-  /hub/calculators
-  /hub/partners
-  /hub/contacts
-  /hub/forms
-  /hub/stats
-  /hub/help
+Oprava:
+- bezpečná tabulka tips
+- doplnění chybějících sloupců tips
+- indexy pro rychlé načítání TIPů
+- diagnostika /api/tips/status
+- zachované HUB moduly
