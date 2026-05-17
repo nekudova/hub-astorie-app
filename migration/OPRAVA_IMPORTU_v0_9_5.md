@@ -1,4 +1,4 @@
-# HUB ASTORIE – oprava importu v1.1.3
+# HUB ASTORIE – oprava importu v1.1.4
 
 ## Opravená chyba
 
@@ -17,9 +17,9 @@ PostgreSQL pak zablokoval všechny další příkazy v rámci stejné transakce.
 
 ## Postup po nasazení
 
-1. Nasadit ZIP `v1.1.3`.
+1. Nasadit ZIP `v1.1.4`.
 2. Na Renderu zvolit `Clear build cache & deploy`.
-3. Ověřit `/version` = `1.1.3-partner-safe-route-fix`.
+3. Ověřit `/version` = `1.1.4-partner-route-final-fix`.
 4. Ověřit `/api/admin/summary`.
 5. Otevřít `/admin/import/hub-xlsx`.
 6. Nahrát XLSX.
