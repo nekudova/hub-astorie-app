@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.2.6 Main Route Bridge Safe
+# HUB ASTORIE APP – v1.3.0 Main Route Bridge Safe
 
 ## Proč tato verze vznikla
 Endpoint `/api/release-1-2-5/status` fungoval, ale `/hub/calculators` stále vracel `Nenalezen`.
