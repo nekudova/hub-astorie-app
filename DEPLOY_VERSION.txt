@@ -1,1 +1,1 @@
-HUB ASTORIE APP v1.2.5-hub-route-aliases-safe
+HUB ASTORIE APP v1.2.6-main-route-bridge-safe

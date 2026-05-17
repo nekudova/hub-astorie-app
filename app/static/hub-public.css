@@ -453,7 +453,7 @@
 @media(max-width:1000px){.hub-grid.four,.hub-filters.wide{grid-template-columns:1fr;}}
 
 
-/* v1.2.5 autocomplete + form source */
+/* v1.2.6 autocomplete + form source */
 .autocomplete-wrap {
   position: relative;
   width: 100%;
@@ -561,7 +561,7 @@
 @media(max-width:900px){.tip-work-card{grid-template-columns:1fr;}}
 
 
-/* v1.2.5 unified inbox */
+/* v1.2.6 unified inbox */
 .tip-tabs{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
