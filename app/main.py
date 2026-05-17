@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.3.4-stable-122-calculators-rates-visual-safe"
+APP_VERSION = "1.3.6-new-tip-visual-correction-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.3.4 vychází ze stabilní v1.2.2; upraven pouze vizuál Kalkulaček/Sazebníku a kontrolní endpoint",
+        "status": "v1.3.6 vychází ze stabilní v1.3.5; upraven pouze vizuál sekce Nový TIP podle schváleného návrhu",
     }
 
 

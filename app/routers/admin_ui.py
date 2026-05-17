@@ -7461,3 +7461,41 @@ def api_release_134_status(db: Session = Depends(get_db)):
         "tables": tables,
         "errors": errors,
     }
+
+
+
+# -------------------------------------------------------------------
+# v1.3.6 New TIP Visual Correction Safe
+# Bezpečný kontrolní endpoint. Nemění DB, importy, API ani jiné sekce.
+# -------------------------------------------------------------------
+@router.get("/api/release-1-3-6/status")
+def api_release_136_status(db: Session = Depends(get_db)):
+    tables = {}
+    errors = []
+    for t in ["sections", "subsections", "specialists", "users", "partners", "partner_links", "tips", "commission_rates"]:
+        try:
+            exists = table_exists_v084_(db, t)
+            count = 0
+            if exists:
+                count = int(db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar() or 0)
+            tables[t] = {"exists": bool(exists), "count": count}
+        except Exception as exc:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            tables[t] = {"exists": False, "count": 0, "error": str(exc)}
+            errors.append(f"{t}: {exc}")
+
+    return {
+        "ok": len(errors) == 0,
+        "version": "1.3.6-new-tip-visual-correction-safe",
+        "message": "Opraven pouze vizuál sekce Nový TIP podle schváleného návrhu: 3 sloupce Oblast / Podsekce / Specialista, kompaktní dlaždice, spodní souhrn výběru. Ostatní sekce, routy, API ani databáze se nemění.",
+        "safe": True,
+        "db_changed": False,
+        "base_version": "1.3.5-new-tip-premium-visual-safe",
+        "changed_files": ["app/main.py", "app/templates/hub_new_tip.html", "app/routers/admin_ui.py - pouze kontrolní endpoint"],
+        "routes_expected": ["/hub/new-tip", "/hub/my-tips", "/hub/calculators", "/hub/partners", "/hub/contacts", "/admin/sections", "/admin/specialists"],
+        "tables": tables,
+        "errors": errors,
+    }
