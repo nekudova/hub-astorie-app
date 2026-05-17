@@ -10,4 +10,4 @@ router = APIRouter(tags=["health"])
 @router.get("/health")
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"ok": True, "app": settings.app_name, "db": True, "version": "1.2.4-contacts-data-source-safe"}
+    return {"ok": True, "app": settings.app_name, "db": True, "version": "1.2.5-hub-route-aliases-safe"}

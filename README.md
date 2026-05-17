@@ -274,7 +274,7 @@ Poznámka:
 - Verze je nedestruktivní: nemaže data, pouze přidává nástroje a endpointy.
 
 
-## v1.2.4 User HUB Core
+## v1.2.5 User HUB Core
 
 Větší vývojový krok – začátek reálné poradenské části HUBu.
 
@@ -297,7 +297,7 @@ Poznámka:
 - Přihlašování poradce je zatím vývojově fixované na testovací identitu. V další verzi se napojí na uživatele/session.
 
 
-## v1.2.4 Specialist Profile & Sections Fix
+## v1.2.5 Specialist Profile & Sections Fix
 
 Opraveno:
 - V profilu specialisty jsou nově viditelné dostupné sekce HUBu.
@@ -310,7 +310,7 @@ Přidáno:
 - Výchozí sekce: Flotily, Majetek, Život, Podnikatelé, Penze, Úvěry, Obnova, Investice, Zlato, Zvíře.
 
 
-## v1.2.4 Visible Sections Fix
+## v1.2.5 Visible Sections Fix
 
 Opraveno:
 - Sekce jsou nově viditelné přímo v poradenské části `/hub/new-tip` jako dlaždice.

@@ -1,7 +1,7 @@
-# HUB ASTORIE APP – v1.2.4 Partners Restore Visual + Grouping
+# HUB ASTORIE APP – v1.2.5 Partners Restore Visual + Grouping
 
 ## Cíl opravy
-Tato verze vrací vizuální koncept sekce Partneři zpět k původnímu workspace vzhledu z v1.2.4 a doplňuje pouze požadované funkční členění.
+Tato verze vrací vizuální koncept sekce Partneři zpět k původnímu workspace vzhledu z v1.2.5 a doplňuje pouze požadované funkční členění.
 
 ## Co verze opravuje
 - Neodstraňuje uživatelskou hlavičku ani původní ovládací prvky.

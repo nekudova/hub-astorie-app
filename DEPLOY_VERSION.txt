@@ -1,1 +1,1 @@
-HUB ASTORIE APP v1.2.4-contacts-data-source-safe
+HUB ASTORIE APP v1.2.5-hub-route-aliases-safe

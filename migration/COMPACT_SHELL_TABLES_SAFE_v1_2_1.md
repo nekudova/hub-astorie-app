@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.2.4 Compact Shell Tables Safe
+# HUB ASTORIE APP – v1.2.5 Compact Shell Tables Safe
 
 ## Co tato verze řeší
 - Schová širokou petrolejovou hero hlavičku na pravé straně uživatelského HUBu.
