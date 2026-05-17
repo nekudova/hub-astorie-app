@@ -10,4 +10,4 @@ router = APIRouter(tags=["health"])
 @router.get("/health")
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"ok": True, "app": settings.app_name, "db": True, "version": "1.1.5-partner-advisor-ui-premium-compact"}
+    return {"ok": True, "app": settings.app_name, "db": True, "version": "1.1.6-partners-figma-like-safe"}

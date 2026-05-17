@@ -1,8 +1,11 @@
-HUB ASTORIE APP v1.1.5-partner-advisor-ui-premium-compact
+HUB ASTORIE APP v1.1.6-partners-figma-like-safe
 
-Bezpečný UI upgrade sekce Partneři pro poradce:
-- kompaktní profesionální vzhled dle schváleného návrhu
+UI sekce Partneři přepracované směrem k odsouhlasenému vizuálu č. 2:
+- přehled partnera
+- akční panel vpravo
+- taby v horní liště
+- přehledové karty
+- hlavní kontakty
+- poslední požadavky
 - loading indikátor
-- decentní + Návrh
-- kontakty, produkty, odkazy, FAQ, požadavky, historie
-- bez zásahu do importu a workflow
+- bez zásahu do importu a databáze
