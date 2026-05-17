@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.1.4 import-index-fix
+# HUB ASTORIE – v1.1.5 import-index-fix
 
 ## Opraveno
 V předchozí verzi zůstala stará přímá tvorba indexu uvnitř importní funkce:
@@ -14,7 +14,7 @@ Pokud byl předtím v transakci jakýkoliv SQL problém, PostgreSQL import zablo
 current transaction is aborted, commands ignored until end of transaction block
 ```
 
-## Co v1.1.4 mění
+## Co v1.1.5 mění
 - Inline tvorba indexu uvnitř importní funkce je odstraněna.
 - Struktura pro specialisty se opravuje před importem.
 - Před importem se provádí rollback/čištění transakce.
@@ -23,7 +23,7 @@ current transaction is aborted, commands ignored until end of transaction block
   - `/api/import/hub-xlsx/repair-schema`
 
 ## Postup
-1. Nasadit v1.1.4.
+1. Nasadit v1.1.5.
 2. Ověřit `/version`.
 3. Otevřít `/api/import/hub-xlsx/repair-schema`.
 4. Potom spustit import na `/admin/import/hub-xlsx`.

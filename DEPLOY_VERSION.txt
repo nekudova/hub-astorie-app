@@ -1,8 +1,8 @@
-HUB ASTORIE APP v1.1.4-partner-route-final-fix
+HUB ASTORIE APP v1.1.5-partner-advisor-ui-premium-compact
 
-Definitivní bezpečná oprava uživatelské sekce Partneři:
-- /hub/partners napojeno na admin číselník
-- kontakty, produkty, odkazy, FAQ
-- požadavky na BO
-- bezpečné fallbacky proti pádu
-- bez zásahu do importu a bez mazání dat
+Bezpečný UI upgrade sekce Partneři pro poradce:
+- kompaktní profesionální vzhled dle schváleného návrhu
+- loading indikátor
+- decentní + Návrh
+- kontakty, produkty, odkazy, FAQ, požadavky, historie
+- bez zásahu do importu a workflow

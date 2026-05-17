@@ -7,242 +7,315 @@
 {% set safe_contacts = contacts if contacts is defined and contacts else [] %}
 {% set safe_links = links if links is defined and links else [] %}
 {% set safe_products = products if products is defined and products else [] %}
+{% set active_tab = tab or 'contacts' %}
 
-<div class="partner-safe-v114">
-  <section class="partner-safe-hero">
+<div id="partnerLoading" class="partner-loading">
+  <span class="partner-spinner"></span>
+  <span>Načítám data…</span>
+</div>
+
+<div class="partners-v115">
+  <section class="partners-topbar-v115">
     <div>
-      <div class="eyebrow">ASTORIE HUB · Partner workspace</div>
+      <div class="partners-eyebrow-v115">ASTORIE HUB · partner workspace</div>
       <h1>Partneři</h1>
-      <p>Uživatelská sekce napojená na admin číselník partnerů, kontakty, produkty, odkazy, FAQ a požadavky pro BackOffice.</p>
+      <p>Rychlý přehled partnerů, kontaktů, produktů, odkazů a požadavků pro BackOffice.</p>
     </div>
     {% if partner %}
-      <button type="button" class="btn orange" onclick="togglePartnerForm('partner-suggest-main')">+ Navrhnout změnu</button>
+      <button type="button" class="btn-proposal-v115" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh</button>
     {% endif %}
   </section>
 
   {% if route_error %}
-    <div class="notice danger">
-      Partner modul se načetl v bezpečném režimu. Detail chyby pro programátora: {{ route_error }}
+    <div class="notice-v115 danger">
+      Partner modul se načetl v bezpečném režimu. Detail pro programátora: {{ route_error }}
     </div>
   {% endif %}
 
   {% if request.query_params.get('workflow') == 'ok' or request.query_params.get('suggestion') == 'ok' %}
-    <div class="notice ok">Požadavek byl uložen a předán BackOffice ke zpracování.</div>
+    <div class="notice-v115 ok">Požadavek byl uložen a předán BackOffice ke zpracování.</div>
   {% elif request.query_params.get('workflow') == 'error' or request.query_params.get('suggestion') == 'error' %}
-    <div class="notice danger">Požadavek se nepodařilo uložit. Zkuste jej prosím odeslat znovu.</div>
+    <div class="notice-v115 danger">Požadavek se nepodařilo uložit. Zkuste jej prosím odeslat znovu.</div>
   {% endif %}
 
-  <form method="get" class="partner-safe-search">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, kód, IČO, datovou schránku, e-mail, město…">
-    <button class="btn orange">Hledat</button>
+  <form method="get" class="partner-search-v115" onsubmit="showPartnerLoading()">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, kód, IČO, DS, e-mail, město…">
+    <button class="btn-search-v115">Hledat</button>
   </form>
 
-  <div class="partner-safe-layout">
-    <aside class="partner-safe-list">
-      <div class="safe-list-head">
-        <strong>Seznam partnerů</strong>
+  <div class="partner-layout-v115">
+    <aside class="partner-list-v115">
+      <div class="partner-list-head-v115">
+        <strong>Partneři</strong>
         <span>{{ partners|length if partners is defined else 0 }}</span>
       </div>
 
       {% for p in partners %}
-        <a class="safe-partner-row {{ 'active' if selected == p.partner_code else '' }}" href="/hub/partners?selected={{ p.partner_code }}&q={{ q or '' }}">
-          <strong>{{ p.name or p.partner_name or p.partner_code }}</strong>
-          <span>{{ p.partner_code }}{% if p.ico %} · IČO {{ p.ico }}{% endif %}</span>
+        <a class="partner-row-v115 {{ 'active' if selected == p.partner_code else '' }}"
+           href="/hub/partners?selected={{ p.partner_code }}&q={{ q or '' }}"
+           onclick="showPartnerLoading()">
+          <div>
+            <strong>{{ p.name or p.partner_name or p.partner_code }}</strong>
+            <span>{{ p.partner_code }}{% if p.ico %} · IČO {{ p.ico }}{% endif %}</span>
+          </div>
+          <em>›</em>
         </a>
       {% else %}
-        <div class="empty-state">Zatím nejsou načtení žádní partneři nebo neodpovídají filtru.</div>
+        <div class="empty-v115">Nenalezen žádný partner.</div>
       {% endfor %}
     </aside>
 
-    <main class="partner-safe-detail">
+    <main class="partner-detail-v115">
       {% if partner %}
-        <section class="safe-partner-header">
-          <div>
-            <div class="partner-code-pill">{{ partner.partner_code }}</div>
+        <section class="partner-header-v115">
+          <div class="partner-title-block-v115">
+            <span class="partner-code-v115">{{ partner.partner_code }}</span>
             <h2>{{ partner.name or partner.partner_name or partner.partner_code }}</h2>
-            <p>
-              <strong>IČO:</strong> {{ partner.ico or '—' }}
-              · <strong>DS:</strong> {{ partner.data_box or '—' }}
-              · <strong>E-mail / podatelna:</strong> {{ partner.registry_email or '—' }}
-            </p>
-            <p><strong>Adresa:</strong> {{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</p>
+
+            <div class="partner-meta-grid-v115">
+              <div><span>Kód</span><strong>{{ partner.partner_code or '—' }}</strong></div>
+              <div><span>IČO</span><strong>{{ partner.ico or '—' }}</strong></div>
+              <div><span>Datová schránka</span><strong>{{ partner.data_box or '—' }}</strong></div>
+              <div><span>E-mail / podatelna</span><strong>{{ partner.registry_email or '—' }}</strong></div>
+              <div class="wide"><span>Adresa</span><strong>{{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</strong></div>
+            </div>
           </div>
-          <button type="button" class="btn soft" onclick="togglePartnerForm('partner-suggest-main')">+ Navrhnout doplnění</button>
+
+          <button type="button" class="btn-proposal-mini-v115" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh</button>
         </section>
 
-        <form id="partner-suggest-main" method="post" action="/hub/partner-workflow/request" class="partner-request-form" style="display:none;">
+        <form id="partner-suggest-main" method="post" action="/hub/partner-workflow/request" class="request-form-v115" style="display:none;" onsubmit="showPartnerLoading()">
           <input type="hidden" name="request_area" value="partners">
           <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
-          <input type="hidden" name="tab" value="{{ tab or 'contacts' }}">
+          <input type="hidden" name="tab" value="{{ active_tab }}">
           <input type="hidden" name="item_type" value="partner">
-          <label>Typ požadavku</label>
-          <select name="request_type">
-            <option>Oprava údajů partnera</option>
-            <option>Doplnění údaje</option>
-            <option>Nový kontakt</option>
-            <option>Nový odkaz</option>
-            <option>Nový produkt</option>
-            <option>FAQ / dotaz</option>
-          </select>
-          <label>Název požadavku</label>
-          <input name="title" placeholder="např. doplnit kontakt, opravit adresu, nový produkt">
-          <label>Popis</label>
-          <textarea name="description" placeholder="Popište, co má BO ověřit nebo doplnit."></textarea>
-          <button class="btn orange">Odeslat požadavek BO</button>
+
+          <div>
+            <label>Typ požadavku</label>
+            <select name="request_type">
+              <option>Oprava údajů partnera</option>
+              <option>Doplnění údaje</option>
+              <option>Nový kontakt</option>
+              <option>Nový odkaz</option>
+              <option>Nový produkt</option>
+              <option>FAQ / dotaz</option>
+            </select>
+          </div>
+          <div>
+            <label>Název požadavku</label>
+            <input name="title" placeholder="např. doplnit kontakt, opravit adresu, nový produkt">
+          </div>
+          <div class="span-2">
+            <label>Popis</label>
+            <textarea name="description" placeholder="Popište, co má BO ověřit nebo doplnit."></textarea>
+          </div>
+          <div class="form-actions-v115">
+            <button type="button" class="btn-muted-v115" onclick="togglePartnerForm('partner-suggest-main')">Zavřít</button>
+            <button class="btn-search-v115">Odeslat BO</button>
+          </div>
         </form>
 
-        <section class="partner-safe-kpis">
+        <section class="kpis-v115">
           <div><span>Kontakty</span><strong>{{ safe_dashboard.contacts or safe_contacts|length }}</strong></div>
           <div><span>Produkty</span><strong>{{ safe_dashboard.products or safe_products|length }}</strong></div>
           <div><span>Odkazy</span><strong>{{ safe_dashboard.links or safe_links|length }}</strong></div>
           <div><span>FAQ</span><strong>{{ safe_dashboard.faq or safe_faqs|length }}</strong></div>
         </section>
 
-        <nav class="partner-safe-tabs">
-          <a class="{{ 'active' if (tab or 'contacts') == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts">Kontakty</a>
-          <a class="{{ 'active' if tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products">Produkty</a>
-          <a class="{{ 'active' if tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links">Odkazy</a>
-          <a class="{{ 'active' if tab == 'faq' else '' }}" href="/hub/partners?selected={{ selected }}&tab=faq">FAQ</a>
-          <a class="{{ 'active' if tab == 'requests' else '' }}" href="/hub/partners?selected={{ selected }}&tab=requests">Požadavky</a>
-          <a class="{{ 'active' if tab == 'history' else '' }}" href="/hub/partners?selected={{ selected }}&tab=history">Historie</a>
+        <nav class="tabs-v115">
+          <a class="{{ 'active' if active_tab == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts" onclick="showPartnerLoading()">Kontakty</a>
+          <a class="{{ 'active' if active_tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products" onclick="showPartnerLoading()">Produkty</a>
+          <a class="{{ 'active' if active_tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links" onclick="showPartnerLoading()">Odkazy</a>
+          <a class="{{ 'active' if active_tab == 'faq' else '' }}" href="/hub/partners?selected={{ selected }}&tab=faq" onclick="showPartnerLoading()">FAQ</a>
+          <a class="{{ 'active' if active_tab == 'requests' else '' }}" href="/hub/partners?selected={{ selected }}&tab=requests" onclick="showPartnerLoading()">Požadavky</a>
+          <a class="{{ 'active' if active_tab == 'history' else '' }}" href="/hub/partners?selected={{ selected }}&tab=history" onclick="showPartnerLoading()">Historie</a>
         </nav>
 
-        {% if tab == 'products' %}
-          <div class="safe-section-head">
+        {% if active_tab == 'products' %}
+          <div class="section-head-v115">
             <h3>Produkty</h3>
-            <button type="button" class="btn soft" onclick="togglePartnerForm('tab-suggest')">+ Navrhnout produkt / opravu</button>
+            <button type="button" class="btn-subtle-v115" onclick="togglePartnerForm('tab-suggest')">+ Návrh produktu</button>
           </div>
+
           {% for pr in safe_products %}
-            <details class="safe-accordion">
+            <details class="accordion-v115" {% if loop.first %}open{% endif %}>
               <summary>
-                <strong>{{ pr.product_name or pr.name or 'Produkt' }}</strong>
-                <span>{{ pr.area or 'Bez oblasti' }}{% if pr.subarea %} · {{ pr.subarea }}{% endif %}</span>
+                <strong>{{ pr.area or pr.product_name or pr.name or 'Produkt' }}</strong>
+                <span>{{ pr.subarea or 'Detail' }}</span>
               </summary>
-              <div>
-                {% if pr.client_type %}<p><strong>Typ klienta:</strong> {{ pr.client_type }}</p>{% endif %}
-                {% if pr.risks %}<p><strong>Rizika:</strong> {{ pr.risks }}</p>{% endif %}
-                {% if pr.keywords %}<p><strong>Klíčová slova:</strong> {{ pr.keywords }}</p>{% endif %}
-                {% if pr.note %}<p><strong>Poznámka:</strong> {{ pr.note }}</p>{% endif %}
+              <div class="accordion-content-v115">
+                <div class="product-line-v115">
+                  <strong>{{ pr.product_name or pr.name or 'Produkt' }}</strong>
+                  {% if pr.client_type %}<span>Typ klienta: {{ pr.client_type }}</span>{% endif %}
+                  {% if pr.keywords %}<small>{{ pr.keywords }}</small>{% endif %}
+                  {% if pr.note %}<p>{{ pr.note }}</p>{% endif %}
+                </div>
               </div>
             </details>
           {% else %}
-            <div class="empty-state">U partnera nejsou zadané produkty.</div>
+            <div class="empty-v115">U partnera nejsou zadané produkty.</div>
           {% endfor %}
 
-        {% elif tab == 'links' %}
-          <div class="safe-section-head">
+        {% elif active_tab == 'links' %}
+          <div class="section-head-v115">
             <h3>Odkazy</h3>
-            <button type="button" class="btn soft" onclick="togglePartnerForm('tab-suggest')">+ Navrhnout odkaz / opravu</button>
+            <button type="button" class="btn-subtle-v115" onclick="togglePartnerForm('tab-suggest')">+ Návrh odkazu</button>
           </div>
-          <div class="safe-card-grid">
+
+          <div class="card-grid-v115">
             {% for l in safe_links %}
-              <a class="safe-link-card" href="{{ l.url }}" target="_blank">
+              <a class="link-card-v115" href="{{ l.url }}" target="_blank">
                 <strong>{{ l.title or l.link_name or l.name or 'Odkaz' }}</strong>
-                <span>{{ l.category or '' }}</span>
+                <span>{{ l.category or 'Odkaz' }}</span>
                 <small>{{ l.url }}</small>
               </a>
             {% else %}
-              <div class="empty-state">U partnera nejsou zadané odkazy.</div>
+              <div class="empty-v115">U partnera nejsou zadané odkazy.</div>
             {% endfor %}
           </div>
 
-        {% elif tab == 'faq' %}
-          <div class="safe-section-head">
+        {% elif active_tab == 'faq' %}
+          <div class="section-head-v115">
             <h3>FAQ</h3>
-            <button type="button" class="btn soft" onclick="togglePartnerForm('tab-suggest')">+ Navrhnout FAQ</button>
+            <button type="button" class="btn-subtle-v115" onclick="togglePartnerForm('tab-suggest')">+ Návrh FAQ</button>
           </div>
+
           {% for f in safe_faqs %}
-            <details class="safe-accordion" open>
-              <summary><strong>{{ f.question }}</strong><span>{{ f.category or 'FAQ' }}</span></summary>
-              <div>{{ f.answer or 'Odpověď zatím není doplněna.' }}</div>
+            <details class="accordion-v115" open>
+              <summary>
+                <strong>{{ f.question }}</strong>
+                <span>{{ f.category or 'FAQ' }}</span>
+              </summary>
+              <div class="accordion-content-v115">{{ f.answer or 'Odpověď zatím není doplněna.' }}</div>
             </details>
           {% else %}
-            <div class="empty-state">U partnera zatím není FAQ.</div>
+            <div class="empty-v115">U partnera zatím není FAQ.</div>
           {% endfor %}
 
-        {% elif tab == 'requests' %}
-          <div class="safe-section-head">
-            <h3>Požadavky k partnerovi</h3>
-            <button type="button" class="btn orange" onclick="togglePartnerForm('partner-suggest-main')">+ Nový požadavek</button>
+        {% elif active_tab == 'requests' %}
+          <div class="section-head-v115">
+            <h3>Požadavky</h3>
+            <button type="button" class="btn-subtle-v115" onclick="togglePartnerForm('partner-suggest-main')">+ Nový požadavek</button>
           </div>
-          {% for r in safe_requests %}
-            <div class="safe-request-card">
-              <strong>{{ r.title or r.request_type or 'Požadavek' }}</strong>
-              <p>{{ r.description or '—' }}</p>
-              <span>{{ r.status or 'new' }}</span>
-            </div>
-          {% else %}
-            <div class="empty-state">K partnerovi nejsou evidované požadavky.</div>
-          {% endfor %}
 
-        {% elif tab == 'history' %}
-          <div class="safe-section-head"><h3>Historie</h3></div>
-          {% for h in safe_history %}
-            <div class="safe-history-card">
-              <strong>{{ h.title }}</strong>
-              <p>{{ h.description }}</p>
-              <small>{{ h.created_at }}</small>
-            </div>
-          {% else %}
-            <div class="empty-state">Historie zatím není dostupná.</div>
-          {% endfor %}
-
-        {% else %}
-          <div class="safe-section-head">
-            <h3>Kontakty</h3>
-            <button type="button" class="btn soft" onclick="togglePartnerForm('tab-suggest')">+ Navrhnout kontakt / opravu</button>
-          </div>
-          <div class="safe-contact-grid">
-            {% for c in safe_contacts %}
-              <article class="safe-contact-card">
+          <div class="timeline-v115">
+            {% for r in safe_requests %}
+              <article>
                 <div>
-                  <h4>{{ c.full_name or c.contact_name or c.name or 'Kontakt' }}</h4>
-                  <p>{{ c.role or c.role_description or c.contact_type or 'Kontakt' }}</p>
-                  {% if c.territory or c.region %}<small>{{ c.territory or c.region }}</small>{% endif %}
-                  {% if c.specialization %}<small>{{ c.specialization }}</small>{% endif %}
-                  <p>{{ c.phone or '' }}{% if c.email %}<br>{{ c.email }}{% endif %}</p>
+                  <strong>{{ r.title or r.request_type or 'Požadavek' }}</strong>
+                  <p>{{ r.description or '—' }}</p>
+                  <small>{{ r.created_by_name or '' }}{% if r.created_at %} · {{ r.created_at }}{% endif %}</small>
                 </div>
-                <button type="button" class="link-button" onclick="openContactSuggest('{{ c.id }}','{{ (c.full_name or c.contact_name or c.name or 'Kontakt')|e }}')">Nahlásit změnu</button>
+                <span class="badge-v115 {{ 'done' if r.status in ['completed','approved','hotovo'] else 'progress' if r.status in ['processing','v řešení'] else 'new' }}">{{ r.status or 'new' }}</span>
               </article>
             {% else %}
-              <div class="empty-state">U partnera nejsou zadané kontakty.</div>
+              <div class="empty-v115">K partnerovi nejsou evidované požadavky.</div>
+            {% endfor %}
+          </div>
+
+        {% elif active_tab == 'history' %}
+          <div class="section-head-v115"><h3>Historie</h3></div>
+
+          <div class="timeline-v115">
+            {% for h in safe_history %}
+              <article>
+                <div>
+                  <strong>{{ h.title or h.event_type or 'Změna' }}</strong>
+                  <p>{{ h.description or '' }}</p>
+                  <small>{{ h.created_by_name or '' }}{% if h.created_at %} · {{ h.created_at }}{% endif %}</small>
+                </div>
+              </article>
+            {% else %}
+              <div class="empty-v115">Historie zatím není dostupná.</div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <div class="section-head-v115">
+            <h3>Kontakty <span>({{ safe_contacts|length }})</span></h3>
+            <button type="button" class="btn-subtle-v115" onclick="togglePartnerForm('tab-suggest')">+ Návrh kontaktu</button>
+          </div>
+
+          <div class="contact-grid-v115">
+            {% for c in safe_contacts %}
+              <article class="contact-card-v115">
+                <div class="contact-main-v115">
+                  <div>
+                    <h4>{{ c.full_name or c.contact_name or c.name or 'Kontakt' }}</h4>
+                    <p>{{ c.role or c.role_description or c.contact_type or 'Kontakt' }}</p>
+                  </div>
+                  {% if c.territory or c.region %}
+                    <span class="region-badge-v115">{{ c.territory or c.region }}</span>
+                  {% endif %}
+                </div>
+
+                {% if c.specialization %}
+                  <small class="muted-line-v115">{{ c.specialization }}</small>
+                {% endif %}
+
+                <div class="contact-actions-v115">
+                  {% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone }}</a>{% endif %}
+                  {% if c.email %}<a href="mailto:{{ c.email }}">{{ c.email }}</a>{% endif %}
+                </div>
+
+                <button type="button" class="report-link-v115" onclick="openContactSuggest('{{ c.id }}','{{ (c.full_name or c.contact_name or c.name or 'Kontakt')|e }}')">Nahlásit změnu</button>
+              </article>
+            {% else %}
+              <div class="empty-v115">U partnera nejsou zadané kontakty.</div>
             {% endfor %}
           </div>
         {% endif %}
 
-        <form id="tab-suggest" method="post" action="/hub/partner-workflow/request" class="partner-request-form" style="display:none;">
+        <form id="tab-suggest" method="post" action="/hub/partner-workflow/request" class="request-form-v115" style="display:none;" onsubmit="showPartnerLoading()">
           <input type="hidden" name="request_area" value="partners">
           <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
-          <input type="hidden" name="tab" value="{{ tab or 'contacts' }}">
-          <input type="hidden" name="item_type" value="{{ tab or 'contacts' }}">
-          <label>Typ požadavku</label>
-          <select name="request_type">
-            <option>Doplnění</option>
-            <option>Oprava</option>
-            <option>Neaktuální údaj</option>
-          </select>
-          <label>Název</label>
-          <input name="title">
-          <label>Popis</label>
-          <textarea name="description"></textarea>
-          <button class="btn orange">Odeslat požadavek BO</button>
+          <input type="hidden" name="tab" value="{{ active_tab }}">
+          <input type="hidden" name="item_type" value="{{ active_tab }}">
+          <div>
+            <label>Typ požadavku</label>
+            <select name="request_type">
+              <option>Doplnění</option>
+              <option>Oprava</option>
+              <option>Neaktuální údaj</option>
+            </select>
+          </div>
+          <div>
+            <label>Název</label>
+            <input name="title">
+          </div>
+          <div class="span-2">
+            <label>Popis</label>
+            <textarea name="description"></textarea>
+          </div>
+          <div class="form-actions-v115">
+            <button type="button" class="btn-muted-v115" onclick="togglePartnerForm('tab-suggest')">Zavřít</button>
+            <button class="btn-search-v115">Odeslat BO</button>
+          </div>
         </form>
 
-        <form id="contact-suggest" method="post" action="/hub/partner-workflow/request" class="partner-request-form" style="display:none;">
+        <form id="contact-suggest" method="post" action="/hub/partner-workflow/request" class="request-form-v115" style="display:none;" onsubmit="showPartnerLoading()">
           <input type="hidden" name="request_area" value="partners">
           <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
           <input type="hidden" name="tab" value="contacts">
           <input type="hidden" name="item_type" value="contact">
           <input type="hidden" id="contactItemId" name="item_id">
           <input type="hidden" name="request_type" value="Neaktuální kontakt">
-          <label>Nahlášení změny kontaktu</label>
-          <input id="contactTitle" name="title" readonly>
-          <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>
-          <button class="btn orange">Odeslat změnu BO</button>
+          <div class="span-2">
+            <label>Nahlášení změny kontaktu</label>
+            <input id="contactTitle" name="title" readonly>
+          </div>
+          <div class="span-2">
+            <label>Popis změny</label>
+            <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>
+          </div>
+          <div class="form-actions-v115">
+            <button type="button" class="btn-muted-v115" onclick="togglePartnerForm('contact-suggest')">Zavřít</button>
+            <button class="btn-search-v115">Odeslat BO</button>
+          </div>
         </form>
 
       {% else %}
-        <section class="safe-empty-premium">
+        <section class="empty-premium-v115">
           <h2>Vyberte partnera</h2>
           <p>Po výběru partnera se zobrazí kontakty, produkty, odkazy, FAQ a workflow požadavků.</p>
         </section>
@@ -252,6 +325,17 @@
 </div>
 
 <script>
+function showPartnerLoading(){
+  const el = document.getElementById("partnerLoading");
+  if(el) el.classList.add("show");
+}
+function hidePartnerLoading(){
+  const el = document.getElementById("partnerLoading");
+  if(el) el.classList.remove("show");
+}
+window.addEventListener("pageshow", hidePartnerLoading);
+window.addEventListener("load", hidePartnerLoading);
+
 function togglePartnerForm(id){
   const el = document.getElementById(id);
   if(!el) return;
