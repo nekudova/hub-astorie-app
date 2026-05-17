@@ -7465,10 +7465,10 @@ def api_release_134_status(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.6 New TIP Visual Correction Safe
+# v1.3.7 New TIP Exact Visual Required Specialist Safe
 # Bezpečný kontrolní endpoint. Nemění DB, importy, API ani jiné sekce.
 # -------------------------------------------------------------------
-@router.get("/api/release-1-3-6/status")
+@router.get("/api/release-1-3-7/status")
 def api_release_136_status(db: Session = Depends(get_db)):
     tables = {}
     errors = []
@@ -7489,7 +7489,7 @@ def api_release_136_status(db: Session = Depends(get_db)):
 
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.6-new-tip-visual-correction-safe",
+        "version": "1.3.7-new-tip-exact-visual-required-specialist-safe",
         "message": "Opraven pouze vizuál sekce Nový TIP podle schváleného návrhu: 3 sloupce Oblast / Podsekce / Specialista, kompaktní dlaždice, spodní souhrn výběru. Ostatní sekce, routy, API ani databáze se nemění.",
         "safe": True,
         "db_changed": False,
