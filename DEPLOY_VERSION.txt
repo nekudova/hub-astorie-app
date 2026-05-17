@@ -1,9 +1,2 @@
-HUB ASTORIE APP v1.1.1-partner-workflow-ux-upgrade
-
-Přidáno:
-- premium Partner workspace
-- KPI dlaždice
-- sticky detail partnera
-- záložky Požadavky a Historie
-- oblíbený partner
-- lepší vizuál kontaktů, produktů, odkazů a FAQ
+HUB ASTORIE APP v1.1.2-partner-hotfix-safe-ui
+Hotfix padu /hub/partners. Bez mazani dat a bez zasahu do importu.
