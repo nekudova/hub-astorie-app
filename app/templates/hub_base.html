@@ -124,7 +124,10 @@
 </style>
 
 
-<style id="hub-safe-visual-shell-v120">
+
+
+
+<style id="hub-compact-shell-v121">
 :root{
   --ast-petrol:#003D4C;
   --ast-petrol2:#005C66;
@@ -136,27 +139,97 @@
   --ast-muted:#5F7680;
 }
 
-/* Zachovat identitu vlevo, nezničit šablony vpravo */
+/* v1.2.1: veškerá velká pravá hero hlavička v uživatelském HUBu se schová.
+   Identita je vlevo, pravá strana má používat kompaktní hlavičku konkrétní sekce. */
+body .hub-hero,
+body .app-hero,
+body .page-hero,
+body .hero-banner,
+body .hero,
+body header.hub-hero,
+body div.hub-hero,
+body [class*="hub-hero"],
+body [class*="app-hero"],
+body [class*="page-hero"],
+body [class*="hero-banner"]{
+  display:none !important;
+  height:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+/* Kdyby měla hero jiný název, skryjeme první velký tmavě petrolejový blok v obsahu.
+   Levého menu se to nedotkne. */
+main > section:first-child[style*="003D4C"],
+main > div:first-child[style*="003D4C"],
+.hub-content > section:first-child[style*="003D4C"],
+.hub-content > div:first-child[style*="003D4C"],
+.content > section:first-child[style*="003D4C"],
+.content > div:first-child[style*="003D4C"]{
+  display:none !important;
+}
+
+/* Levé menu zůstává jako jednotná identita. */
 .hub-sidebar, .sidebar, aside.sidebar, .left-sidebar{
   background:linear-gradient(180deg,var(--ast-petrol),#004B57) !important;
 }
 
-/* Jemné sjednocení karet bez přepisování obsahu */
-.card, .panel, .section-card, .module-card, .content-card,
-[class*="card"], [class*="panel"]{
-  border-radius:18px;
+/* Základní profesionální sjednocení, bez mazání obsahu. */
+main, .hub-content, .content, .main-content{
+  background:var(--ast-bg) !important;
 }
-
-/* Vstupy a tlačítka vizuálně sjednocené, ale bez zásahu do chování */
+.card, .panel, .section-card, .module-card, .content-card{
+  border-radius:18px !important;
+  border:1px solid var(--ast-border) !important;
+  box-shadow:0 10px 26px rgba(0,61,76,.055) !important;
+}
 input, select, textarea{
-  border-color:var(--ast-border);
+  border-color:var(--ast-border) !important;
 }
 button, .btn, a.btn{
   border-radius:12px;
 }
 
-/* Globální loader – funguje napříč HUBem */
-.hub-loading-v120{
+/* Pokud stránka nemá vlastní kompaktní hlavičku, upraví první obsahovou kartu tak, aby nepůsobila jako starý blok. */
+main > .card:first-child,
+.hub-content > .card:first-child,
+.content > .card:first-child,
+main > section:first-child,
+.hub-content > section:first-child,
+.content > section:first-child{
+  border-radius:20px;
+}
+
+/* Bezpečný fulltext blok v tabulkách – doplní JS jen tam, kde je tabulka a chybí hledání. */
+.hub-table-search-v121{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:12px 0 10px;
+  padding:12px;
+  background:#fff;
+  border:1px solid var(--ast-border);
+  border-radius:16px;
+  box-shadow:0 8px 20px rgba(0,61,76,.04);
+}
+.hub-table-search-v121 label{
+  color:var(--ast-petrol);
+  font-weight:900;
+  white-space:nowrap;
+}
+.hub-table-search-v121 input{
+  width:100%;
+  min-width:240px;
+  border:1px solid var(--ast-border);
+  border-radius:12px;
+  padding:10px 12px;
+  font:inherit;
+}
+
+/* Globální loader */
+.hub-loading-v121{
   position:fixed;
   right:22px;
   bottom:22px;
@@ -176,64 +249,53 @@ button, .btn, a.btn{
   font-size:14px;
   font-weight:900;
 }
-.hub-loading-v120.show{
+.hub-loading-v121.show{
   opacity:1;
   transform:translateY(0);
 }
-.hub-loading-v120 i{
+.hub-loading-v121 i{
   width:17px;
   height:17px;
   border:2px solid rgba(255,255,255,.3);
   border-top-color:#fff;
   border-radius:50%;
-  animation:hubSpin120 .75s linear infinite;
+  animation:hubSpin121 .75s linear infinite;
 }
-@keyframes hubSpin120{to{transform:rotate(360deg)}}
+@keyframes hubSpin121{to{transform:rotate(360deg)}}
 
-/* Profesionálnější mezery bez mazání sekcí */
-main, .hub-content, .content, .main-content{
-  background:var(--ast-bg);
-}
-main h1, .hub-content h1, .content h1{
-  color:var(--ast-text);
-  letter-spacing:-.02em;
-}
-
-/* Nový TIP: jen jemné zkompaktnění, bez změny generování sekcí/podsekcí */
-[href*="/hub/new-tip"]{}
-.hub-content .section-card,
-.hub-content .module-card{
-  box-shadow:0 10px 26px rgba(0,61,76,.05);
-}
-
-/* Zabraňuje, aby vizuální shell schoval obsah. */
-.hub-safe-no-hide-v120{
-  display:initial;
+@media(max-width:1200px){
+  .hub-table-search-v121{display:block}
+  .hub-table-search-v121 label{display:block;margin-bottom:8px}
 }
 </style>
 
-<script id="hub-safe-visual-shell-js-v120">
+<script id="hub-compact-shell-js-v121">
 (function(){
+  function normalize(v){
+    return (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  }
+
   function ensureLoader(){
-    if(document.getElementById("hubGlobalLoadingV120")) return;
+    if(document.getElementById("hubGlobalLoadingV121")) return;
     var d=document.createElement("div");
-    d.id="hubGlobalLoadingV120";
-    d.className="hub-loading-v120";
+    d.id="hubGlobalLoadingV121";
+    d.className="hub-loading-v121";
     d.innerHTML="<i></i><span>Načítám data…</span>";
     document.body.appendChild(d);
   }
   function show(){
     ensureLoader();
-    var el=document.getElementById("hubGlobalLoadingV120");
+    var el=document.getElementById("hubGlobalLoadingV121");
     if(el) el.classList.add("show");
   }
   function hide(){
-    var el=document.getElementById("hubGlobalLoadingV120");
+    var el=document.getElementById("hubGlobalLoadingV121");
     if(el) el.classList.remove("show");
   }
-  window.showHubLoadingV120=show;
+  window.showHubLoadingV121=show;
   window.addEventListener("pageshow", hide);
   window.addEventListener("load", hide);
+
   document.addEventListener("click", function(e){
     var a=e.target.closest && e.target.closest("a[href]");
     if(!a) return;
@@ -246,6 +308,45 @@ main h1, .hub-content h1, .content h1{
     var f=e.target;
     if(f && f.tagName==="FORM") show();
   });
+
+  function tableAlreadyHasNearbySearch(table){
+    var parent = table.parentElement;
+    for(var i=0;i<4 && parent;i++,parent=parent.parentElement){
+      if(parent.querySelector('input[type="search"], input[name="q"], input[id*="search" i], input[placeholder*="Hledat" i]')) return true;
+    }
+    return false;
+  }
+
+  function addSearchToTable(table, idx){
+    if(table.dataset.hubSearchReady === "1") return;
+    // Nezasahovat do malých layout tabulek.
+    var rows = table.querySelectorAll("tbody tr");
+    if(rows.length < 5) return;
+
+    // Pokud už stránka nad tabulkou má hledání, další nevkládat.
+    if(tableAlreadyHasNearbySearch(table)) return;
+
+    table.dataset.hubSearchReady = "1";
+    var wrap = document.createElement("div");
+    wrap.className = "hub-table-search-v121";
+    wrap.innerHTML = '<label>Fulltext v tabulce</label><input type="search" placeholder="Hledat v tabulce podle sekce, podsekce, partnera, produktu, sazby…">';
+    table.parentNode.insertBefore(wrap, table);
+
+    var input = wrap.querySelector("input");
+    input.addEventListener("input", function(){
+      var q = normalize(input.value);
+      table.querySelectorAll("tbody tr").forEach(function(row){
+        row.style.display = normalize(row.textContent).indexOf(q) >= 0 ? "" : "none";
+      });
+    });
+  }
+
+  function initTableSearch(){
+    document.querySelectorAll("table").forEach(addSearchToTable);
+  }
+
+  document.addEventListener("DOMContentLoaded", initTableSearch);
+  window.addEventListener("load", initTableSearch);
 })();
 </script>
 

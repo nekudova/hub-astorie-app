@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.2.0 Partner Workflow Core
+# HUB ASTORIE APP – v1.2.1 Partner Workflow Core
 
 Přidáno:
 - partner_change_requests
@@ -12,7 +12,7 @@ Přidáno:
 - bezpečný fallback: bez SMTP se požadavek uloží a workflow nespadne
 
 Ověření po nasazení:
-1. `/version` = `1.2.0-safe-rollback-visual-shell`
+1. `/version` = `1.2.1-compact-shell-tables-safe`
 2. `/api/partner-workflow/status`
 3. `/admin/partner-requests`
 4. test z `/hub/partners` přes Navrhnout doplnění / Nahlásit změnu.

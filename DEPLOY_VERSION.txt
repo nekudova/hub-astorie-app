@@ -1,9 +1,8 @@
-HUB ASTORIE APP v1.2.0-safe-rollback-visual-shell
+HUB ASTORIE APP v1.2.1-compact-shell-tables-safe
 
-Opravná bezpečná verze:
-- rollback na stabilní v1.1.8
-- odstranění destruktivních zásahů z v1.1.9
-- neinvazivní globální visual shell
-- zachování původních šablon Kalkulačky, TIPy, Kontakty atd.
-- zachování Partneři v1.1.8
-- bez zásahu do DB, importu a workflow
+Bezpečný UI patch:
+- skrytí široké pravé hero hlavičky
+- zachování funkčních šablon
+- zachování Partnerů z v1.1.8/v1.2.0
+- fulltext nad dlouhé tabulky, včetně Sazebníku
+- bez zásahu do DB/import/workflow

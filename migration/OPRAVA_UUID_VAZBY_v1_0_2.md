@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.2.0 uuid-relationship-fix
+# HUB ASTORIE – v1.2.1 uuid-relationship-fix
 
 ## Opravená chyba
 
@@ -26,7 +26,7 @@ invalid input syntax for type uuid: ""
 
 ## Postup
 
-1. `/version` = `1.2.0-safe-rollback-visual-shell`
+1. `/version` = `1.2.1-compact-shell-tables-safe`
 2. `/api/import/hub-xlsx/repair-database`
 3. `/api/import/hub-xlsx/repair-uuid-relationships`
 4. `/api/import/hub-xlsx/preflight`
