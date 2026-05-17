@@ -123,6 +123,240 @@
 @media(max-width:780px){.partners-page-head-v118,.tab-head-v118{display:block}.partners-top-actions-v118,.tab-tools-v118{margin-top:10px}.global-search-v118{min-width:220px}.request-form-v118{grid-template-columns:1fr}.request-form-v118 .span-2,.form-actions-v118{grid-column:span 1}}
 </style>
 
+
+<style id="hub-unified-shell-v119">
+/* v1.1.9 unified HUB shell – bezpečná UI vrstva bez změny backendu */
+:root{
+  --hub-petrol:#003D4C;
+  --hub-petrol-2:#005C66;
+  --hub-orange:#FC4C02;
+  --hub-bg:#F4F8F9;
+  --hub-card:#FFFFFF;
+  --hub-border:#DCE9ED;
+  --hub-text:#102A33;
+  --hub-muted:#607783;
+}
+
+/* Velká hero hlavička vpravo zbytečně zabírala místo. Necháváme identitu v levém menu a stránkovou hlavičku v obsahu. */
+body:not(.admin-page) .hub-hero,
+body:not(.admin-page) .page-hero,
+body:not(.admin-page) .app-hero,
+body:not(.admin-page) .hero-banner{
+  display:none !important;
+}
+
+/* Levý panel jako hlavní nosič identity. */
+.hub-sidebar, .sidebar, aside.sidebar, .left-sidebar{
+  background:linear-gradient(180deg,var(--hub-petrol),#004B57) !important;
+}
+.hub-sidebar .brand, .sidebar .brand, .hub-brand, .app-brand{
+  padding-top:18px !important;
+  padding-bottom:14px !important;
+}
+.hub-sidebar .brand::after, .sidebar .brand::after, .hub-brand::after, .app-brand::after{
+  content:"S lehkostí světem financí";
+  display:block;
+  margin-top:4px;
+  color:rgba(255,255,255,.72);
+  font-size:11px;
+  letter-spacing:.02em;
+}
+
+/* Obecné sjednocení karet a obsahu. */
+.main-content, .hub-content, main, .content{
+  background:var(--hub-bg);
+}
+.card, .panel, .section-card, .module-card, .content-card{
+  border-radius:18px !important;
+  border:1px solid var(--hub-border) !important;
+  box-shadow:0 10px 26px rgba(0,61,76,.055) !important;
+}
+input, select, textarea{
+  border-color:var(--hub-border) !important;
+}
+button, .btn{
+  border-radius:12px;
+}
+
+/* Kompaktní jednotná stránková hlavička – aplikuje se na nové/patchované stránky. */
+.hub-section-head-v119{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  background:#fff;
+  border:1px solid var(--hub-border);
+  border-radius:20px;
+  padding:16px 18px;
+  box-shadow:0 10px 26px rgba(0,61,76,.05);
+  margin-bottom:16px;
+}
+.hub-section-title-v119{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+.hub-section-icon-v119{
+  width:42px;height:42px;
+  border-radius:14px;
+  display:grid;place-items:center;
+  background:#EEF7F8;
+  color:var(--hub-petrol);
+  font-size:22px;
+  flex:0 0 auto;
+}
+.hub-section-head-v119 h1{
+  margin:0;
+  color:var(--hub-petrol);
+  font-size:26px;
+  line-height:1.08;
+  letter-spacing:-.02em;
+}
+.hub-section-head-v119 p{
+  margin:5px 0 0;
+  color:var(--hub-muted);
+  font-size:14px;
+  line-height:1.35;
+}
+.hub-section-actions-v119{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.hub-search-v119{
+  display:flex;
+  height:42px;
+  min-width:360px;
+  border:1px solid var(--hub-border);
+  border-radius:14px;
+  background:#fff;
+  overflow:hidden;
+}
+.hub-search-v119 input{
+  border:0 !important;
+  outline:0;
+  padding:0 13px;
+  flex:1;
+  font:inherit;
+  min-width:0;
+}
+.hub-search-v119 button,.hub-primary-v119{
+  border:0;
+  background:var(--hub-orange);
+  color:#fff;
+  padding:0 16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.hub-secondary-v119{
+  border:1px solid var(--hub-border);
+  background:#EEF7F8;
+  color:var(--hub-petrol);
+  padding:11px 14px;
+  border-radius:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.hub-grid-v119{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+}
+.hub-card-v119{
+  background:#fff;
+  border:1px solid var(--hub-border);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 10px 24px rgba(0,61,76,.045);
+}
+.hub-card-v119 h3{
+  margin:0 0 8px;
+  color:var(--hub-petrol);
+  font-size:18px;
+}
+.hub-card-v119 p{
+  color:var(--hub-muted);
+  margin:0 0 10px;
+}
+.hub-empty-v119{
+  display:inline-block;
+  border:1px dashed #C9DCE2;
+  border-radius:16px;
+  padding:16px 18px;
+  color:#667B85;
+  font-weight:800;
+  background:#FAFDFD;
+}
+.hub-loading-v119{
+  position:fixed;right:22px;bottom:22px;z-index:999999;
+  background:var(--hub-petrol);
+  color:#fff;
+  padding:12px 16px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 16px 44px rgba(0,61,76,.28);
+  opacity:0;
+  transform:translateY(8px);
+  pointer-events:none;
+  transition:.18s ease;
+  font-size:14px;
+  font-weight:900;
+}
+.hub-loading-v119.show{opacity:1;transform:translateY(0)}
+.hub-loading-v119 i{
+  width:17px;height:17px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;
+  animation:hubSpin119 .75s linear infinite;
+}
+@keyframes hubSpin119{to{transform:rotate(360deg)}}
+
+/* Vizuální zkrocení starších stránek, aby nepůsobily amatérsky a nezabíraly zbytečně mnoho místa. */
+main h1, .content h1, .hub-content h1{
+  letter-spacing:-.02em;
+}
+main > .card:first-child, .content > .card:first-child, .hub-content > .card:first-child{
+  margin-top:0;
+}
+.module-grid, .cards-grid, .calc-grid{
+  gap:14px !important;
+}
+@media(max-width:1200px){
+  .hub-section-head-v119{display:block}
+  .hub-section-actions-v119{margin-top:12px}
+  .hub-search-v119{min-width:220px;width:100%}
+  .hub-grid-v119{grid-template-columns:1fr}
+}
+</style>
+<script id="hub-unified-shell-js-v119">
+(function(){
+  function ensureLoader(){
+    if(document.getElementById("hubGlobalLoadingV119")) return;
+    var d=document.createElement("div");
+    d.id="hubGlobalLoadingV119";
+    d.className="hub-loading-v119";
+    d.innerHTML="<i></i><span>Načítám data…</span>";
+    document.body.appendChild(d);
+  }
+  function show(){ensureLoader(); var el=document.getElementById("hubGlobalLoadingV119"); if(el) el.classList.add("show");}
+  function hide(){var el=document.getElementById("hubGlobalLoadingV119"); if(el) el.classList.remove("show");}
+  window.showHubLoadingV119=show;
+  window.addEventListener("pageshow", hide);
+  window.addEventListener("load", hide);
+  document.addEventListener("click", function(e){
+    var a=e.target.closest && e.target.closest("a[href]");
+    if(!a) return;
+    var href=a.getAttribute("href") || "";
+    if(href.indexOf("/hub/")===0 || href.indexOf(location.origin + "/hub/")===0){ show(); }
+  });
+  document.addEventListener("submit", function(e){
+    var f=e.target;
+    if(f && f.tagName==="FORM"){ show(); }
+  });
+})();
+</script>
+
 </head>
 <body class="hub-public-body">
   <div class="hub-shell">

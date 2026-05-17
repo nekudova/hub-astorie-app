@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.1.8-partners-restore-visual-plus-grouping"
+APP_VERSION = "1.1.9-unified-hub-shell-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.1.8 Visible Sections Fix is loaded",
+        "status": "v1.1.9 Visible Sections Fix is loaded",
     }
 
 

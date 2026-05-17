@@ -1,10 +1,9 @@
-HUB ASTORIE APP v1.1.8-partners-restore-visual-plus-grouping
+HUB ASTORIE APP v1.1.9-unified-hub-shell-safe
 
-Opravná bezpečná verze:
-- vrácen původní partner workspace vizuál
-- zachována uživatelská hlavička a ovládání
-- kontakty rozdělené do rozklikávacích kategorií
-- produkty seskupené podle sekcí
-- odkazy řazené abecedně
-- fulltext zachován
+Bezpečné sjednocení uživatelského HUBu:
+- jednotnější UI shell
+- méně prostoru zabraného horní hero hlavičkou
+- kompaktní stránkové hlavičky
+- profesionálnější Kontakty ASTORIE a Kalkulačky
+- zachování sekce Partneři z v1.1.8 včetně seskupení kontaktů/produktů
 - bez zásahu do DB, importu a workflow

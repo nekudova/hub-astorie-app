@@ -1,50 +1,51 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
-<div class="hub-card">
-  <h1>Kalkulačky</h1>
-  <p class="page-subtitle">Načítá odkazy typu kalkulačka z administrace odkazů partnerů.</p>
-
-  <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat kalkulačku, partnera, kategorii…">
-    <button class="btn orange">Hledat</button>
-  </form>
-
-  <div class="portal-grid">
-    {% for l in links %}
-      <div class="portal-card">
-        <span class="portal-letter">{{ (l.partner_name or l.partner_code or 'A')[0] }}</span>
-        <h3>{{ l.title }}</h3>
-        <p>{{ l.partner_name or l.partner_code }}</p>
-        <p class="muted">{{ l.category or '' }}</p>
-        <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
-      </div>
-    {% else %}
-      <div class="empty-state">Zatím nejsou vložené odkazy na kalkulačky. V adminu přidejte odkaz s kategorií/názvem obsahujícím „kalkulačka“.</div>
-    {% endfor %}
+{% set safe_links = links if links is defined and links else [] %}
+{% set safe_calculators = calculators if calculators is defined and calculators else safe_links %}
+<div class="hub-section-head-v119">
+  <div class="hub-section-title-v119">
+    <div class="hub-section-icon-v119">🧮</div>
+    <div>
+      <h1>Kalkulačky</h1>
+      <p>Firemní a partnerské kalkulačky přehledně na jednom místě.</p>
+    </div>
+  </div>
+  <div class="hub-section-actions-v119">
+    <form method="get" class="hub-search-v119">
+      <input id="calcSearchV119" name="q" value="{{ q if q is defined else '' }}" placeholder="Hledat kalkulačku, partnera, kategorii…">
+      <button>Hledat</button>
+    </form>
   </div>
 </div>
 
-<div class="hub-card">
-  <h2>Sazebník</h2>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Sekce</th><th>Podsekce</th><th>Partner</th><th>Typ</th><th>Produkt</th><th>Sazba</th></tr></thead>
-      <tbody>
-        {% for r in rates %}
-        <tr>
-          <td>{{ r.section_code }}</td>
-          <td>{{ r.subsection_code }}</td>
-          <td>{{ r.partner_name }}</td>
-          <td>{{ r.base_type or '' }}</td>
-          <td>{{ r.product_type or '' }}</td>
-          <td>{{ r.rate_percent or '' }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6">Sazebník zatím není naplněn.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div id="calcGridV119" class="hub-grid-v119">
+  {% for l in safe_calculators %}
+    <article class="hub-card-v119 calc-card-v119" data-search="{{ ((l.title or l.name or l.link_name or '') ~ ' ' ~ (l.partner_code or l.partner or '') ~ ' ' ~ (l.category or l.type or ''))|lower }}">
+      <div class="hub-section-icon-v119" style="width:38px;height:38px;font-size:18px;margin-bottom:10px;">A</div>
+      <h3>{{ l.title or l.name or l.link_name or 'Kalkulačka' }}</h3>
+      <p>{{ l.partner_code or l.partner or 'AST' }}</p>
+      <p><strong>{{ l.category or l.type or 'WEB' }}</strong></p>
+      {% if l.url %}
+        <a class="hub-secondary-v119" style="display:inline-block;text-decoration:none;" href="{{ l.url }}" target="_blank">Otevřít</a>
+      {% endif %}
+    </article>
+  {% else %}
+    <div class="hub-empty-v119">Zatím nejsou načtené žádné kalkulačky nebo neodpovídají filtru.</div>
+  {% endfor %}
 </div>
+
+<script>
+(function(){
+  var input=document.getElementById("calcSearchV119");
+  var grid=document.getElementById("calcGridV119");
+  if(!input||!grid) return;
+  function n(v){return (v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+  input.addEventListener("input",function(){
+    var q=n(input.value);
+    grid.querySelectorAll(".calc-card-v119").forEach(function(card){
+      card.style.display=n(card.dataset.search).indexOf(q)>=0?"":"none";
+    });
+  });
+})();
+</script>
 {% endblock %}
