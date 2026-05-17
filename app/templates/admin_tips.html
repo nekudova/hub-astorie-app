@@ -1,56 +1,49 @@
-
 {% extends "base.html" %}
 {% block content %}
-
-<style id="admin-tips-v140-compact">
-.admin-tips-v140{display:grid;gap:18px}.admin-tips-v140 .metric-card strong{font-size:28px}.admin-tips-v140 .admin-filter-grid{display:grid;grid-template-columns:2fr 1fr 1.1fr 1.1fr auto auto;gap:10px;align-items:center}.admin-tip-list-v140{display:grid;gap:10px}.admin-tip-row-v140{display:grid;grid-template-columns:1.05fr 1.1fr 1.1fr 1fr .8fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid #DCE9ED;border-radius:16px;background:#fff;box-shadow:0 8px 22px rgba(0,61,76,.035)}.admin-tip-row-v140:hover{border-color:#BFD5DC;box-shadow:0 12px 28px rgba(0,61,76,.06)}.admin-tip-row-v140 strong{color:#003D4C}.admin-tip-cell-v140 small{display:block;color:#687F89;text-transform:uppercase;font-size:10px;font-weight:900;letter-spacing:.04em;margin-bottom:3px}.admin-tip-status-v140{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;background:#E9F8EE;color:#147D3A;white-space:nowrap}.admin-tip-date-v140{font-size:13px;color:#526B76}.admin-tip-money-v140{font-weight:900;color:#003D4C}@media(max-width:1100px){.admin-tips-v140 .admin-filter-grid{grid-template-columns:1fr 1fr}.admin-tip-row-v140{grid-template-columns:1fr 1fr}.admin-tip-row-v140 .actions{text-align:left}}
+<style id="admin-tips-v141-compact-statuses">
+.admin-tips-v141{display:grid;gap:16px}.admin-tips-v141 .metric-card strong{font-size:28px}.admin-filter-grid-v141{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto auto;gap:10px;align-items:center}.tip-cards-v141{display:grid;gap:10px}.tip-row-v141{display:grid;grid-template-columns:1.15fr 1.05fr 1.05fr 1.05fr .9fr .8fr;gap:12px;align-items:center;border:1px solid #DCE9ED;border-radius:16px;background:#fff;padding:13px 15px;box-shadow:0 8px 22px rgba(0,61,76,.035)}.tip-row-v141:hover{border-color:#BFD5DC;box-shadow:0 12px 28px rgba(0,61,76,.06)}.tip-cell-v141{min-width:0}.tip-cell-v141 small{display:block;color:#687F89;text-transform:uppercase;font-size:10px;font-weight:1000;letter-spacing:.04em;margin-bottom:2px}.tip-cell-v141 strong{display:block;color:#003D4C;font-size:15px;line-height:1.15}.tip-cell-v141 .muted{display:block;color:#687F89;font-size:12px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.tip-cell-v141 .line{display:block;line-height:1.2}.tip-status-v141{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:1000;white-space:nowrap}.st-new{background:#EAF4FF;color:#115E96}.st-progress{background:#FFF3D7;color:#9A5B00}.st-won{background:#E8F8EE;color:#147D3A}.st-lost{background:#FDEBEC;color:#B4232A}.st-archive{background:#EEF1F3;color:#53636B}.tip-date-v141{font-size:12px;color:#526B76;margin-top:4px}.tip-detail-btn-v141{display:inline-flex;margin-top:6px;text-decoration:none;background:#EEF7F8;color:#003D4C;border-radius:10px;padding:7px 10px;font-weight:900;font-size:12px}.tip-money-v141{font-weight:1000;color:#003D4C}.tip-table-head-v141{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.tip-table-head-v141 h2{margin:0;color:#003D4C}.tip-empty-v141{border:1px dashed #CFE0E5;background:#FAFDFD;border-radius:16px;padding:18px;color:#526B76;font-weight:800}@media(max-width:1250px){.tip-row-v141{grid-template-columns:1fr 1fr 1fr}.admin-filter-grid-v141{grid-template-columns:1fr 1fr}}@media(max-width:760px){.tip-row-v141,.admin-filter-grid-v141{grid-template-columns:1fr}}
 </style>
 
-<div class="admin-tips-v140">
-<h1 class="page-title">Centrální evidence TIPů</h1>
-<p class="page-subtitle">BO vidí všechny TIPy zadané kýmkoliv, včetně rozpracovaných, uzavřených a archivu.</p>
+<div class="admin-tips-v141">
+  <h1 class="page-title">Centrální evidence TIPů</h1>
+  <p class="page-subtitle">Přehled všech TIPů, jejich stavů, specialistů, poradce, smluv a objemu obchodu.</p>
 
-<div class="dashboard-grid">
-  <div class="metric-card"><span>Celkem</span><strong>{{ stats.total or 0 }}</strong></div>
-  <div class="metric-card"><span>Nové</span><strong>{{ stats.new_count or 0 }}</strong></div>
-  <div class="metric-card"><span>V řešení</span><strong>{{ stats.progress_count or 0 }}</strong></div>
-  <div class="metric-card"><span>Sjednáno</span><strong>{{ stats.won_count or 0 }}</strong></div>
-  <div class="metric-card"><span>Storno</span><strong>{{ stats.lost_count or 0 }}</strong></div>
-  <div class="metric-card"><span>Archiv</span><strong>{{ stats.archive_count or 0 }}</strong></div>
-</div>
-
-<section class="card section-space">
-  <form method="get" class="admin-filter-grid">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, poradce, specialistu, smlouvu, sekci…">
-    <select name="status">
-      <option value="">Všechny stavy</option>
-      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
-        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-    <input name="specialist" value="{{ specialist or '' }}" placeholder="E-mail specialisty">
-    <input name="adviser" value="{{ adviser or '' }}" placeholder="E-mail poradce">
-    <label class="mini-check"><input type="checkbox" name="archive" value="1" {% if archive == '1' %}checked{% endif %}> včetně archivu</label>
-    <button class="btn orange">Filtrovat</button>
-  </form>
-</section>
-
-<section class="card section-space">
-  <div class="table-head">Všechny TIPy</div>
-  <div class="admin-tip-list-v140">
-    {% for r in rows %}
-      <div class="admin-tip-row-v140">
-        <div class="admin-tip-cell-v140"><small>Klient</small><strong>{{ r.client_name }}</strong><span class="muted">{{ r.client_identifier or '' }}</span></div>
-        <div class="admin-tip-cell-v140"><small>Poradce</small>{{ r.adviser_name }}<span class="muted">{{ r.adviser_email }}</span></div>
-        <div class="admin-tip-cell-v140"><small>Specialista</small>{{ r.specialist_name or '—' }}<span class="muted">{{ r.specialist_email or '' }}</span></div>
-        <div class="admin-tip-cell-v140"><small>Odbornost</small>{{ r.section_name or r.section_code }}<span class="muted">{{ r.subsection_name or r.subsection_code }}</span></div>
-        <div class="admin-tip-cell-v140"><small>Smlouva / objem</small><span>{{ r.policy_no or '—' }}</span><span class="admin-tip-money-v140">{{ r.final_volume or r.potential_amount or '' }}</span></div>
-        <div class="admin-tip-cell-v140 actions"><span class="admin-tip-status-v140">{{ r.status }}</span><div class="admin-tip-date-v140">{{ r.created_at }}</div><a class="btn soft micro" href="/admin/tips/{{ r.id }}">Detail</a></div>
-      </div>
-    {% else %}
-      <div class="tip-empty-v135">Zatím nejsou žádné TIPy.</div>
-    {% endfor %}
+  <div class="dashboard-grid">
+    <div class="metric-card"><span>Celkem</span><strong>{{ stats.total or 0 }}</strong></div>
+    <div class="metric-card"><span>Nové</span><strong>{{ stats.new_count or 0 }}</strong></div>
+    <div class="metric-card"><span>V řešení</span><strong>{{ stats.progress_count or 0 }}</strong></div>
+    <div class="metric-card"><span>Sjednáno</span><strong>{{ stats.won_count or 0 }}</strong></div>
+    <div class="metric-card"><span>Storno</span><strong>{{ stats.lost_count or 0 }}</strong></div>
+    <div class="metric-card"><span>Archiv</span><strong>{{ stats.archive_count or 0 }}</strong></div>
   </div>
-</section>
+
+  <section class="card section-space">
+    <form method="get" class="admin-filter-grid-v141">
+      <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, poradce, specialistu, smlouvu, sekci…">
+      <select name="status"><option value="">Všechny stavy</option>{% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}<option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+      <input name="specialist" value="{{ specialist or '' }}" placeholder="Specialista">
+      <input name="adviser" value="{{ adviser or '' }}" placeholder="Poradce">
+      <label class="mini-check"><input type="checkbox" name="archive" value="1" {% if archive == '1' %}checked{% endif %}> včetně archivu</label>
+      <button class="btn orange">Filtrovat</button>
+    </form>
+  </section>
+
+  <section class="card section-space">
+    <div class="tip-table-head-v141"><h2>Všechny TIPy</h2><span class="muted">Řazeno podle poslední aktualizace</span></div>
+    <div class="tip-cards-v141">
+      {% for r in rows %}
+      <div class="tip-row-v141">
+        <div class="tip-cell-v141"><small>Klient</small><strong>{{ r.client_name or '—' }}</strong><span class="muted">{{ r.client_identifier or '' }}{% if r.client_phone %} · {{ r.client_phone }}{% endif %}</span></div>
+        <div class="tip-cell-v141"><small>Poradce</small><span class="line">{{ r.adviser_name or '—' }}</span><span class="muted">{{ r.adviser_email or '' }}</span></div>
+        <div class="tip-cell-v141"><small>Specialista</small><span class="line">{{ r.specialist_name or '—' }}</span><span class="muted">{{ r.specialist_email or '' }}</span></div>
+        <div class="tip-cell-v141"><small>Odbornost</small><span class="line">{{ r.section_name or r.section_code }}</span><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></div>
+        <div class="tip-cell-v141"><small>Smlouva / obchod</small><span class="line">{{ r.policy_no or '—' }}</span><span class="tip-money-v141">{{ r.final_volume or r.potential_amount or '—' }}</span>{% if r.next_business %}<span class="muted">Další obchod: {{ r.next_business }}</span>{% endif %}</div>
+        <div class="tip-cell-v141"><small>Stav</small><span class="tip-status-v141 {% if r.status == 'Nový' %}st-new{% elif r.status == 'V řešení' %}st-progress{% elif r.status == 'Sjednáno' %}st-won{% elif r.status == 'Storno' %}st-lost{% else %}st-archive{% endif %}">{{ r.status }}</span><div class="tip-date-v141">{{ r.last_update_at or r.created_at }}</div><a class="tip-detail-btn-v141" href="/admin/tips/{{ r.id }}">Detail</a></div>
+      </div>
+      {% else %}
+      <div class="tip-empty-v141">Zatím nejsou žádné TIPy.</div>
+      {% endfor %}
+    </div>
+  </section>
 </div>
 {% endblock %}

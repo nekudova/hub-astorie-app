@@ -3719,6 +3719,10 @@ def hub_specialist_tip_detail_v090(request: Request, tip_id: str, db: Session = 
 def hub_specialist_tip_update_v090(
     tip_id: str,
     status: str = Form("V řešení"),
+    policy_no: str = Form(""),
+    closed_at_input: str = Form(""),
+    final_volume: str = Form(""),
+    next_business: str = Form(""),
     message_to_adviser: str = Form(""),
     internal_note: str = Form(""),
     final_report: str = Form(""),
@@ -3739,11 +3743,33 @@ def hub_specialist_tip_update_v090(
 
     old_status = old["status"]
     new_status = normalize_tip_status_v090_(status)
-    closed_sql = ", closed_at = now()" if new_status in ["Sjednáno", "Storno"] else ""
+
+    final_amount = old.get("final_volume") if old else None
+    if final_volume:
+        try:
+            final_amount = Decimal(str(final_volume).replace(" ", "").replace("Kč", "").replace(",", "."))
+        except Exception:
+            final_amount = old.get("final_volume") if old else None
+
+    closed_value = None
+    if closed_at_input:
+        try:
+            closed_value = datetime.strptime(closed_at_input.strip(), "%Y-%m-%d")
+        except Exception:
+            closed_value = None
+
+    closed_sql = ""
+    if closed_value:
+        closed_sql = ", closed_at = :closed_at"
+    elif new_status in ["Sjednáno", "Storno"] and not old.get("closed_at"):
+        closed_sql = ", closed_at = now()"
 
     db.execute(text(f"""
         UPDATE tips
         SET status = :status,
+            policy_no = :policy_no,
+            final_volume = :final_volume,
+            next_business = :next_business,
             adviser_last_message = :message_to_adviser,
             specialist_internal_note = :internal_note,
             final_report = :final_report,
@@ -3753,6 +3779,10 @@ def hub_specialist_tip_update_v090(
     """), {
         "id": tip_id,
         "status": new_status,
+        "policy_no": (policy_no or old.get("policy_no") or "").strip(),
+        "final_volume": final_amount,
+        "next_business": (next_business if next_business != "" else (old.get("next_business") or "")).strip(),
+        "closed_at": closed_value,
         "message_to_adviser": message_to_adviser,
         "internal_note": internal_note,
         "final_report": final_report,
@@ -4059,6 +4089,10 @@ def hub_tip_detail_unified_v091(request: Request, tip_id: str, db: Session = Dep
 def hub_tip_unified_specialist_update_v091(
     tip_id: str,
     status: str = Form("V řešení"),
+    policy_no: str = Form(""),
+    closed_at_input: str = Form(""),
+    final_volume: str = Form(""),
+    next_business: str = Form(""),
     message_to_adviser: str = Form(""),
     internal_note: str = Form(""),
     final_report: str = Form(""),
@@ -4067,6 +4101,10 @@ def hub_tip_unified_specialist_update_v091(
     return hub_specialist_tip_update_v090(
         tip_id=tip_id,
         status=status,
+        policy_no=policy_no,
+        closed_at_input=closed_at_input,
+        final_volume=final_volume,
+        next_business=next_business,
         message_to_adviser=message_to_adviser,
         internal_note=internal_note,
         final_report=final_report,

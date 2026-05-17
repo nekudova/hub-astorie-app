@@ -1,68 +1,67 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
-<p><a href="/hub/specialist-tips">← Zpět na moje TIPy specialisty</a></p>
+<style id="specialist-tip-detail-v141">
+.tip-detail-v141{display:grid;gap:18px;color:#102A33}.tip-back-v141{color:#003D4C;font-weight:900;text-decoration:none}.tip-hero-v141{background:#fff;border:1px solid #DCE9ED;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(0,61,76,.055)}.tip-hero-v141 h1{margin:0;color:#003D4C;font-size:30px;letter-spacing:-.025em}.tip-sub-v141{margin:6px 0 0;color:#526B76}.tip-status-v141{display:inline-flex;align-items:center;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:1000;white-space:nowrap}.st-new{background:#EAF4FF;color:#115E96}.st-progress{background:#FFF3D7;color:#9A5B00}.st-won{background:#E8F8EE;color:#147D3A}.st-lost{background:#FDEBEC;color:#B4232A}.st-archive{background:#EEF1F3;color:#53636B}.tip-info-grid-v141{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}.tip-info-v141{border:1px solid #DCE9ED;background:#FAFDFD;border-radius:16px;padding:14px}.tip-info-v141 span{display:block;color:#687F89;text-transform:uppercase;font-size:11px;font-weight:1000;letter-spacing:.04em}.tip-info-v141 strong{display:block;color:#003D4C;font-size:16px;margin-top:5px}.tip-info-v141.wide{grid-column:span 4}.tip-form-v141{background:#fff;border:1px solid #DCE9ED;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(0,61,76,.055)}.tip-form-v141 h2{margin:0 0 6px;color:#003D4C;font-size:24px}.tip-form-grid-v141{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.tip-field-v141 label{display:block;color:#607681;font-weight:1000;font-size:12px;text-transform:uppercase;margin-bottom:6px}.tip-field-v141 input,.tip-field-v141 select,.tip-field-v141 textarea{width:100%;border:1px solid #DCE9ED;border-radius:14px;padding:12px 13px;font:inherit;background:#fff;color:#102A33}.tip-field-v141 textarea{min-height:105px;resize:vertical}.tip-field-v141.span-2{grid-column:span 2}.tip-field-v141.span-3{grid-column:span 3}.tip-actions-v141{display:flex;justify-content:flex-end;margin-top:16px}.tip-actions-v141 .btn{border:0;background:#FC4C02;color:#fff;border-radius:16px;padding:14px 22px;font-weight:1000;cursor:pointer;box-shadow:0 16px 28px rgba(252,76,2,.22)}.tip-history-v141{background:#fff;border:1px solid #DCE9ED;border-radius:22px;padding:18px;box-shadow:0 14px 36px rgba(0,61,76,.045)}.tip-history-list-v141{display:grid;gap:10px}.tip-history-item-v141{border:1px solid #DCE9ED;border-radius:16px;padding:13px;background:#FAFDFD}.tip-history-top-v141{display:flex;justify-content:space-between;gap:12px;align-items:center}.muted{color:#687F89}@media(max-width:1100px){.tip-info-grid-v141,.tip-form-grid-v141{grid-template-columns:1fr}.tip-info-v141.wide,.tip-field-v141.span-2,.tip-field-v141.span-3{grid-column:auto}}
+</style>
+
+<div class="tip-detail-v141">
+<p><a class="tip-back-v141" href="/hub/specialist-tips">← Zpět na moje TIPy specialisty</a></p>
 
 {% if not tip %}
   <div class="hub-card"><h1>TIP nenalezen nebo není přiřazen Vašemu e-mailu.</h1></div>
 {% else %}
-<div class="hub-card">
-  <h1>{{ tip.client_name }}</h1>
-  <p class="page-subtitle">{{ tip.section_name or tip.section_code }} / {{ tip.subsection_name or tip.subsection_code }}</p>
-
-  <div class="partner-data-grid">
-    <div><span>Stav</span><strong>{{ tip.status }}</strong></div>
-    <div><span>Poradce</span><strong>{{ tip.adviser_name }}</strong><br>{{ tip.adviser_email }}</div>
-    <div><span>Kontakt klienta</span><strong>{{ tip.client_phone or '—' }}</strong></div>
-    <div><span>Smlouva</span><strong>{{ tip.policy_no or '—' }}</strong></div>
-    <div class="wide"><span>Zadání poradce</span><strong>{{ tip.adviser_note or '—' }}</strong></div>
+<section class="tip-hero-v141">
+  <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start">
+    <div>
+      <h1>{{ tip.client_name }}</h1>
+      <p class="tip-sub-v141">{{ tip.section_name or tip.section_code }} / {{ tip.subsection_name or tip.subsection_code }}</p>
+    </div>
+    <span class="tip-status-v141 {% if tip.status == 'Nový' %}st-new{% elif tip.status == 'V řešení' %}st-progress{% elif tip.status == 'Sjednáno' %}st-won{% elif tip.status == 'Storno' %}st-lost{% else %}st-archive{% endif %}">{{ tip.status }}</span>
   </div>
-</div>
+  <div class="tip-info-grid-v141">
+    <div class="tip-info-v141"><span>Poradce</span><strong>{{ tip.adviser_name }}</strong><div class="muted">{{ tip.adviser_email }}</div></div>
+    <div class="tip-info-v141"><span>Kontakt klienta</span><strong>{{ tip.client_phone or '—' }}</strong></div>
+    <div class="tip-info-v141"><span>RČ / IČO / datum nar.</span><strong>{{ tip.client_identifier or '—' }}</strong></div>
+    <div class="tip-info-v141"><span>Odhad potenciálu</span><strong>{{ tip.potential_amount or '—' }}</strong></div>
+    <div class="tip-info-v141 wide"><span>Zadání poradce</span><strong>{{ tip.adviser_note or '—' }}</strong></div>
+  </div>
+</section>
 
-<div class="hub-card">
-  <h2>Aktualizace pro tipaře a konečná zpráva</h2>
-  <form method="post" action="/hub/specialist-tips/{{ tip.id }}/update" class="hub-form">
-    <label>Stav TIPu</label>
-    <select name="status">
-      {% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}
-        <option value="{{ s }}" {% if tip.status == s %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-
-    <label>Průběžná informace pro tipaře</label>
-    <textarea name="message_to_adviser" placeholder="Co se s TIPem aktuálně děje, co bylo zjištěno, co bude následovat…">{{ tip.adviser_last_message or '' }}</textarea>
-
-    <label>Interní poznámka specialisty</label>
-    <textarea name="internal_note" placeholder="Interní poznámka – nebude určena pro klienta.">{{ tip.specialist_internal_note or '' }}</textarea>
-
-    <label>Konečná zpráva</label>
-    <textarea name="final_report" placeholder="Vyplnit zejména při stavu Sjednáno nebo Storno.">{{ tip.final_report or '' }}</textarea>
-
-    <button class="btn orange">Uložit aktualizaci</button>
+<section class="tip-form-v141">
+  <h2>Doplnění specialisty</h2>
+  <p class="tip-sub-v141">Tady specialista průběžně doplní výsledek, smlouvu, objem obchodu a informaci pro tipaře.</p>
+  <form method="post" action="/hub/specialist-tips/{{ tip.id }}/update">
+    <div class="tip-form-grid-v141">
+      <div class="tip-field-v141"><label>Stav TIPu</label><select name="status">{% for s in ['Nový','V řešení','Sjednáno','Storno','Archiv'] %}<option value="{{ s }}" {% if tip.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+      <div class="tip-field-v141"><label>Číslo smlouvy</label><input name="policy_no" value="{{ tip.policy_no or '' }}" placeholder="např. 123456789"></div>
+      <div class="tip-field-v141"><label>Datum uzavření</label><input type="date" name="closed_at_input" value="{% if tip.closed_at %}{{ (tip.closed_at|string)[:10] }}{% endif %}"></div>
+      <div class="tip-field-v141"><label>Výše obchodu / pojistné</label><input name="final_volume" value="{{ tip.final_volume or '' }}" placeholder="např. 25 000"></div>
+      <div class="tip-field-v141"><label>Další obchod</label><select name="next_business"><option value="" {% if not tip.next_business %}selected{% endif %}>— vyberte —</option><option value="ANO – má zájem" {% if tip.next_business == 'ANO – má zájem' %}selected{% endif %}>ANO – má zájem</option><option value="NE" {% if tip.next_business == 'NE' %}selected{% endif %}>NE</option><option value="Později" {% if tip.next_business == 'Později' %}selected{% endif %}>Později</option></select></div>
+      <div class="tip-field-v141"><label>Poslední aktualizace</label><input value="{{ tip.last_update_at or '' }}" readonly></div>
+      <div class="tip-field-v141 span-3"><label>Průběžná informace pro tipaře</label><textarea name="message_to_adviser" placeholder="Co se s TIPem aktuálně děje, co bylo zjištěno, co bude následovat…">{{ tip.adviser_last_message or '' }}</textarea></div>
+      <div class="tip-field-v141 span-3"><label>Interní poznámka specialisty</label><textarea name="internal_note" placeholder="Interní poznámka – uvidí ji BO/specialista, není určena klientovi.">{{ tip.specialist_internal_note or '' }}</textarea></div>
+      <div class="tip-field-v141 span-3"><label>Konečná zpráva</label><textarea name="final_report" placeholder="Vyplnit zejména při stavu Sjednáno nebo Storno.">{{ tip.final_report or '' }}</textarea></div>
+    </div>
+    <div class="tip-actions-v141"><button class="btn">Uložit aktualizaci</button></div>
   </form>
-</div>
+</section>
 
-<div class="hub-card">
-  <h2>Historie</h2>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Datum</th><th>Autor</th><th>Stav</th><th>Zpráva pro tipaře</th><th>Interní poznámka</th><th>Konečná zpráva</th></tr></thead>
-      <tbody>
-        {% for u in updates %}
-          <tr>
-            <td>{{ u.created_at }}</td>
-            <td>{{ u.author_name }}<br><span class="muted">{{ u.author_role }}</span></td>
-            <td>{{ u.old_status }} → {{ u.new_status }}</td>
-            <td>{{ u.message_to_adviser }}</td>
-            <td>{{ u.internal_note }}</td>
-            <td>{{ u.final_report }}</td>
-          </tr>
-        {% else %}
-          <tr><td colspan="6">Zatím není žádná historie.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<section class="tip-history-v141">
+  <h2>Historie komunikace a změn</h2>
+  <div class="tip-history-list-v141">
+    {% for u in updates %}
+      <div class="tip-history-item-v141">
+        <div class="tip-history-top-v141"><strong>{{ u.author_name }} <span class="muted">({{ u.author_role }})</span></strong><span class="muted">{{ u.created_at }}</span></div>
+        <div><span class="muted">Stav:</span> {{ u.old_status }} → {{ u.new_status }}</div>
+        {% if u.message_to_adviser %}<div><span class="muted">Zpráva pro tipaře:</span> {{ u.message_to_adviser }}</div>{% endif %}
+        {% if u.internal_note %}<div><span class="muted">Interní poznámka:</span> {{ u.internal_note }}</div>{% endif %}
+        {% if u.final_report %}<div><span class="muted">Konečná zpráva:</span> {{ u.final_report }}</div>{% endif %}
+      </div>
+    {% else %}
+      <div class="tip-history-item-v141">Zatím není žádná historie.</div>
+    {% endfor %}
   </div>
-</div>
+</section>
 {% endif %}
+</div>
 {% endblock %}

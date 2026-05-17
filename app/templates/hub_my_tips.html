@@ -1,63 +1,46 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
-<div class="hub-card">
+<style id="my-tips-v141">
+.my-tips-v141{display:grid;gap:16px}.my-tips-v141 h1{color:#003D4C}.tip-status-v141{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:1000;white-space:nowrap}.st-new{background:#EAF4FF;color:#115E96}.st-progress{background:#FFF3D7;color:#9A5B00}.st-won{background:#E8F8EE;color:#147D3A}.st-lost{background:#FDEBEC;color:#B4232A}.st-archive{background:#EEF1F3;color:#53636B}.my-tip-list-v141{display:grid;gap:12px}.my-tip-card-v141{border:1px solid #DCE9ED;border-radius:18px;background:#fff;box-shadow:0 12px 28px rgba(0,61,76,.045);overflow:hidden}.my-tip-top-v141{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:14px;padding:16px 18px;align-items:start}.my-tip-cell-v141 small{display:block;color:#687F89;text-transform:uppercase;font-size:10px;font-weight:1000;letter-spacing:.04em;margin-bottom:3px}.my-tip-cell-v141 strong{display:block;color:#003D4C;font-size:16px;line-height:1.15}.my-tip-cell-v141 .muted{display:block;color:#687F89;font-size:12px;overflow-wrap:anywhere}.my-tip-body-v141{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;padding:13px 18px;background:#FAFDFD;border-top:1px solid #EAF2F5}.my-tip-note-v141{padding:13px 18px;border-top:1px solid #EAF2F5;display:grid;grid-template-columns:1fr 1fr;gap:12px}.my-tip-note-v141 div{border:1px solid #DCE9ED;border-radius:14px;padding:12px;background:#fff}.my-tip-actions-v141{display:flex;justify-content:flex-end;padding:0 18px 16px}.my-tip-actions-v141 a{background:#EEF7F8;color:#003D4C;text-decoration:none;border-radius:12px;padding:9px 12px;font-weight:900}.money-v141{font-weight:1000;color:#003D4C}@media(max-width:1000px){.my-tip-top-v141,.my-tip-body-v141,.my-tip-note-v141{grid-template-columns:1fr}}
+</style>
+<div class="hub-card my-tips-v141">
   <h1>Moje TIPy</h1>
-  <p class="page-subtitle">Přehled TIPů založených poradcem.</p>
-
-  {% if created %}
-    <div class="success-box">TIP byl uložen.</div>
-  {% endif %}
-
+  <p class="page-subtitle">Přehled TIPů založených poradcem, včetně smlouvy, objemu, dalšího obchodu a poslední informace od specialisty.</p>
+  {% if created %}<div class="success-box">TIP byl uložen.</div>{% endif %}
   <div class="hub-grid four">
     <div class="metric-card"><span>Odesláno</span><strong>{{ stats.total or 0 }}</strong></div>
     <div class="metric-card"><span>Sjednáno</span><strong>{{ stats.won or 0 }}</strong></div>
     <div class="metric-card"><span>V řešení</span><strong>{{ stats.open or 0 }}</strong></div>
     <div class="metric-card"><span>Storno</span><strong>{{ stats.lost or 0 }}</strong></div>
   </div>
-
   <form method="get" class="hub-filters wide">
     <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, specialistu, smlouvu, sekci…">
-    <select name="section">
-      <option value="">Všechny sekce</option>
-      {% for s in sections %}
-        <option value="{{ s.section_code }}" {% if section == s.section_code %}selected{% endif %}>{{ s.section_name }}</option>
-      {% endfor %}
-    </select>
-    <select name="status">
-      <option value="">Všechny stavy</option>
-      <option value="Nový" {% if status == 'Nový' %}selected{% endif %}>Nový</option>
-      <option value="V řešení" {% if status == 'V řešení' %}selected{% endif %}>V řešení</option>
-      <option value="Sjednáno" {% if status == 'Sjednáno' %}selected{% endif %}>Sjednáno</option>
-      <option value="Storno" {% if status == 'Storno' %}selected{% endif %}>Storno</option>
-    </select>
+    <select name="section"><option value="">Všechny sekce</option>{% for s in sections %}<option value="{{ s.section_code }}" {% if section == s.section_code %}selected{% endif %}>{{ s.section_name }}</option>{% endfor %}</select>
+    <select name="status"><option value="">Všechny stavy</option>{% for s in ['Nový','V řešení','Sjednáno','Storno'] %}<option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
     <button class="btn orange">Filtrovat</button>
   </form>
-
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr><th>Datum</th><th>Klient</th><th>Odbornost</th><th>Specialista</th><th>Smlouva</th><th>Datum uzavření</th><th>Objem / potenciál</th><th>Další obchod</th><th>Stav</th><th>Poznámka</th></tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r.created_at }}</td>
-          <td><strong>{{ r.client_name }}</strong><br><span class="muted">{{ r.client_identifier or '' }}</span></td>
-          <td>{{ r.section_name or r.section_code }}<br><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></td>
-          <td>{{ r.specialist_name or '—' }}<br><span class="muted">{{ r.specialist_email or '' }}</span></td>
-          <td>{{ r.policy_no or '' }}</td>
-          <td>{{ r.closed_at or '' }}</td>
-          <td><strong>{{ r.final_volume or '' }}</strong>{% if r.potential_amount %}<br><span class="muted">potenciál: {{ r.potential_amount }}</span>{% endif %}</td>
-          <td>{{ r.next_business or '' }}</td>
-          <td><span class="status ok">{{ r.status }}</span></td>
-          <td>{{ r.adviser_note or '' }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="10">Zatím nemáte žádné TIPy.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="my-tip-list-v141">
+    {% for r in rows %}
+    <article class="my-tip-card-v141">
+      <div class="my-tip-top-v141">
+        <div class="my-tip-cell-v141"><small>Klient a identifikace</small><strong>{{ r.client_name or '—' }}</strong><span class="muted">{{ r.client_phone or 'telefon neuveden' }}{% if r.client_identifier %} · {{ r.client_identifier }}{% endif %}</span></div>
+        <div class="my-tip-cell-v141"><small>Odbornost</small><strong>{{ r.section_name or r.section_code }}</strong><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></div>
+        <div class="my-tip-cell-v141"><small>Přiřazený specialista</small><strong>{{ r.specialist_name or '—' }}</strong><span class="muted">{{ r.specialist_email or '' }}</span></div>
+        <div class="my-tip-cell-v141"><small>Stav</small><span class="tip-status-v141 {% if r.status == 'Nový' %}st-new{% elif r.status == 'V řešení' %}st-progress{% elif r.status == 'Sjednáno' %}st-won{% elif r.status == 'Storno' %}st-lost{% else %}st-archive{% endif %}">{{ r.status }}</span></div>
+      </div>
+      <div class="my-tip-body-v141">
+        <div class="my-tip-cell-v141"><small>Číslo smlouvy</small><strong>{{ r.policy_no or '—' }}</strong></div>
+        <div class="my-tip-cell-v141"><small>Datum uzavření</small><strong>{{ r.closed_at or '—' }}</strong></div>
+        <div class="my-tip-cell-v141"><small>Objem / potenciál</small><strong class="money-v141">{{ r.final_volume or r.potential_amount or '—' }}</strong></div>
+        <div class="my-tip-cell-v141"><small>Další obchod</small><strong>{{ r.next_business or '—' }}</strong></div>
+      </div>
+      <div class="my-tip-note-v141">
+        <div><small>Zadání poradce</small><br>{{ r.adviser_note or '—' }}</div>
+        <div><small>Poslední informace specialisty</small><br>{{ r.adviser_last_message or '—' }}</div>
+      </div>
+      <div class="my-tip-actions-v141"><a href="/hub/tips/{{ r.id }}">Detail TIPu</a></div>
+    </article>
+    {% else %}<div class="tip-empty-v141">Zatím nemáte žádné TIPy.</div>{% endfor %}
   </div>
 </div>
 {% endblock %}
