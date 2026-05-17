@@ -1,1 +1,1 @@
-v1.2.3: NEŠAHÁ na Partnery. Opravuje poradenské Kontakty ASTORIE, kompaktní Kalkulačky a Sazebník provizí s fulltextem a filtry.
+v1.2.4: NEŠAHÁ na Partnery. Opravuje poradenské Kontakty ASTORIE, kompaktní Kalkulačky a Sazebník provizí s fulltextem a filtry.

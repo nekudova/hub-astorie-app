@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.2.3 Admin Taxonomy Specialists Links Safe
+# HUB ASTORIE APP – v1.2.4 Admin Taxonomy Specialists Links Safe
 
 ## Řešené problémy
 1. Duplicitní zobrazení sekcí v Novém TIPu

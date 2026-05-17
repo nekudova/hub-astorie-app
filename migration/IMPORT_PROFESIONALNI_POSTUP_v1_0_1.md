@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.2.3 import-relationship-fix
+# HUB ASTORIE – v1.2.4 import-relationship-fix
 
 ## Opravená chyba
 
@@ -21,7 +21,7 @@ Excel a import pracují se `section_code`, ale databáze má u `subsections` pov
 
 ## Doporučený rychlý postup
 
-1. Nasadit v1.2.3.
+1. Nasadit v1.2.4.
 2. Otevřít `/api/import/hub-xlsx/repair-database`.
 3. Otevřít `/api/import/hub-xlsx/repair-relationships`.
 4. Otevřít `/api/import/hub-xlsx/preflight`.

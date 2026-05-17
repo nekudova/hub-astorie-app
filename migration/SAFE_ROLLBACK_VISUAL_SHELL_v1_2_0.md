@@ -1,13 +1,13 @@
-# HUB ASTORIE APP – v1.2.3 Safe Rollback Visual Shell
+# HUB ASTORIE APP – v1.2.4 Safe Rollback Visual Shell
 
 ## Důvod verze
-Verze v1.2.3 přepsala některé konkrétní šablony uživatelských sekcí. To mohlo způsobit ztrátu funkčních prvků, například v Kalkulačkách nebo dalších sekcích.
+Verze v1.2.4 přepsala některé konkrétní šablony uživatelských sekcí. To mohlo způsobit ztrátu funkčních prvků, například v Kalkulačkách nebo dalších sekcích.
 
 Tato verze je opravná:
-- vrací základ na stabilní v1.2.3,
+- vrací základ na stabilní v1.2.4,
 - nepřepisuje funkční šablony jednotlivých sekcí,
 - doplňuje pouze bezpečnou globální vizuální vrstvu,
-- zachovává sekci Partneři z v1.2.3 včetně rozdělení kontaktů a produktů,
+- zachovává sekci Partneři z v1.2.4 včetně rozdělení kontaktů a produktů,
 - nemění databázi, import ani workflow.
 
 ## Co se nemění
