@@ -1,2 +1,11 @@
-HUB ASTORIE APP v1.1.2-partner-hotfix-safe-ui
-Hotfix padu /hub/partners. Bez mazani dat a bez zasahu do importu.
+HUB ASTORIE APP v1.1.3-partner-safe-route-fix
+
+Okamžitý bezpečný hotfix:
+- opravuje pád /hub/partners na nedefinované proměnné dashboard, partner_history, partner_requests
+- zachovává data, import i workflow
+- nesahá do databáze destruktivně
+
+Po nasazení:
+1) /version
+2) /api/partner-safe-route/status
+3) /hub/partners
