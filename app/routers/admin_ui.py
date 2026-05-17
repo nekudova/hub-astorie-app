@@ -2267,6 +2267,9 @@ def hub_create_tip_v083(
     potential_amount: str = Form(""),
     adviser_note: str = Form(""),
     policy_no: str = Form(""),
+    final_volume: str = Form(""),
+    closed_at_input: str = Form(""),
+    next_business: str = Form(""),
     db: Session = Depends(get_db),
 ):
     ensure_user_hub_tables_v082_(db)
@@ -2300,6 +2303,9 @@ def hub_create_tip_v083(
         "potential_amount": amount,
         "adviser_note": f"[Sekce: {section_code}; Podsekce: {subsection_code}]\n{adviser_note}",
         "policy_no": policy_no,
+        "final_volume": final_amount,
+        "closed_at": closed_value,
+        "next_business": next_business,
     })
     db.commit()
     return RedirectResponse("/hub/my-tips?created=1", status_code=303)
@@ -2898,8 +2904,7 @@ def get_specialists_for_hub_v085_(db: Session):
         LEFT JOIN hub_sections hs ON hs.section_code = s.section_code
         LEFT JOIN hub_subsections hss ON hss.subsection_code = s.subsection_code
         WHERE COALESCE(s.is_active, TRUE) = TRUE
-          AND COALESCE(s.available, TRUE) = TRUE
-        ORDER BY hs.sort_order, hss.sort_order, s.specialist_name
+        ORDER BY COALESCE(s.available, TRUE) DESC, hs.sort_order, hss.sort_order, s.specialist_name
         LIMIT 500
     """)
 
@@ -2929,6 +2934,9 @@ def hub_create_tip_v085(
     potential_amount: str = Form(""),
     adviser_note: str = Form(""),
     policy_no: str = Form(""),
+    final_volume: str = Form(""),
+    closed_at_input: str = Form(""),
+    next_business: str = Form(""),
     db: Session = Depends(get_db),
 ):
     ensure_tip_workflow_v090_(db)
@@ -2943,7 +2951,9 @@ def hub_create_tip_v085(
     if not client_identifier.strip(): missing_fields.append("RČ / IČO / datum nar.")
     if not potential_amount.strip(): missing_fields.append("odhad potenciálu / objemu")
     if not policy_no.strip(): missing_fields.append("smlouva č.")
-    if not adviser_note.strip(): missing_fields.append("popis případu")
+    if not final_volume.strip(): missing_fields.append("výše obchodu / pojistné")
+    if not closed_at_input.strip(): missing_fields.append("datum uzavření")
+    if not next_business.strip(): missing_fields.append("další obchod")
     if missing_fields:
         return JSONResponse({"ok": False, "error": "Chybí povinné údaje: " + ", ".join(missing_fields)}, status_code=400)
 
@@ -2968,6 +2978,21 @@ def hub_create_tip_v085(
         except Exception:
             amount = None
 
+    final_amount = None
+    if final_volume:
+        try:
+            final_amount = Decimal(str(final_volume).replace(" ", "").replace("Kč", "").replace(",", "."))
+        except Exception:
+            final_amount = None
+
+    closed_value = None
+    if closed_at_input:
+        try:
+            from datetime import datetime
+            closed_value = datetime.strptime(closed_at_input.strip(), "%Y-%m-%d")
+        except Exception:
+            closed_value = None
+
     if not specialist_name and specialist_email:
         spec = fetch_one_safe_v084_(db, """
             SELECT specialist_name
@@ -2985,13 +3010,13 @@ def hub_create_tip_v085(
            section_code, subsection_code, section_name, subsection_name,
            specialist_name, specialist_email,
            client_name, client_phone, client_identifier, potential_amount,
-           adviser_note, status, policy_no)
+           adviser_note, status, policy_no, final_volume, closed_at, next_business)
         VALUES
           (:id, :advisor_id, :advisor_name, :advisor_email,
            :section_code, :subsection_code, :section_name, :subsection_name,
            :specialist_name, :specialist_email,
            :client_name, :client_phone, :client_identifier, :potential_amount,
-           :adviser_note, 'Nový', :policy_no)
+           :adviser_note, 'Nový', :policy_no, :final_volume, :closed_at, :next_business)
     """), {
         "id": tip_id,
         "advisor_id": user["advisor_id"],
@@ -3367,6 +3392,7 @@ def ensure_tip_workflow_v090_(db: Session):
         "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_internal_note TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_last_message TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE tips ADD COLUMN IF NOT EXISTS final_report TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS next_business TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE tips ADD COLUMN IF NOT EXISTS closed_at TIMESTAMP WITH TIME ZONE",
         "ALTER TABLE tips ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
         "ALTER TABLE tips ADD COLUMN IF NOT EXISTS last_update_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()",

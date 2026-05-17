@@ -1,6 +1,12 @@
 
 {% extends "base.html" %}
 {% block content %}
+
+<style id="admin-tips-v140-compact">
+.admin-tips-v140{display:grid;gap:18px}.admin-tips-v140 .metric-card strong{font-size:28px}.admin-tips-v140 .admin-filter-grid{display:grid;grid-template-columns:2fr 1fr 1.1fr 1.1fr auto auto;gap:10px;align-items:center}.admin-tip-list-v140{display:grid;gap:10px}.admin-tip-row-v140{display:grid;grid-template-columns:1.05fr 1.1fr 1.1fr 1fr .8fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid #DCE9ED;border-radius:16px;background:#fff;box-shadow:0 8px 22px rgba(0,61,76,.035)}.admin-tip-row-v140:hover{border-color:#BFD5DC;box-shadow:0 12px 28px rgba(0,61,76,.06)}.admin-tip-row-v140 strong{color:#003D4C}.admin-tip-cell-v140 small{display:block;color:#687F89;text-transform:uppercase;font-size:10px;font-weight:900;letter-spacing:.04em;margin-bottom:3px}.admin-tip-status-v140{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;background:#E9F8EE;color:#147D3A;white-space:nowrap}.admin-tip-date-v140{font-size:13px;color:#526B76}.admin-tip-money-v140{font-weight:900;color:#003D4C}@media(max-width:1100px){.admin-tips-v140 .admin-filter-grid{grid-template-columns:1fr 1fr}.admin-tip-row-v140{grid-template-columns:1fr 1fr}.admin-tip-row-v140 .actions{text-align:left}}
+</style>
+
+<div class="admin-tips-v140">
 <h1 class="page-title">Centrální evidence TIPů</h1>
 <p class="page-subtitle">BO vidí všechny TIPy zadané kýmkoliv, včetně rozpracovaných, uzavřených a archivu.</p>
 
@@ -29,30 +35,22 @@
   </form>
 </section>
 
-<section class="card table-card section-space">
+<section class="card section-space">
   <div class="table-head">Všechny TIPy</div>
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr><th>Datum</th><th>Klient</th><th>Poradce</th><th>Specialista</th><th>Sekce</th><th>Stav</th><th>Aktualizace</th><th>Akce</th></tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r.created_at }}</td>
-          <td><strong>{{ r.client_name }}</strong><br><span class="muted">{{ r.client_identifier or '' }}</span></td>
-          <td>{{ r.adviser_name }}<br><span class="muted">{{ r.adviser_email }}</span></td>
-          <td>{{ r.specialist_name or '—' }}<br><span class="muted">{{ r.specialist_email or '' }}</span></td>
-          <td>{{ r.section_name or r.section_code }}<br><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></td>
-          <td><span class="status ok">{{ r.status }}</span></td>
-          <td>{{ r.last_update_at }}</td>
-          <td><a class="btn soft micro" href="/admin/tips/{{ r.id }}">Detail</a></td>
-        </tr>
-        {% else %}
-        <tr><td colspan="8">Zatím nejsou žádné TIPy.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="admin-tip-list-v140">
+    {% for r in rows %}
+      <div class="admin-tip-row-v140">
+        <div class="admin-tip-cell-v140"><small>Klient</small><strong>{{ r.client_name }}</strong><span class="muted">{{ r.client_identifier or '' }}</span></div>
+        <div class="admin-tip-cell-v140"><small>Poradce</small>{{ r.adviser_name }}<span class="muted">{{ r.adviser_email }}</span></div>
+        <div class="admin-tip-cell-v140"><small>Specialista</small>{{ r.specialist_name or '—' }}<span class="muted">{{ r.specialist_email or '' }}</span></div>
+        <div class="admin-tip-cell-v140"><small>Odbornost</small>{{ r.section_name or r.section_code }}<span class="muted">{{ r.subsection_name or r.subsection_code }}</span></div>
+        <div class="admin-tip-cell-v140"><small>Smlouva / objem</small><span>{{ r.policy_no or '—' }}</span><span class="admin-tip-money-v140">{{ r.final_volume or r.potential_amount or '' }}</span></div>
+        <div class="admin-tip-cell-v140 actions"><span class="admin-tip-status-v140">{{ r.status }}</span><div class="admin-tip-date-v140">{{ r.created_at }}</div><a class="btn soft micro" href="/admin/tips/{{ r.id }}">Detail</a></div>
+      </div>
+    {% else %}
+      <div class="tip-empty-v135">Zatím nejsou žádné TIPy.</div>
+    {% endfor %}
   </div>
 </section>
+</div>
 {% endblock %}

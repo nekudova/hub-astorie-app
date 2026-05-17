@@ -37,7 +37,7 @@
   <div class="table-scroll">
     <table>
       <thead>
-        <tr><th>Datum</th><th>Klient</th><th>Sekce</th><th>Specialista</th><th>Potenciál</th><th>Stav</th><th>Poznámka</th></tr>
+        <tr><th>Datum</th><th>Klient</th><th>Odbornost</th><th>Specialista</th><th>Smlouva</th><th>Datum uzavření</th><th>Objem / potenciál</th><th>Další obchod</th><th>Stav</th><th>Poznámka</th></tr>
       </thead>
       <tbody>
         {% for r in rows %}
@@ -46,12 +46,15 @@
           <td><strong>{{ r.client_name }}</strong><br><span class="muted">{{ r.client_identifier or '' }}</span></td>
           <td>{{ r.section_name or r.section_code }}<br><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></td>
           <td>{{ r.specialist_name or '—' }}<br><span class="muted">{{ r.specialist_email or '' }}</span></td>
-          <td>{{ r.potential_amount or '' }}</td>
+          <td>{{ r.policy_no or '' }}</td>
+          <td>{{ r.closed_at or '' }}</td>
+          <td><strong>{{ r.final_volume or '' }}</strong>{% if r.potential_amount %}<br><span class="muted">potenciál: {{ r.potential_amount }}</span>{% endif %}</td>
+          <td>{{ r.next_business or '' }}</td>
           <td><span class="status ok">{{ r.status }}</span></td>
-          <td>{{ r.adviser_note }}</td>
+          <td>{{ r.adviser_note or '' }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="7">Zatím nemáte žádné TIPy.</td></tr>
+        <tr><td colspan="10">Zatím nemáte žádné TIPy.</td></tr>
         {% endfor %}
       </tbody>
     </table>
