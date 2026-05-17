@@ -1,9 +1,1 @@
-HUB ASTORIE APP v1.2.2-admin-taxonomy-specialists-links-safe
-
-Bezpečná opravná verze:
-- deduplikace sekcí v Novém TIPu pouze pro zobrazení
-- editace sekcí a podsekcí v adminu
-- specialista zakládaný výběrem ze seznamu uživatelů
-- rozdělení odkazů na ASTORIE a partnerské
-- kontrolní endpointy
-- bez mazání dat, bez zásahu do importu a partner workspace
+HUB ASTORIE APP v1.2.3-contacts-calculators-rates-safe
