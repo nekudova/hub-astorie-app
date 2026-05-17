@@ -2747,12 +2747,26 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
         """, params)
 
     if table_exists_v084_(db, "commission_rates"):
+        # v1.4.2: sazebník vrací explicitní aliasy pro frontend, aby se neztrácely
+        # sazby, typy a produkty jen kvůli rozdílným názvům sloupců v databázi.
         rates = fetch_all_safe_v084_(db, """
-            SELECT *
-            FROM commission_rates
-            WHERE COALESCE(is_active, TRUE) = TRUE
-            ORDER BY partner_name, section_code, subsection_code
-            LIMIT 300
+            SELECT
+                cr.*,
+                COALESCE(NULLIF(s.name, ''), cr.section_code, '') AS section_display,
+                COALESCE(NULLIF(ss.name, ''), cr.subsection_code, '') AS subsection_display,
+                COALESCE(NULLIF(cr.base_type, ''), '') AS type_display,
+                COALESCE(NULLIF(cr.product_type, ''), '') AS product_display,
+                CASE
+                    WHEN cr.rate_percent IS NULL THEN ''
+                    WHEN cr.rate_percent = ROUND(cr.rate_percent) THEN TRIM(TO_CHAR(cr.rate_percent, 'FM999999990')) || ' %'
+                    ELSE REPLACE(TRIM(TO_CHAR(cr.rate_percent, 'FM999999990D99')), '.', ',') || ' %'
+                END AS rate_display
+            FROM commission_rates cr
+            LEFT JOIN sections s ON s.section_code = cr.section_code
+            LEFT JOIN subsections ss ON ss.subsection_code = cr.subsection_code
+            WHERE COALESCE(cr.is_active, TRUE) = TRUE
+            ORDER BY COALESCE(cr.priority, 0) DESC, cr.partner_name, section_display, subsection_display, product_display
+            LIMIT 2000
         """)
 
     return hub_render_v083_(request, "hub_calculators.html", {
@@ -7664,5 +7678,21 @@ def release_139_status():
             "založení TIPu zapisuje zprávu do historie TIPu",
             "pokud je SMTP nastavené, odešle se e-mail specialistovi i poradci",
             "Správa TIPů je dostupná v administraci na /admin/tips"
+        ]
+    }
+
+@router.get("/api/release-1-4-2/status")
+def release_142_status():
+    return {
+        "ok": True,
+        "version": "1.4.2-specialist-badge-and-rates-data-fix-safe",
+        "safe": True,
+        "db_changed": False,
+        "scope": "Pouze Nový TIP badge specialisty + Sazebník provizí data mapping",
+        "changes": [
+            "specialista ukazuje PŘIJÍMÁ TIPY / NEPŘIJÍMÁ TIPY, dokud není ručně vybrán",
+            "DOPORUČENO se zobrazí až po skutečném výběru specialisty",
+            "Sazebník vrací sekci, podsekci, partnera, typ, produkt i sazbu přes explicitní aliasy",
+            "Sazebník má doplněný filtr produktů a zobrazuje sazby jako badge"
         ]
     }

@@ -28,10 +28,11 @@
   <h2 style="margin:0;color:var(--petrol);font-size:26px;">Sazebník provizí</h2>
   <p class="page-subtitle">Fulltext a filtry fungují přímo nad načtenou tabulkou.</p>
   <div class="rate-filters-v123">
-    <input id="rateSearchV123" placeholder="Fulltext: sekce, podsekce, partner, produkt, sazba…">
+    <input id="rateSearchV123" placeholder="Fulltext: sekce, podsekce, partner, produkt, typ, sazba…">
     <select id="rateSectionV123"><option value="">Všechny sekce</option></select>
     <select id="ratePartnerV123"><option value="">Všichni partneři</option></select>
     <select id="rateTypeV123"><option value="">Všechny typy</option></select>
+    <select id="rateProductV123"><option value="">Všechny produkty</option></select>
     <button class="btn soft" type="button" onclick="clearRateFiltersV123()">Vymazat filtry</button>
   </div>
   <div class="table-scroll">
@@ -39,7 +40,14 @@
       <thead><tr><th>Sekce</th><th>Podsekce</th><th>Partner</th><th>Typ</th><th>Produkt</th><th>Sazba</th></tr></thead>
       <tbody>
         {% for r in commission_rates or rates or rate_rows %}
-          <tr><td>{{ r.section or r.section_code or r.sekce }}</td><td>{{ r.subsection or r.subsection_code or r.podsekce }}</td><td>{{ r.partner or r.partner_code or r.partner_name }}</td><td>{{ r.type or r.rate_type or r.typ }}</td><td>{{ r.product or r.product_name or r.produkt }}</td><td>{{ r.rate or r.sazba }}</td></tr>
+          <tr>
+            <td>{{ r.section_display or r.section or r.section_name or r.section_code or r.sekce }}</td>
+            <td>{{ r.subsection_display or r.subsection or r.subsection_name or r.subsection_code or r.podsekce }}</td>
+            <td>{{ r.partner or r.partner_code or r.partner_name }}</td>
+            <td>{{ r.type_display or r.type or r.rate_type or r.typ or r.base_type or r.business_type }}</td>
+            <td>{{ r.product_display or r.product or r.product_name or r.produkt or r.product_type or r.area }}</td>
+            <td>{% set rv = r.rate_display or r.rate or r.sazba or r.rate_percent or r.commission_rate or r.provize %}{% if rv %}<span class="rate-badge-v142">{{ rv }}</span>{% else %}—{% endif %}</td>
+          </tr>
         {% else %}
           <tr><td colspan="6">Sazebník zatím není načtený.</td></tr>
         {% endfor %}
@@ -48,7 +56,7 @@
   </div>
 </div>
 <style>
-.calc-list-v123{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.calc-row-v123{display:flex;align-items:center;gap:12px;border:1px solid #DCE9ED;border-radius:16px;padding:12px 14px;background:#fff;min-height:74px}.calc-icon-v123{width:42px;height:42px;border-radius:13px;background:#EEF7F8;color:#003D4C;display:grid;place-items:center;font-weight:900;flex:0 0 auto}.calc-main-v123{flex:1;min-width:0}.calc-main-v123 h3{margin:0;color:#003D4C;font-size:16px;line-height:1.2}.calc-main-v123 p{margin:4px 0 0;color:#667883;font-weight:800;font-size:13px}.rate-filters-v123{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;margin:16px 0}.rate-filters-v123 input,.rate-filters-v123 select{height:44px;border:1px solid #DCE9ED;border-radius:12px;padding:0 12px}@media(max-width:1300px){.calc-list-v123{grid-template-columns:1fr}.rate-filters-v123{grid-template-columns:1fr 1fr}}
+.calc-list-v123{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.calc-row-v123{display:flex;align-items:center;gap:12px;border:1px solid #DCE9ED;border-radius:16px;padding:12px 14px;background:#fff;min-height:74px}.calc-icon-v123{width:42px;height:42px;border-radius:13px;background:#EEF7F8;color:#003D4C;display:grid;place-items:center;font-weight:900;flex:0 0 auto}.calc-main-v123{flex:1;min-width:0}.calc-main-v123 h3{margin:0;color:#003D4C;font-size:16px;line-height:1.2}.calc-main-v123 p{margin:4px 0 0;color:#667883;font-weight:800;font-size:13px}.rate-filters-v123{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:10px;margin:16px 0}.rate-filters-v123 input,.rate-filters-v123 select{height:44px;border:1px solid #DCE9ED;border-radius:12px;padding:0 12px}.rate-badge-v142{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#FC4C02;color:#fff;font-weight:1000;padding:5px 10px;min-width:54px;white-space:nowrap}@media(max-width:1300px){.calc-list-v123{grid-template-columns:1fr}.rate-filters-v123{grid-template-columns:1fr 1fr}}
 </style>
 <script>
 function normV123(v){return (v||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
@@ -56,14 +64,14 @@ function normV123(v){return (v||'').toString().toLowerCase().normalize('NFD').re
  const ci=document.getElementById('calcQuickSearch'), cl=document.getElementById('calcListV123');
  if(ci&&cl){ci.addEventListener('input',()=>{const q=normV123(ci.value);cl.querySelectorAll('.calc-row-v123').forEach(r=>r.style.display=normV123(r.dataset.search).includes(q)?'flex':'none')})}
  const table=document.getElementById('rateTableV123'); if(!table)return;
- const search=document.getElementById('rateSearchV123'), section=document.getElementById('rateSectionV123'), partner=document.getElementById('ratePartnerV123'), type=document.getElementById('rateTypeV123');
+ const search=document.getElementById('rateSearchV123'), section=document.getElementById('rateSectionV123'), partner=document.getElementById('ratePartnerV123'), type=document.getElementById('rateTypeV123'), product=document.getElementById('rateProductV123');
  const rows=[...table.querySelectorAll('tbody tr')];
  function unique(col){return [...new Set(rows.map(r=>(r.children[col]?.textContent||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'))}
  function fill(sel, vals){vals.forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)})}
- fill(section,unique(0)); fill(partner,unique(2)); fill(type,unique(3));
- function apply(){const q=normV123(search.value),s=section.value,p=partner.value,t=type.value;rows.forEach(r=>{const ok=(!q||normV123(r.textContent).includes(q))&&(!s||(r.children[0]?.textContent||'').trim()===s)&&(!p||(r.children[2]?.textContent||'').trim()===p)&&(!t||(r.children[3]?.textContent||'').trim()===t);r.style.display=ok?'':'none'})}
- [search,section,partner,type].forEach(el=>el&&el.addEventListener('input',apply));[section,partner,type].forEach(el=>el&&el.addEventListener('change',apply));
- window.clearRateFiltersV123=function(){search.value='';section.value='';partner.value='';type.value='';apply()}
+ fill(section,unique(0)); fill(partner,unique(2)); fill(type,unique(3)); fill(product,unique(4));
+ function apply(){const q=normV123(search.value),s=section.value,p=partner.value,t=type.value,pr=product.value;rows.forEach(r=>{const ok=(!q||normV123(r.textContent).includes(q))&&(!s||(r.children[0]?.textContent||'').trim()===s)&&(!p||(r.children[2]?.textContent||'').trim()===p)&&(!t||(r.children[3]?.textContent||'').trim()===t)&&(!pr||(r.children[4]?.textContent||'').trim()===pr);r.style.display=ok?'':'none'})}
+ [search,section,partner,type,product].forEach(el=>el&&el.addEventListener('input',apply));[section,partner,type,product].forEach(el=>el&&el.addEventListener('change',apply));
+ window.clearRateFiltersV123=function(){search.value='';section.value='';partner.value='';type.value='';product.value='';apply()}
 })();
 </script>
 {% endblock %}

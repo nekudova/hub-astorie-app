@@ -20,7 +20,7 @@
   .tip-choice-bar-v135{position:sticky;bottom:12px;z-index:20;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border:1px solid #DCE9ED;border-radius:20px;padding:13px 17px;box-shadow:0 18px 45px rgba(0,61,76,.14)}.tip-choice-bar-v135 h3{margin:0;color:#003D4C;font-size:18px}.tip-crumbs-v135{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.tip-crumb-v135{display:inline-flex;align-items:center;gap:8px;border:1px solid #DCE9ED;background:#fff;border-radius:13px;padding:8px 11px;color:#003D4C;font-weight:900}.tip-crumb-v135.muted{color:#81939B;background:#F7FBFC}.tip-arrow-v135{color:#81939B}.tip-continue-v135{border:0;background:#FC4C02;color:#fff;border-radius:14px;padding:14px 24px;font-weight:1000;cursor:pointer;box-shadow:0 16px 28px rgba(252,76,2,.22);white-space:nowrap;min-width:210px}.tip-continue-v135:disabled{background:#C8D5DA;box-shadow:none;cursor:not-allowed}
   .tip-form-panel-v135{display:none;background:#fff;border:1px solid #DCE9ED;border-radius:22px;padding:22px;box-shadow:0 14px 38px rgba(0,61,76,.055)}.tip-form-panel-v135.open{display:block}.tip-form-panel-v135 h2{margin:0 0 6px;color:#003D4C}.tip-form-grid-v135{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}.tip-field-v135 label{display:block;color:#607681;font-weight:1000;font-size:12px;text-transform:uppercase;margin-bottom:6px}.tip-field-v135 input,.tip-field-v135 textarea{width:100%;border:1px solid #DCE9ED;border-radius:14px;padding:12px 13px;font:inherit;background:#fff}.tip-field-v135 textarea{min-height:110px;resize:vertical}.tip-field-v135.span-3{grid-column:span 3}.tip-submit-row-v135{display:flex;justify-content:flex-end;margin-top:16px}.tip-submit-v135{border:0;background:#FC4C02;color:white;border-radius:16px;padding:15px 22px;font-weight:1000;cursor:pointer;box-shadow:0 16px 28px rgba(252,76,2,.22)}.tip-submit-v135:disabled{background:#C8D5DA;box-shadow:none;cursor:not-allowed}
 
-  .tip-specialist-card-v135 .tip-availability-v140{position:absolute;right:0;top:0;padding:6px 12px;border-radius:0 0 0 13px;font-size:10px;font-weight:1000;text-transform:uppercase;letter-spacing:.02em;background:#DFFBE9;color:#137D38}.tip-specialist-card-v135 .tip-availability-v140.off{background:#FFE9E6;color:#A33A2A}.tip-specialist-card-v135.selected .tip-availability-v140{display:none}.tip-specialist-card-v135.selected .tip-badge-v135{display:inline-flex}.tip-specialist-card-v135.unavailable{background:#F6F8F9;color:#8B9AA2;cursor:not-allowed;opacity:.78;filter:grayscale(.25)}.tip-specialist-card-v135.unavailable:hover{transform:none;box-shadow:0 12px 28px rgba(0,61,76,.035);border-color:#DCE9ED}.tip-specialist-card-v135.unavailable .tip-specialist-main-v135 strong,.tip-specialist-card-v135.unavailable .sp-contact-v135{color:#788A93}.tip-specialist-card-v135.unavailable .tip-radio-v135{background:#EEF2F4;color:transparent}.tip-select-v140{width:100%;border:1px solid #DCE9ED;border-radius:14px;padding:12px 13px;background:#fff;font:inherit}.tip-choice-select-v140{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+  .tip-specialist-card-v135 .tip-availability-v140{position:absolute;right:0;top:0;padding:6px 12px;border-radius:0 0 0 13px;font-size:10px;font-weight:1000;text-transform:uppercase;letter-spacing:.02em;background:#DFFBE9;color:#137D38}.tip-specialist-card-v135 .tip-availability-v140.off{background:#FFE9E6;color:#A33A2A}.tip-specialist-card-v135 .tip-badge-v135{display:none!important}.tip-specialist-card-v135[data-picked="1"] .tip-availability-v140{display:none!important}.tip-specialist-card-v135[data-picked="1"] .tip-badge-v135{display:inline-flex!important}.tip-specialist-card-v135:not([data-picked="1"]) .tip-availability-v140{display:inline-flex!important}.tip-specialist-card-v135.unavailable{background:#F6F8F9;color:#8B9AA2;cursor:not-allowed;opacity:.78;filter:grayscale(.25)}.tip-specialist-card-v135.unavailable:hover{transform:none;box-shadow:0 12px 28px rgba(0,61,76,.035);border-color:#DCE9ED}.tip-specialist-card-v135.unavailable .tip-specialist-main-v135 strong,.tip-specialist-card-v135.unavailable .sp-contact-v135{color:#788A93}.tip-specialist-card-v135.unavailable .tip-radio-v135{background:#EEF2F4;color:transparent}.tip-select-v140{width:100%;border:1px solid #DCE9ED;border-radius:14px;padding:12px 13px;background:#fff;font:inherit}.tip-choice-select-v140{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
   @media(max-width:1120px){.tip-workspace-v135{grid-template-columns:1fr}.tip-panel-v135{min-height:auto}.tip-section-grid-v135{grid-template-columns:repeat(3,minmax(0,1fr))}.tip-choice-bar-v135{grid-template-columns:1fr}.tip-continue-v135{width:100%}.tip-step-v135:not(:last-child)::after{display:none}}
   @media(max-width:760px){.tip-head-v135{display:block}.tip-head-actions-v135{margin-top:12px}.tip-progress-v135{grid-template-columns:1fr}.tip-section-grid-v135{grid-template-columns:repeat(2,minmax(0,1fr))}.tip-form-grid-v135{grid-template-columns:1fr}.tip-field-v135.span-3{grid-column:span 1}}
 </style>
@@ -101,6 +101,7 @@
                     data-name="{{ s.specialist_name or '' }}"
                     data-role="{{ s.role_description or 'Specialista' }}"
                     data-available="{{ '1' if sp_available else '0' }}"
+                    data-picked="0"
                     onclick="selectSpecialist(this)" style="display:none;" {% if not sp_available %}disabled aria-disabled="true"{% endif %}>
               <span class="tip-availability-v140{% if not sp_available %} off{% endif %}">{{ 'PŘIJÍMÁ TIPY' if sp_available else 'NEPŘIJÍMÁ TIPY' }}</span>
               <span class="tip-badge-v135">DOPORUČENO</span>
@@ -288,6 +289,7 @@ function filterHubSpecialists(){
     const show = !!section && !!subsection && secOk && subOk;
     card.style.display = show ? '' : 'none';
     card.classList.remove('selected');
+    card.dataset.picked = '0';
     if(show){ any = true; count++; }
   });
   document.getElementById('empty_specialist_note').style.display = any ? 'none' : '';
@@ -300,8 +302,9 @@ function selectSpecialist(btn){
     alert('Tento specialista aktuálně nepřijímá TIPy. Vyberte prosím jiného specialistu.');
     return;
   }
-  document.querySelectorAll('.specialist-card').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.specialist-card').forEach(b => { b.classList.remove('selected'); b.dataset.picked = '0'; });
   btn.classList.add('selected');
+  btn.dataset.picked = '1';
   document.getElementById('specialist_email').value = btn.dataset.email || '';
   document.getElementById('specialist_name').value = btn.dataset.name || '';
   hideTipFormV135();
