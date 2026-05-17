@@ -1,1 +1,1 @@
-HUB ASTORIE APP v1.3.0-professional-sections-safe
+1.3.2-stable-core-route-restore-safe

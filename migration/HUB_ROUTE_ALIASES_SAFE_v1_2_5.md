@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.3.0 Hub Route Aliases Safe
+# HUB ASTORIE APP – v1.2.6 Hub Route Aliases Safe
 
 ## Co opravuje
 OpenAPI ukázalo, že aplikace obsahuje staré route:

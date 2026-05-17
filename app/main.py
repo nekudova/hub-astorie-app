@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.3.0-professional-sections-safe"
+APP_VERSION = "1.3.2-stable-core-route-restore-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.3.0 Visible Sections Fix is loaded",
+        "status": "v1.3.2 stable core + restored hub routes is loaded",
     }
 
 
@@ -58,27 +58,30 @@ def admin_test():
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Main Route Bridge Safe
+# v1.3.2 Stable Core Route Restore Safe
 # -------------------------------------------------------------------
-# Nouzová stabilizace: pevné aplikační aliasy jsou registrované přímo
-# v main.py před include_router(...), takže mají přednost před starými
-# nebo neúplně zaregistrovanými routerovými variantami.
-# DB, import ani sekce Partneři se nemění.
+# Stabilizační verze postavená na posledním funkčním jádru v1.2.6.
+# Důležité: zde už NEJSOU nouzové redirecty pro /hub/calculators,
+# /hub/new-tip, /hub/forms, /hub/stats a /hub/help.
+# Přímé routy obsluhuje admin_ui.py, aby se načítala aktuální šablona
+# včetně fulltextu Sazebníku a aby nebyly odříznuté sekce TIPů.
+# DB, importy ani Partneři se nemění.
 
-
-
-
-@app.get("/api/release-1-3-0/status")
-def release_130_status():
+@app.get("/api/release-1-3-2/status")
+def release_132_status():
     return {
         "ok": True,
         "version": APP_VERSION,
-        "message": "Profesionální stabilizační verze HUB sekcí bez nouzových redirectů.",
+        "message": "Obnoveno stabilní jádro HUBu; odstraněny přepisující redirecty; vráceny TIP routy a fulltext sazebníku.",
         "safe": True,
         "db_changed": False,
         "partners_changed": False,
-        "sections": [
+        "routes_restored": [
             "/hub/new-tip",
+            "/hub/my-tips",
+            "/hub/tips/{tip_id}",
+            "/hub/specialist-tips",
+            "/hub/specialist-tips/{tip_id}",
             "/hub/calculators",
             "/hub/forms",
             "/hub/stats",
@@ -87,6 +90,7 @@ def release_130_status():
             "/hub/partners"
         ]
     }
+
 
 # API + UI routers
 app.include_router(health_router)

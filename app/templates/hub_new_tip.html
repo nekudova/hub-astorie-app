@@ -1,47 +1,145 @@
+
 {% extends "hub_base.html" %}
 {% block content %}
-<section class="pro-page-head">
-  <div>
-    <h1>📝 Nový TIP</h1>
-    <p>Sekce, podsekce a specialisté jsou načtené z administrace. Duplicitní sekce se v zobrazení odstraňují.</p>
-  </div>
-  <a class="btn soft" href="/api/release-1-3-0/router-status" target="_blank">Kontrola dat</a>
-</section>
+<div class="hub-card">
+  <h1>Nový TIP</h1>
+  <p class="page-subtitle">Sekce, podsekce a specialisté jsou načtené z administrace.</p>
 
-<section class="pro-card">
-  <div class="pro-section-title"><h2>Vyberte oblast</h2><span class="pro-count">{{ sections|length if sections else 0 }}</span></div>
-  <div class="section-grid-v130">
-    {% for s in sections %}
-      <article class="section-tile-v130" data-section="{{ s.section_code or s.code }}">
-        <span>{{ s.icon or '•' }}</span>
-        <h3>{{ s.section_name or s.name }}</h3>
-        <p>{{ s.section_code or s.code }}</p>
-      </article>
-    {% else %}
-      <div class="empty-state">Nejsou načtené žádné sekce.</div>
-    {% endfor %}
-  </div>
-</section>
+  <form method="post" action="/hub/tips/create" class="hub-form">
+    <input type="hidden" name="section_code" id="section_code">
+    <input type="hidden" name="subsection_code" id="subsection_code_hidden">
+    <input type="hidden" name="specialist_email" id="specialist_email">
+    <input type="hidden" name="specialist_name" id="specialist_name">
 
-<section class="pro-card">
-  <div class="pro-section-title"><h2>Podsekce a specialisté</h2><span class="pro-count">{{ specialists|length if specialists else 0 }} specialistů</span></div>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Sekce</th><th>Podsekce</th><th>Kód</th></tr></thead>
-      <tbody>
-      {% for ss in subsections %}
-        <tr><td>{{ ss.section_code }}</td><td>{{ ss.subsection_name or ss.name }}</td><td>{{ ss.subsection_code or ss.code }}</td></tr>
-      {% else %}
-        <tr><td colspan="3">Nejsou načtené žádné podsekce.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% if not specialists %}
-    <div class="empty-state" style="margin-top:12px;">Specialisté nejsou naplnění. V adminu je nutné je přiřadit výběrem z uživatelů.</div>
-  {% endif %}
-</section>
-<style>
-.pro-page-head,.pro-card{background:#fff;border:1px solid #dce9ed;border-radius:18px;padding:18px 22px;margin:14px 0;box-shadow:0 10px 28px rgba(0,61,76,.06)}.pro-page-head{display:flex;justify-content:space-between;align-items:center}.pro-page-head h1{margin:0;color:#003D4C;font-size:28px}.pro-page-head p{margin:5px 0 0;color:#637684}.pro-section-title{display:flex;justify-content:space-between;align-items:center}.pro-section-title h2{margin:0;color:#003D4C}.pro-count{background:#eaf3f5;border-radius:999px;padding:7px 12px;font-weight:900;color:#003D4C}.section-grid-v130{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}.section-tile-v130{border:1px solid #dce9ed;border-radius:16px;padding:16px;min-height:110px}.section-tile-v130 span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#eef7f8}.section-tile-v130 h3{margin:12px 0 2px;color:#003D4C}.section-tile-v130 p{margin:0;color:#667883;font-weight:800;font-size:12px}@media(max-width:1200px){.section-grid-v130{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.section-grid-v130{grid-template-columns:1fr}}
-</style>
+    <div class="hub-card inner">
+      <div class="section-head-row">
+        <div>
+          <h2>Vyberte oblast</h2>
+          <p class="page-subtitle">Oblasti odpovídají sekcím nastaveným v administraci.</p>
+        </div>
+        <a class="mini-link" href="/api/hub/taxonomy-status" target="_blank">kontrola dat</a>
+      </div>
+
+      <div class="section-tile-grid">
+        {% for s in sections %}
+          <button type="button" class="section-tile" data-section="{{ s.section_code }}" onclick="selectSectionTile(this)">
+            <span>{{ s.icon or '•' }}</span>
+            <strong>{{ s.section_name }}</strong>
+            <small>{{ s.section_code }}</small>
+          </button>
+        {% else %}
+          <div class="empty-state">V administraci zatím nejsou aktivní sekce.</div>
+        {% endfor %}
+      </div>
+
+      <div class="subsection-area">
+        <h3>Podsekce</h3>
+        <div class="subsection-chip-grid" id="subsection_chip_grid">
+          {% for ss in subsections %}
+            <button type="button" class="subsection-chip" data-section="{{ ss.section_code }}" data-subsection="{{ ss.subsection_code }}" onclick="selectSubsectionChip(this)" style="display:none;">
+              {{ ss.subsection_name }}
+            </button>
+          {% endfor %}
+        </div>
+        <div class="empty-subsection-note" id="empty_subsection_note">Nejprve vyberte oblast.</div>
+      </div>
+    </div>
+
+    <div class="hub-card inner">
+      <h2>Specialista</h2>
+      <p class="page-subtitle">Zobrazí se jen aktivní a dostupní specialisté pro vybranou oblast.</p>
+
+      <div class="specialist-grid" id="specialist_grid">
+        {% for s in specialists %}
+          <button type="button" class="specialist-card"
+                  data-section="{{ s.section_code or '' }}"
+                  data-subsection="{{ s.subsection_code or '' }}"
+                  data-email="{{ s.email or '' }}"
+                  data-name="{{ s.specialist_name or '' }}"
+                  onclick="selectSpecialist(this)" style="display:none;">
+            <strong>{{ s.specialist_name }}</strong>
+            <span>{{ s.role_description or 'Specialista' }}</span>
+            <span>{{ s.section_name or s.section_code }}{% if s.subsection_name %} / {{ s.subsection_name }}{% endif %}</span>
+            <span>{{ s.region or 'ČR' }}</span>
+            <span>{{ s.email }}</span>
+            <em>IF/PS: {{ s.if_share or '—' }} / {{ s.ps_share or '—' }}</em>
+          </button>
+        {% else %}
+          <div class="empty-state">Zatím nejsou založení dostupní specialisté.</div>
+        {% endfor %}
+      </div>
+      <div class="empty-subsection-note" id="empty_specialist_note">Vyberte oblast, aby se zobrazili specialisté.</div>
+    </div>
+
+    <div class="hub-card inner orange-border">
+      <h2>Formulář TIPu</h2>
+      <div class="hub-grid three">
+        <div><label>Poradce</label><input value="{{ user.name }}" readonly></div>
+        <div><label>E-mail IF</label><input value="{{ user.email }}" readonly></div>
+        <div><label>Telefon IF</label><input value="{{ user.phone }}" readonly></div>
+      </div>
+
+      <div class="hub-grid three">
+        <div><label>Klient</label><input name="client_name" placeholder="jméno / název klienta" required></div>
+        <div><label>Kontakt na klienta</label><input name="client_phone" placeholder="telefon, e-mail"></div>
+        <div><label>RČ / IČO / datum nar.</label><input name="client_identifier" placeholder="identifikace"></div>
+      </div>
+
+      <div><label>Odhad potenciálu / objemu</label><input name="potential_amount" placeholder="např. 25 000 Kč / rok"></div>
+      <div><label>Smlouva č.</label><input name="policy_no"></div>
+      <div><label>Popis případu</label><textarea name="adviser_note" placeholder="Stručně popište situaci klienta, co řešíte a co očekáváte od specialisty."></textarea></div>
+
+      <div class="form-actions"><button class="btn orange" type="submit">Odeslat TIP</button></div>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectSectionTile(btn){
+  document.querySelectorAll(".section-tile").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  const section = btn.dataset.section || "";
+  document.getElementById("section_code").value = section;
+  document.getElementById("subsection_code_hidden").value = "";
+  document.getElementById("specialist_email").value = "";
+  document.getElementById("specialist_name").value = "";
+  let anySub = false;
+  document.querySelectorAll(".subsection-chip").forEach(chip => {
+    const visible = chip.dataset.section === section;
+    chip.style.display = visible ? "" : "none";
+    chip.classList.remove("selected");
+    if(visible) anySub = true;
+  });
+  document.getElementById("empty_subsection_note").style.display = anySub ? "none" : "";
+  filterHubSpecialists();
+}
+function selectSubsectionChip(btn){
+  document.querySelectorAll(".subsection-chip").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("subsection_code_hidden").value = btn.dataset.subsection || "";
+  document.getElementById("specialist_email").value = "";
+  document.getElementById("specialist_name").value = "";
+  filterHubSpecialists();
+}
+function filterHubSpecialists(){
+  const section = document.getElementById("section_code").value;
+  const subsection = document.getElementById("subsection_code_hidden").value;
+  let any = false;
+  document.querySelectorAll(".specialist-card").forEach(card => {
+    const secOk = !section || card.dataset.section === section;
+    const subOk = !subsection || !card.dataset.subsection || card.dataset.subsection === subsection;
+    const show = secOk && subOk && !!section;
+    card.style.display = show ? "" : "none";
+    card.classList.remove("selected");
+    if(show) any = true;
+  });
+  document.getElementById("empty_specialist_note").style.display = any ? "none" : "";
+}
+function selectSpecialist(btn){
+  document.querySelectorAll(".specialist-card").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("specialist_email").value = btn.dataset.email || "";
+  document.getElementById("specialist_name").value = btn.dataset.name || "";
+}
+</script>
 {% endblock %}

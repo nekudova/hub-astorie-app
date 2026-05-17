@@ -1,24 +1,49 @@
 {% extends "hub_base.html" %}
 {% block content %}
-<section class="pro-page-head">
-  <div><h1>🔗 Odkazy ASTORIE</h1><p>Rozdělení na interní odkazy ASTORIE a partnerské odkazy.</p></div>
-  <form method="get" class="pro-search"><input name="q" value="{{ q or '' }}" placeholder="Hledat portál, partnera, kategorii…"><button class="btn orange">Hledat</button></form>
-</section>
-<section class="pro-card">
-  <h2>ASTORIE</h2>
-  <div class="compact-list">
-    {% for l in astorie_links %}
-      <article class="compact-row"><span class="avatar">A</span><div><h3>{{ l.title or l.name or l.link_name }}</h3><p>{{ l.category or l.type or 'Odkaz' }}</p></div>{% if l.url %}<a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>{% endif %}</article>
-    {% else %}<div class="empty-state">Zatím nejsou načtené interní odkazy ASTORIE.</div>{% endfor %}
+<div class="hub-card">
+  <h1>Odkazy ASTORIE</h1>
+  <p class="page-subtitle">Rychlý přístup k interním firemním aplikacím, portálům a důležitým odkazům. Partnerské odkazy patří primárně do detailu partnera.</p>
+
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat odkaz, portál, kategorii…">
+    <button class="btn orange">Hledat</button>
+  </form>
+
+  <h2>Interní odkazy ASTORIE</h2>
+  <div class="portal-grid">
+    {% for l in links %}
+      {% set pc = (l.partner_code or '')|upper %}
+      {% set cat = (l.category or '')|lower %}
+      {% if pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat %}
+        <div class="portal-card">
+          <span class="portal-letter">🔗</span>
+          <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
+          <p>{{ l.category or 'ASTORIE' }}</p>
+          <p class="muted">{{ l.note or '' }}</p>
+          <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít portál</a>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">Zatím nejsou vložené interní odkazy ASTORIE.</div>
+    {% endfor %}
   </div>
-</section>
-<section class="pro-card">
-  <h2>Partnerské odkazy</h2>
-  <div class="compact-list">
-    {% for l in partner_links %}
-      <article class="compact-row"><span class="avatar">{{ (l.partner_code or l.partner or 'P')[:1] }}</span><div><h3>{{ l.title or l.name or l.link_name }}</h3><p>{{ l.partner_code or l.partner }} · {{ l.category or l.type or 'Odkaz' }}</p></div>{% if l.url %}<a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>{% endif %}</article>
-    {% else %}<div class="empty-state">Zatím nejsou načtené partnerské odkazy.</div>{% endfor %}
+
+  <h2 style="margin-top:28px;">Partnerské odkazy</h2>
+  <p class="page-subtitle">Tyto odkazy se zobrazují také v detailu partnera.</p>
+  <div class="portal-grid">
+    {% for l in links %}
+      {% set pc = (l.partner_code or '')|upper %}
+      {% set cat = (l.category or '')|lower %}
+      {% if not (pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat) %}
+        <div class="portal-card">
+          <span class="portal-letter">{{ (l.partner_code or 'P')[:1] }}</span>
+          <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
+          <p>{{ l.partner_code }}</p>
+          <p class="muted">{{ l.category or '' }}</p>
+          <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
+        </div>
+      {% endif %}
+    {% endfor %}
   </div>
-</section>
-<style>.pro-page-head,.pro-card{background:#fff;border:1px solid #dce9ed;border-radius:18px;padding:18px 22px;margin:14px 0;box-shadow:0 10px 28px rgba(0,61,76,.06)}.pro-page-head{display:flex;justify-content:space-between;gap:18px;align-items:center}.pro-page-head h1{margin:0;color:#003D4C;font-size:28px}.pro-page-head p{margin:5px 0 0;color:#637684}.pro-search{display:flex;gap:10px;min-width:430px}.pro-search input{flex:1}.compact-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.compact-row{display:flex;align-items:center;gap:12px;border:1px solid #dce9ed;border-radius:14px;padding:11px 13px}.avatar{width:38px;height:38px;border-radius:12px;background:#eef7f8;display:grid;place-items:center;font-weight:900;color:#003D4C}.compact-row div{flex:1}.compact-row h3{margin:0;font-size:15px;color:#003D4C}.compact-row p{margin:3px 0 0;color:#667883;font-size:13px;font-weight:700}@media(max-width:1200px){.compact-list{grid-template-columns:1fr}.pro-page-head{display:block}.pro-search{min-width:0;margin-top:12px}}</style>
+</div>
 {% endblock %}

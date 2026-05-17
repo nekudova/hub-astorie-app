@@ -1,92 +1,69 @@
 {% extends "hub_base.html" %}
 {% block content %}
-<section class="pro-page-head">
-  <div>
-    <h1>🧮 Kalkulačky</h1>
-    <p>Kompaktní pracovní přehled kalkulaček a sazebníku provizí.</p>
+<div class="hub-card" style="padding:22px 26px;">
+  <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px;">
+    <div>
+      <h1 style="margin:0;color:var(--petrol);font-size:30px;">Kalkulačky</h1>
+      <p class="page-subtitle" style="margin-top:6px;">Kompaktní přehled kalkulaček a odkazů. Níže je sazebník provizí s fulltextem a filtry.</p>
+    </div>
+    <form method="get" style="display:flex;gap:10px;min-width:420px;">
+      <input id="calcQuickSearch" name="q" value="{{ q or '' }}" placeholder="Hledat kalkulačku, partnera, kategorii…" style="flex:1;">
+      <button class="btn orange">Hledat</button>
+    </form>
   </div>
-  <form method="get" class="pro-search">
-    <input id="calcQuickSearch" name="q" value="{{ q or '' }}" placeholder="Hledat kalkulačku, partnera, kategorii…">
-    <button class="btn orange">Hledat</button>
-  </form>
-</section>
-
-<section class="pro-card">
-  <div class="pro-section-title">
-    <div><h2>Kalkulačky a portály</h2><p>Řazeno abecedně, kompaktní zobrazení pro rychlou práci.</p></div>
-    <span class="pro-count">{{ calculators|length if calculators else 0 }}</span>
-  </div>
-  <div class="compact-list" id="calcListV130">
+  <div class="calc-list-v123" id="calcListV123">
     {% for l in calculators or links %}
-      <article class="compact-row" data-search="{{ ((l.title or l.name or l.link_name or '') ~ ' ' ~ (l.partner_code or l.partner or '') ~ ' ' ~ (l.category or l.type or ''))|lower }}">
-        <span class="avatar">{{ (l.partner_code or l.partner or l.title or 'A')[:1] }}</span>
-        <div>
-          <h3>{{ l.title or l.name or l.link_name or 'Kalkulačka' }}</h3>
-          <p>{{ l.partner_code or l.partner or 'AST' }} · {{ l.category or l.type or 'Odkaz' }}</p>
-        </div>
+      <article class="calc-row-v123" data-search="{{ ((l.title or l.name or l.link_name or '') ~ ' ' ~ (l.partner_code or l.partner or '') ~ ' ' ~ (l.category or l.type or ''))|lower }}">
+        <div class="calc-icon-v123">{{ (l.partner_code or l.partner or l.title or 'A')[:1] }}</div>
+        <div class="calc-main-v123"><h3>{{ l.title or l.name or l.link_name or 'Kalkulačka' }}</h3><p>{{ l.partner_code or l.partner or 'AST' }} · {{ l.category or l.type or 'Odkaz' }}</p></div>
         {% if l.url %}<a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>{% endif %}
       </article>
     {% else %}
       <div class="empty-state">Zatím nejsou načtené žádné kalkulačky.</div>
     {% endfor %}
   </div>
-</section>
+</div>
 
-<section class="pro-card">
-  <div class="pro-section-title">
-    <div><h2>Sazebník provizí</h2><p>Fulltext a filtry nad načtenou tabulkou. Zdroj: {{ rate_source or '—' }}</p></div>
-    <span class="pro-count">{{ rate_rows|length if rate_rows else 0 }}</span>
-  </div>
-  <div class="rate-filters-v130">
-    <input id="rateSearchV130" placeholder="Fulltext: sekce, podsekce, partner, produkt, sazba…">
-    <select id="rateSectionV130"><option value="">Všechny sekce</option></select>
-    <select id="ratePartnerV130"><option value="">Všichni partneři</option></select>
-    <select id="rateTypeV130"><option value="">Všechny typy</option></select>
-    <button class="btn soft" type="button" onclick="clearRateFiltersV130()">Vymazat</button>
+<div class="hub-card" style="padding:22px 26px;margin-top:18px;">
+  <h2 style="margin:0;color:var(--petrol);font-size:26px;">Sazebník provizí</h2>
+  <p class="page-subtitle">Fulltext a filtry fungují přímo nad načtenou tabulkou.</p>
+  <div class="rate-filters-v123">
+    <input id="rateSearchV123" placeholder="Fulltext: sekce, podsekce, partner, produkt, sazba…">
+    <select id="rateSectionV123"><option value="">Všechny sekce</option></select>
+    <select id="ratePartnerV123"><option value="">Všichni partneři</option></select>
+    <select id="rateTypeV123"><option value="">Všechny typy</option></select>
+    <button class="btn soft" type="button" onclick="clearRateFiltersV123()">Vymazat filtry</button>
   </div>
   <div class="table-scroll">
-    <table id="rateTableV130">
+    <table id="rateTableV123">
       <thead><tr><th>Sekce</th><th>Podsekce</th><th>Partner</th><th>Typ</th><th>Produkt</th><th>Sazba</th></tr></thead>
       <tbody>
         {% for r in commission_rates or rates or rate_rows %}
-          <tr>
-            <td>{{ r.section or r.section_code or r.sekce }}</td>
-            <td>{{ r.subsection or r.subsection_code or r.podsekce }}</td>
-            <td>{{ r.partner or r.partner_code or r.partner_name }}</td>
-            <td>{{ r.type or r.rate_type or r.typ }}</td>
-            <td>{{ r.product or r.product_name or r.produkt }}</td>
-            <td>{{ r.rate or r.sazba }}</td>
-          </tr>
+          <tr><td>{{ r.section or r.section_code or r.sekce }}</td><td>{{ r.subsection or r.subsection_code or r.podsekce }}</td><td>{{ r.partner or r.partner_code or r.partner_name }}</td><td>{{ r.type or r.rate_type or r.typ }}</td><td>{{ r.product or r.product_name or r.produkt }}</td><td>{{ r.rate or r.sazba }}</td></tr>
         {% else %}
           <tr><td colspan="6">Sazebník zatím není načtený.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-</section>
-
+</div>
 <style>
-.pro-page-head,.pro-card{background:#fff;border:1px solid #dce9ed;border-radius:18px;padding:18px 22px;margin:14px 0;box-shadow:0 10px 28px rgba(0,61,76,.06)}
-.pro-page-head{display:flex;justify-content:space-between;gap:18px;align-items:center}
-.pro-page-head h1{margin:0;color:#003D4C;font-size:28px}.pro-page-head p,.pro-section-title p{margin:5px 0 0;color:#637684}
-.pro-search{display:flex;gap:10px;min-width:430px}.pro-search input{flex:1}
-.pro-section-title{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}.pro-section-title h2{margin:0;color:#003D4C;font-size:22px}.pro-count{background:#eaf3f5;border-radius:999px;padding:7px 12px;font-weight:900;color:#003D4C}
-.compact-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.compact-row{display:flex;align-items:center;gap:12px;border:1px solid #dce9ed;border-radius:14px;padding:11px 13px}.compact-row .avatar{width:38px;height:38px;border-radius:12px;background:#eef7f8;display:grid;place-items:center;font-weight:900;color:#003D4C}.compact-row div{flex:1}.compact-row h3{margin:0;font-size:15px;color:#003D4C}.compact-row p{margin:3px 0 0;color:#667883;font-size:13px;font-weight:700}
-.rate-filters-v130{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;margin-bottom:12px}
-@media(max-width:1200px){.compact-list{grid-template-columns:1fr}.rate-filters-v130,.pro-page-head{display:block}.pro-search{min-width:0;margin-top:12px}}
+.calc-list-v123{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.calc-row-v123{display:flex;align-items:center;gap:12px;border:1px solid #DCE9ED;border-radius:16px;padding:12px 14px;background:#fff;min-height:74px}.calc-icon-v123{width:42px;height:42px;border-radius:13px;background:#EEF7F8;color:#003D4C;display:grid;place-items:center;font-weight:900;flex:0 0 auto}.calc-main-v123{flex:1;min-width:0}.calc-main-v123 h3{margin:0;color:#003D4C;font-size:16px;line-height:1.2}.calc-main-v123 p{margin:4px 0 0;color:#667883;font-weight:800;font-size:13px}.rate-filters-v123{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;margin:16px 0}.rate-filters-v123 input,.rate-filters-v123 select{height:44px;border:1px solid #DCE9ED;border-radius:12px;padding:0 12px}@media(max-width:1300px){.calc-list-v123{grid-template-columns:1fr}.rate-filters-v123{grid-template-columns:1fr 1fr}}
 </style>
 <script>
-function n130(v){return (v||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function normV123(v){return (v||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 (function(){
- const ci=document.getElementById('calcQuickSearch'), cl=document.getElementById('calcListV130');
- if(ci&&cl){ci.addEventListener('input',()=>{const q=n130(ci.value);cl.querySelectorAll('.compact-row').forEach(r=>r.style.display=n130(r.dataset.search).includes(q)?'flex':'none')})}
- const table=document.getElementById('rateTableV130'); if(!table)return;
- const rows=[...table.querySelectorAll('tbody tr')], search=document.getElementById('rateSearchV130'), section=document.getElementById('rateSectionV130'), partner=document.getElementById('ratePartnerV130'), type=document.getElementById('rateTypeV130');
- function unique(c){return [...new Set(rows.map(r=>(r.children[c]?.textContent||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'))}
- function fill(sel,vals){vals.forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)})}
+ const ci=document.getElementById('calcQuickSearch'), cl=document.getElementById('calcListV123');
+ if(ci&&cl){ci.addEventListener('input',()=>{const q=normV123(ci.value);cl.querySelectorAll('.calc-row-v123').forEach(r=>r.style.display=normV123(r.dataset.search).includes(q)?'flex':'none')})}
+ const table=document.getElementById('rateTableV123'); if(!table)return;
+ const search=document.getElementById('rateSearchV123'), section=document.getElementById('rateSectionV123'), partner=document.getElementById('ratePartnerV123'), type=document.getElementById('rateTypeV123');
+ const rows=[...table.querySelectorAll('tbody tr')];
+ function unique(col){return [...new Set(rows.map(r=>(r.children[col]?.textContent||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'))}
+ function fill(sel, vals){vals.forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)})}
  fill(section,unique(0)); fill(partner,unique(2)); fill(type,unique(3));
- function apply(){const q=n130(search.value),s=section.value,p=partner.value,t=type.value;rows.forEach(r=>{const ok=(!q||n130(r.textContent).includes(q))&&(!s||(r.children[0]?.textContent||'').trim()===s)&&(!p||(r.children[2]?.textContent||'').trim()===p)&&(!t||(r.children[3]?.textContent||'').trim()===t);r.style.display=ok?'':'none'})}
- [search,section,partner,type].forEach(el=>el&&el.addEventListener('input',apply));[section,partner,type].forEach(el=>el&&el.addEventListener('change',apply));window.clearRateFiltersV130=function(){search.value='';section.value='';partner.value='';type.value='';apply()}
+ function apply(){const q=normV123(search.value),s=section.value,p=partner.value,t=type.value;rows.forEach(r=>{const ok=(!q||normV123(r.textContent).includes(q))&&(!s||(r.children[0]?.textContent||'').trim()===s)&&(!p||(r.children[2]?.textContent||'').trim()===p)&&(!t||(r.children[3]?.textContent||'').trim()===t);r.style.display=ok?'':'none'})}
+ [search,section,partner,type].forEach(el=>el&&el.addEventListener('input',apply));[section,partner,type].forEach(el=>el&&el.addEventListener('change',apply));
+ window.clearRateFiltersV123=function(){search.value='';section.value='';partner.value='';type.value='';apply()}
 })();
 </script>
 {% endblock %}

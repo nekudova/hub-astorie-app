@@ -27,7 +27,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.3.0",
+        "version": "v1.2.6",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1818,7 +1818,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Specialist Profile & Sections Fix
+# v1.2.6 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2017,7 +2017,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Visible Sections Fix
+# v1.2.6 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2087,7 +2087,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2106,7 +2106,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v1.3.0 – bezpečné tabulky pro TIPy.
+    v1.2.6 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2165,18 +2165,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "1.3.0-professional-sections-safe",
+            "version": "1.2.6-main-route-bridge-safe",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "1.3.0-professional-sections-safe", "error": str(e)}
+        return {"ok": False, "version": "1.2.6-main-route-bridge-safe", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Adviser HUB routes fix
+# v1.2.6 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2193,7 +2193,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2373,7 +2373,7 @@ def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: st
     partner_history = fetch_partner_history_v111(db, selected) if selected else []
     partner_requests = fetch_partner_requests_v111(db, selected) if selected else []
 
-    # v1.3.0 safe route fix: proměnné pro šablonu musí existovat vždy.
+    # v1.2.6 safe route fix: proměnné pro šablonu musí existovat vždy.
     try:
         dashboard = fetch_partner_dashboard_v111(db, selected) if selected and globals().get("fetch_partner_dashboard_v111") else {}
     except Exception:
@@ -2443,7 +2443,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v1.2.6 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2495,7 +2495,7 @@ def hub_partners_v084(
     db: Session = Depends(get_db),
 ):
     """
-    v1.3.0 – definitivní bezpečná uživatelská sekce Partneři.
+    v1.2.6 – definitivní bezpečná uživatelská sekce Partneři.
     Tato route nesmí spadnout kvůli chybějící proměnné dashboard/partner_history/partner_requests.
     Používá pouze bezpečné SELECT * dotazy a vše ostatní dopočítává v Pythonu.
     """
@@ -2663,26 +2663,1183 @@ def hub_partners_v084(
         "selected": selected or "",
         "tab": tab or "contacts",
         "route_error": getattr(request.state, "partner_route_error", ""),
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
     })
 
 
 @router.get("/hub/contacts", response_class=HTMLResponse)
-def hub_contacts_v130(request: Request, q: str = "", db: Session = Depends(get_db)):
-    contacts, source = hub_global_contacts_v130_(db, q=q)
+def hub_contacts_v124(request: Request, q: str = "", db: Session = Depends(get_db)):
+    contacts, source, warning = get_global_contacts_v124_(db)
+    qn = (q or "").strip().lower()
+    if qn:
+        contacts = [r for r in contacts if qn in " ".join(str(v or "") for v in (r.values() if isinstance(r, dict) else [])).lower()]
     groups = {}
-    for c in contacts:
-        groups.setdefault(hub_contact_group_v130_(c), []).append(c)
-    order = ["VIP / TOP kontakty", "Osobní kontakty", "Metodika", "Infolinky / podpora", "Ostatní"]
+    for r in contacts:
+        groups.setdefault(classify_global_contact_v124_(r), []).append(r)
+    order = ["VIP / BackOffice","Metodika / compliance","Infolinky / podpora","Provozní kontakty","Ostatní kontakty"]
     grouped_contacts = [{"name": k, "items": groups[k]} for k in order if k in groups]
-    return render(request, "hub_contacts.html", {
-        "active": "contacts",
+    return render(request, "hub_contacts.html", {"active":"contacts","q":q,"contacts":contacts,"grouped_contacts":grouped_contacts,"source_table":source,"data_warning":warning})
+
+
+@router.get("/admin/tips", response_class=HTMLResponse)
+def admin_all_tips_v090(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    specialist: str = "",
+    adviser: str = "",
+    archive: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE 1=1
+    """
+    params = {}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(adviser_name, '')) LIKE :q OR
+            lower(COALESCE(adviser_email, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(specialist_email, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    if specialist:
+        sql += " AND lower(COALESCE(specialist_email, '')) LIKE :specialist"
+        params["specialist"] = f"%{specialist.lower()}%"
+
+    if adviser:
+        sql += " AND lower(COALESCE(adviser_email, '')) LIKE :adviser"
+        params["adviser"] = f"%{adviser.lower()}%"
+
+    if archive != "1":
+        sql += " AND COALESCE(status, '') <> 'Archiv'"
+
+    sql += " ORDER BY last_update_at DESC, created_at DESC LIMIT 800"
+
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status = 'Nový') AS new_count,
+          COUNT(*) FILTER (WHERE status = 'V řešení') AS progress_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count,
+          COUNT(*) FILTER (WHERE status = 'Archiv') AS archive_count
+        FROM tips
+    """)).mappings().first()
+
+    return request.app.state.templates.TemplateResponse("admin_tips.html", {
+        "request": request,
+        "active": "admin_tips",
+        "rows": rows,
+        "stats": stats,
         "q": q,
-        "contacts": contacts,
-        "grouped_contacts": grouped_contacts,
-        "source_table": source,
-        "data_warning": None if source != "partner_contacts_fallback" else "Zobrazuji fallback z partnerských kontaktů, protože interní kontakty ASTORIE nejsou naplněné."
+        "status": status,
+        "specialist": specialist,
+        "adviser": adviser,
+        "archive": archive,
+        "version": "1.2.6-main-route-bridge-safe",
     })
+
+
+@router.get("/admin/tips/{tip_id}", response_class=HTMLResponse)
+def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    tip = fetch_one_safe_v084_(db, "SELECT * FROM tips WHERE id = :id", {"id": tip_id})
+    updates = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM tip_updates
+        WHERE tip_id = :id
+        ORDER BY created_at DESC
+    """, {"id": tip_id})
+
+    return request.app.state.templates.TemplateResponse("admin_tip_detail.html", {
+        "request": request,
+        "active": "admin_tips",
+        "tip": tip,
+        "updates": updates,
+        "version": "1.2.6-main-route-bridge-safe",
+    })
+
+
+@router.post("/admin/tips/{tip_id}/bo-update")
+def admin_tip_bo_update_v090(
+    tip_id: str,
+    status: str = Form(""),
+    bo_note: str = Form(""),
+    message_to_adviser: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = current_bo_user_v090_()
+    old = fetch_one_safe_v084_(db, "SELECT * FROM tips WHERE id = :id", {"id": tip_id})
+    old_status = old["status"] if old else ""
+
+    new_status = normalize_tip_status_v090_(status or old_status)
+    closed_sql = ", closed_at = now()" if new_status in ["Sjednáno", "Storno"] else ""
+    archived_sql = ", archived_at = now()" if new_status == "Archiv" else ""
+
+    db.execute(text(f"""
+        UPDATE tips
+        SET status = :status,
+            bo_note = :bo_note,
+            adviser_last_message = :message_to_adviser,
+            last_update_at = now()
+            {closed_sql}
+            {archived_sql}
+        WHERE id = :id
+    """), {
+        "id": tip_id,
+        "status": new_status,
+        "bo_note": bo_note,
+        "message_to_adviser": message_to_adviser,
+    })
+
+    db.execute(text("""
+        INSERT INTO tip_updates
+        (id, tip_id, author_name, author_email, author_role, update_type,
+         old_status, new_status, message_to_adviser, internal_note)
+        VALUES
+        (:id, :tip_id, :author_name, :author_email, :author_role, 'BO_UPDATE',
+         :old_status, :new_status, :message_to_adviser, :internal_note)
+    """), {
+        "id": str(uuid.uuid4()),
+        "tip_id": tip_id,
+        "author_name": user["name"],
+        "author_email": user["email"],
+        "author_role": user["role"],
+        "old_status": old_status,
+        "new_status": new_status,
+        "message_to_adviser": message_to_adviser,
+        "internal_note": bo_note,
+    })
+    db.commit()
+    return RedirectResponse(f"/admin/tips/{tip_id}", status_code=303)
+
+
+@router.get("/hub/specialist-tips", response_class=HTMLResponse)
+def hub_specialist_tips_v090(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    archive: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    email = (user.get("email") or "").lower()
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE lower(COALESCE(specialist_email, '')) = :email
+    """
+    params = {"email": email}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(adviser_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    if archive != "1":
+        sql += " AND COALESCE(status, '') <> 'Archiv'"
+
+    sql += " ORDER BY last_update_at DESC, created_at DESC LIMIT 300"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status = 'Nový') AS new_count,
+          COUNT(*) FILTER (WHERE status = 'V řešení') AS progress_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count,
+          COUNT(*) FILTER (WHERE status = 'Archiv') AS archive_count
+        FROM tips
+        WHERE lower(COALESCE(specialist_email, '')) = :email
+    """), {"email": email}).mappings().first()
+
+    return hub_render_v083_(request, "hub_specialist_tips.html", {
+        "active": "specialist_tips",
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+        "archive": archive,
+    })
+
+
+@router.get("/hub/specialist-tips/{tip_id}", response_class=HTMLResponse)
+def hub_specialist_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    tip = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM tips
+        WHERE id = :id
+          AND lower(COALESCE(specialist_email, '')) = lower(:email)
+        LIMIT 1
+    """, {"id": tip_id, "email": user["email"]})
+
+    updates = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM tip_updates
+        WHERE tip_id = :id
+        ORDER BY created_at DESC
+    """, {"id": tip_id})
+
+    return hub_render_v083_(request, "hub_specialist_tip_detail.html", {
+        "active": "specialist_tips",
+        "tip": tip,
+        "updates": updates,
+    })
+
+
+@router.post("/hub/specialist-tips/{tip_id}/update")
+def hub_specialist_tip_update_v090(
+    tip_id: str,
+    status: str = Form("V řešení"),
+    message_to_adviser: str = Form(""),
+    internal_note: str = Form(""),
+    final_report: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    old = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM tips
+        WHERE id = :id
+          AND lower(COALESCE(specialist_email, '')) = lower(:email)
+        LIMIT 1
+    """, {"id": tip_id, "email": user["email"]})
+
+    if not old:
+        return RedirectResponse("/hub/specialist-tips", status_code=303)
+
+    old_status = old["status"]
+    new_status = normalize_tip_status_v090_(status)
+    closed_sql = ", closed_at = now()" if new_status in ["Sjednáno", "Storno"] else ""
+
+    db.execute(text(f"""
+        UPDATE tips
+        SET status = :status,
+            adviser_last_message = :message_to_adviser,
+            specialist_internal_note = :internal_note,
+            final_report = :final_report,
+            last_update_at = now()
+            {closed_sql}
+        WHERE id = :id
+    """), {
+        "id": tip_id,
+        "status": new_status,
+        "message_to_adviser": message_to_adviser,
+        "internal_note": internal_note,
+        "final_report": final_report,
+    })
+
+    db.execute(text("""
+        INSERT INTO tip_updates
+        (id, tip_id, author_name, author_email, author_role, update_type,
+         old_status, new_status, message_to_adviser, internal_note, final_report)
+        VALUES
+        (:id, :tip_id, :author_name, :author_email, 'SPECIALIST', 'SPECIALIST_UPDATE',
+         :old_status, :new_status, :message_to_adviser, :internal_note, :final_report)
+    """), {
+        "id": str(uuid.uuid4()),
+        "tip_id": tip_id,
+        "author_name": user["name"],
+        "author_email": user["email"],
+        "old_status": old_status,
+        "new_status": new_status,
+        "message_to_adviser": message_to_adviser,
+        "internal_note": internal_note,
+        "final_report": final_report,
+    })
+
+    db.commit()
+    return RedirectResponse(f"/hub/specialist-tips/{tip_id}", status_code=303)
+
+
+@router.get("/admin/import/legacy-tips", response_class=HTMLResponse)
+def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    jobs = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM import_jobs
+        ORDER BY created_at DESC
+        LIMIT 20
+    """)
+    return request.app.state.templates.TemplateResponse("admin_import_legacy_tips.html", {
+        "request": request,
+        "active": "import",
+        "jobs": jobs,
+        "version": "1.2.6-main-route-bridge-safe",
+    })
+
+
+@router.post("/admin/import/legacy-tips")
+async def admin_import_legacy_tips_v090(
+    file: UploadFile = File(...),
+    source_name: str = Form("Stávající HUB ASTORIE"),
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = current_bo_user_v090_()
+    job_id = str(uuid.uuid4())
+    rows_total = rows_imported = rows_skipped = 0
+    errors = []
+
+    content = await file.read()
+    text_content = content.decode("utf-8-sig", errors="replace")
+    reader = csv.DictReader(io.StringIO(text_content), delimiter=";")
+    if not reader.fieldnames or len(reader.fieldnames) <= 1:
+        reader = csv.DictReader(io.StringIO(text_content), delimiter=",")
+
+    for row in reader:
+        rows_total += 1
+        try:
+            original_id = str(get_row_value_v090_(row, ["id", "tip_id", "ID", "Číslo", "Cislo"], "")).strip()
+            client_name = str(get_row_value_v090_(row, ["client_name", "Klient", "Jméno klienta", "Jmeno klienta", "Název klienta"], "")).strip()
+            adviser_name = str(get_row_value_v090_(row, ["adviser_name", "Poradce", "Tipař", "Tipar", "IF"], "")).strip()
+            adviser_email = str(get_row_value_v090_(row, ["adviser_email", "E-mail poradce", "Email poradce", "E-mail IF"], "")).strip()
+            specialist_name = str(get_row_value_v090_(row, ["specialist_name", "Specialista", "PS"], "")).strip()
+            specialist_email = str(get_row_value_v090_(row, ["specialist_email", "E-mail specialista", "Email specialista", "E-mail PS"], "")).strip()
+            status = normalize_tip_status_v090_(str(get_row_value_v090_(row, ["status", "Stav"], "Nový")).strip())
+            section_name = str(get_row_value_v090_(row, ["section_name", "Sekce", "Oblast"], "")).strip()
+            subsection_name = str(get_row_value_v090_(row, ["subsection_name", "Podsekce", "Podoblast"], "")).strip()
+            policy_no = str(get_row_value_v090_(row, ["policy_no", "Smlouva", "Číslo smlouvy", "Cislo smlouvy"], "")).strip()
+            note = str(get_row_value_v090_(row, ["adviser_note", "Poznámka", "Poznamka", "Popis"], "")).strip()
+            potential_raw = str(get_row_value_v090_(row, ["potential_amount", "Potenciál", "Potencial", "Objem"], "")).strip()
+
+            if not client_name and not adviser_name and not specialist_name:
+                rows_skipped += 1
+                continue
+
+            amount = None
+            if potential_raw:
+                try:
+                    amount = Decimal(potential_raw.replace(" ", "").replace("Kč", "").replace(",", "."))
+                except Exception:
+                    amount = None
+
+            db.execute(text("""
+                INSERT INTO tips
+                (id, adviser_original_id, adviser_name, adviser_email,
+                 specialist_name, specialist_email, client_name, potential_amount,
+                 adviser_note, status, policy_no, section_name, subsection_name,
+                 imported_source, imported_original_id, last_update_at)
+                VALUES
+                (:id, :adviser_original_id, :adviser_name, :adviser_email,
+                 :specialist_name, :specialist_email, :client_name, :potential_amount,
+                 :adviser_note, :status, :policy_no, :section_name, :subsection_name,
+                 :imported_source, :imported_original_id, now())
+            """), {
+                "id": str(uuid.uuid4()),
+                "adviser_original_id": str(get_row_value_v090_(row, ["advisor_id", "ID poradce", "ID"], "")),
+                "adviser_name": adviser_name,
+                "adviser_email": adviser_email,
+                "specialist_name": specialist_name,
+                "specialist_email": specialist_email,
+                "client_name": client_name,
+                "potential_amount": amount,
+                "adviser_note": note,
+                "status": status,
+                "policy_no": policy_no,
+                "section_name": section_name,
+                "subsection_name": subsection_name,
+                "imported_source": source_name,
+                "imported_original_id": original_id,
+            })
+            rows_imported += 1
+        except Exception as e:
+            rows_skipped += 1
+            errors.append(f"Řádek {rows_total}: {str(e)}")
+
+    db.execute(text("""
+        INSERT INTO import_jobs
+        (id, source_name, rows_total, rows_imported, rows_skipped, error_log, created_by)
+        VALUES
+        (:id, :source_name, :rows_total, :rows_imported, :rows_skipped, :error_log, :created_by)
+    """), {
+        "id": job_id,
+        "source_name": source_name,
+        "rows_total": rows_total,
+        "rows_imported": rows_imported,
+        "rows_skipped": rows_skipped,
+        "error_log": "\n".join(errors[:100]),
+        "created_by": user["email"],
+    })
+    db.commit()
+
+    return RedirectResponse("/admin/import/legacy-tips", status_code=303)
+
+
+@router.get("/api/tips/central-status")
+def api_tips_central_status_v090(db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status = 'Nový') AS new_count,
+          COUNT(*) FILTER (WHERE status = 'V řešení') AS progress_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count,
+          COUNT(*) FILTER (WHERE status = 'Archiv') AS archive_count
+        FROM tips
+    """)).mappings().first()
+    return {
+        "ok": True,
+        "version": "1.2.6-main-route-bridge-safe",
+        "stats": dict(stats or {}),
+    }
+
+
+
+
+
+# -------------------------------------------------------------------
+# v1.2.6 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# -------------------------------------------------------------------
+
+@router.get("/hub/my-tips", response_class=HTMLResponse)
+def hub_my_tips_unified_v091(
+    request: Request,
+    tab: str = "sent",
+    q: str = "",
+    status: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    adviser_id = user.get("advisor_id") or ""
+    email = (user.get("email") or "").lower()
+
+    base_where = "1=1"
+    params = {}
+
+    if tab == "work":
+        base_where = "lower(COALESCE(specialist_email, '')) = :email AND COALESCE(status, '') NOT IN ('Sjednáno','Storno','Archiv')"
+        params["email"] = email
+    elif tab == "archive":
+        base_where = """
+          (
+            COALESCE(adviser_original_id, '') = :adviser_id
+            OR lower(COALESCE(adviser_email, '')) = :email
+            OR lower(COALESCE(specialist_email, '')) = :email
+          )
+          AND COALESCE(status, '') IN ('Sjednáno','Storno','Archiv')
+        """
+        params["adviser_id"] = adviser_id
+        params["email"] = email
+    else:
+        tab = "sent"
+        base_where = """
+          (
+            COALESCE(adviser_original_id, '') = :adviser_id
+            OR lower(COALESCE(adviser_email, '')) = :email
+          )
+          AND COALESCE(status, '') <> 'Archiv'
+        """
+        params["adviser_id"] = adviser_id
+        params["email"] = email
+
+    sql = f"SELECT * FROM tips WHERE {base_where}"
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(adviser_name, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(section_name, '')) LIKE :q OR
+            lower(COALESCE(subsection_name, '')) LIKE :q OR
+            lower(COALESCE(adviser_note, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    sql += " ORDER BY last_update_at DESC, created_at DESC LIMIT 500"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) FILTER (
+            WHERE (COALESCE(adviser_original_id, '') = :adviser_id OR lower(COALESCE(adviser_email, '')) = :email)
+              AND COALESCE(status, '') <> 'Archiv'
+          ) AS sent_count,
+          COUNT(*) FILTER (
+            WHERE lower(COALESCE(specialist_email, '')) = :email
+              AND COALESCE(status, '') NOT IN ('Sjednáno','Storno','Archiv')
+          ) AS work_count,
+          COUNT(*) FILTER (
+            WHERE (
+              COALESCE(adviser_original_id, '') = :adviser_id
+              OR lower(COALESCE(adviser_email, '')) = :email
+              OR lower(COALESCE(specialist_email, '')) = :email
+            )
+            AND COALESCE(status, '') IN ('Sjednáno','Storno','Archiv')
+          ) AS archive_count,
+          COUNT(*) FILTER (WHERE status = 'Sjednáno') AS won_count,
+          COUNT(*) FILTER (WHERE status = 'Storno') AS lost_count
+        FROM tips
+    """), {"adviser_id": adviser_id, "email": email}).mappings().first()
+
+    return hub_render_v083_(request, "hub_my_tips_unified.html", {
+        "active": "my_tips",
+        "tab": tab,
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+    })
+
+
+@router.get("/hub/tips/{tip_id}", response_class=HTMLResponse)
+def hub_tip_detail_unified_v091(request: Request, tip_id: str, db: Session = Depends(get_db)):
+    ensure_tip_workflow_v090_(db)
+    user = hub_user_context_v083_()
+    email = (user.get("email") or "").lower()
+    adviser_id = user.get("advisor_id") or ""
+
+    tip = fetch_one_safe_v084_(db, """
+        SELECT *
+        FROM tips
+        WHERE id = :id
+          AND (
+            COALESCE(adviser_original_id, '') = :adviser_id
+            OR lower(COALESCE(adviser_email, '')) = :email
+            OR lower(COALESCE(specialist_email, '')) = :email
+          )
+        LIMIT 1
+    """, {"id": tip_id, "email": email, "adviser_id": adviser_id})
+
+    updates = fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM tip_updates
+        WHERE tip_id = :id
+        ORDER BY created_at DESC
+    """, {"id": tip_id})
+
+    return hub_render_v083_(request, "hub_tip_detail_unified.html", {
+        "active": "my_tips",
+        "tip": tip,
+        "updates": updates,
+        "is_specialist": bool(tip and (tip.get("specialist_email") or "").lower() == email),
+    })
+
+
+@router.post("/hub/tips/{tip_id}/specialist-update")
+def hub_tip_unified_specialist_update_v091(
+    tip_id: str,
+    status: str = Form("V řešení"),
+    message_to_adviser: str = Form(""),
+    internal_note: str = Form(""),
+    final_report: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    return hub_specialist_tip_update_v090(
+        tip_id=tip_id,
+        status=status,
+        message_to_adviser=message_to_adviser,
+        internal_note=internal_note,
+        final_report=final_report,
+        db=db,
+    )
+
+
+
+
+
+# -------------------------------------------------------------------
+# v1.2.6 XLSX importer – import přímo ze staženého Google Sheetu
+# -------------------------------------------------------------------
+
+def xlsx_cell_to_str_v093_(value):
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    # Excel často vrací číselné ID jako float 501.0; v aplikaci musí být 501.
+    if isinstance(value, float):
+        if value.is_integer():
+            return str(int(value))
+        return str(value).strip()
+    if isinstance(value, int):
+        return str(value)
+    text_value = str(value).strip()
+    if re.fullmatch(r"\d+\.0", text_value):
+        return text_value[:-2]
+    return text_value
+
+
+def xlsx_bool_v093_(value):
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"ano", "a", "true", "1", "yes", "aktivni", "aktivní"}
+
+
+def xlsx_num_v093_(value, default=0):
+    try:
+        if value is None or value == "":
+            return default
+        return int(float(str(value).replace(",", ".").replace(" ", "")))
+    except Exception:
+        return default
+
+
+def xlsx_decimal_v093_(value):
+    if value is None or value == "":
+        return None
+    try:
+        return Decimal(str(value).replace("Kč", "").replace(",-", "").replace(" ", "").replace(",", "."))
+    except Exception:
+        return None
+
+
+def xlsx_norm_header_v093_(value):
+    value = str(value or "").strip().lower()
+    repl = {
+        "á": "a", "č": "c", "ď": "d", "é": "e", "ě": "e", "í": "i",
+        "ň": "n", "ó": "o", "ř": "r", "š": "s", "ť": "t", "ú": "u",
+        "ů": "u", "ý": "y", "ž": "z",
+    }
+    for a, b in repl.items():
+        value = value.replace(a, b)
+    for ch in [" ", "-", ".", "/", "\\", "(", ")", "[", "]", ":", ";"]:
+        value = value.replace(ch, "_")
+    while "__" in value:
+        value = value.replace("__", "_")
+    return value.strip("_")
+
+
+def xlsx_rows_v093_(wb, sheet_name):
+    if sheet_name not in wb.sheetnames:
+        return []
+    ws = wb[sheet_name]
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return []
+    headers = [xlsx_norm_header_v093_(h) for h in rows[0]]
+    out = []
+    for row in rows[1:]:
+        item = {}
+        empty = True
+        for i, h in enumerate(headers):
+            if not h:
+                continue
+            val = row[i] if i < len(row) else None
+            if val not in (None, ""):
+                empty = False
+            item[h] = val
+        if not empty:
+            out.append(item)
+    return out
+
+
+def xlsx_pick_v093_(row, *keys, default=""):
+    for key in keys:
+        k = xlsx_norm_header_v093_(key)
+        if k in row and row[k] not in (None, ""):
+            return row[k]
+    return default
+
+
+def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
+    """
+    Bezpečný UPSERT pro XLSX import.
+    v1.2.6: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
+    nemají vždy serverový DEFAULT pro id a raw SQL nepoužije SQLAlchemy default.
+    """
+    uuid_tables = {
+        "users",
+        "roles",
+        "app_settings",
+        "sections",
+        "subsections",
+        "partners",
+        "tips",
+        "commission_rates",
+        "audit_log",
+    }
+
+    data = dict(data or {})
+    if table in uuid_tables and "id" not in data:
+        data["id"] = str(uuid.uuid4())
+
+    # v1.2.6: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
+    # Proto timestampy doplňujeme přímo do importních dat.
+    timestamp_tables = {
+        "users",
+        "sections",
+        "subsections",
+        "hub_sections",
+        "hub_subsections",
+        "specialists",
+        "partners",
+        "partner_contacts",
+        "partner_links",
+        "partner_products",
+        "tips",
+        "commission_rates",
+        "audit_log",
+    }
+    if table in timestamp_tables:
+        if "created_at" not in data:
+            data["created_at"] = datetime.utcnow()
+        if "updated_at" not in data:
+            data["updated_at"] = datetime.utcnow()
+
+    # v1.2.6: tabulka subsections má v produkci povinný section_id.
+    # Excel/import pracuje se section_code, proto ID dohledáme před UPSERTem.
+    if table == "subsections" and "section_id" not in data:
+        section_code = str(data.get("section_code") or "").strip()
+        if section_code:
+            try:
+                found_section_id = db.execute(
+                    text("SELECT id FROM sections WHERE section_code = :section_code LIMIT 1"),
+                    {"section_code": section_code}
+                ).scalar()
+                if found_section_id:
+                    data["section_id"] = str(found_section_id)
+            except Exception:
+                db.rollback()
+                raise
+
+    columns = list(data.keys())
+    params = {k: data[k] for k in columns}
+    col_sql = ", ".join(columns)
+    val_sql = ", ".join([f":{c}" for c in columns])
+
+    if update_existing:
+        # Nikdy neaktualizujeme primární klíč id ani konfliktní sloupec.
+        set_cols = [c for c in columns if c not in {conflict_col, "id"}]
+        set_sql = ", ".join([f"{c}=EXCLUDED.{c}" for c in set_cols]) or f"{conflict_col}=EXCLUDED.{conflict_col}"
+        sql = f"""
+            INSERT INTO {table} ({col_sql})
+            VALUES ({val_sql})
+            ON CONFLICT ({conflict_col}) DO UPDATE SET {set_sql}
+        """
+    else:
+        sql = f"""
+            INSERT INTO {table} ({col_sql})
+            VALUES ({val_sql})
+            ON CONFLICT ({conflict_col}) DO NOTHING
+        """
+
+    try:
+        res = db.execute(text(sql), params)
+        return res.rowcount or 0
+    except Exception:
+        db.rollback()
+        raise
+
+
+def ensure_xlsx_import_structures_v093_(db):
+    ensure_tip_workflow_v090_(db)
+    ensure_visible_hub_sections_(db)
+    ensure_specialists_table_(db)
+
+    # Starší DB mohou mít užší tabulky. Tady je pouze bezpečné rozšíření.
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS risks TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS client_type TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS keywords TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS priority INTEGER NOT NULL DEFAULT 100"))
+    db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS original_note TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS business_type TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS area TEXT NOT NULL DEFAULT ''"))
+    db.commit()
+
+
+def import_hub_xlsx_data_v093_(db, wb, update_existing=False):
+    try:
+        repair_users_timestamps_v098_(db)
+    except Exception:
+        pass
+    ensure_xlsx_import_structures_v093_(db)
+
+    result = {
+        "users": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "sections": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "subsections": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "specialists": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "partners": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "contacts": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "links": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "products": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "commission_rates": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "terminations_partners": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "tips": {"created": 0, "updated_or_skipped": 0, "rows": 0},
+        "errors": [],
+    }
+
+    # Poradci -> users
+    for row in xlsx_rows_v093_(wb, "Poradci"):
+        result["users"]["rows"] += 1
+        try:
+            advisor_id = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_poradce"))
+            email = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email")).lower()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno"))
+            if not advisor_id or not email or not name:
+                continue
+            data = {
+                "advisor_id": advisor_id,
+                "name": name,
+                "email": email,
+                "phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Telefon")),
+                "role": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Role", default="IF")) or "IF",
+                "password_hash": hash_password(xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Heslo", default="1234")) or "1234"),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", default="ANO")),
+                "must_change_password": True,
+            }
+            created = xlsx_upsert_v093_(db, "users", "advisor_id", data, update_existing)
+            result["users"]["created"] += created
+            result["users"]["updated_or_skipped"] += 0 if created else 1
+        except Exception as exc:
+            result["errors"].append(f"Poradci: {exc}")
+
+    # Sekce -> hub_sections + sections
+    for row in xlsx_rows_v093_(wb, "Sekce"):
+        result["sections"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_sekce")).upper()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev sekce", "Název sekce"))
+            if not code or not name:
+                continue
+            data_hub = {
+                "section_code": code,
+                "section_name": name,
+                "icon": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Ikona")),
+                "sort_order": xlsx_num_v093_(xlsx_pick_v093_(row, "Poradi", "Pořadí"), 100),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Popis")),
+            }
+            created = xlsx_upsert_v093_(db, "hub_sections", "section_code", data_hub, update_existing)
+            result["sections"]["created"] += created
+            result["sections"]["updated_or_skipped"] += 0 if created else 1
+
+            data_core = {
+                "section_code": code,
+                "name": name,
+                "icon": data_hub["icon"],
+                "sort_order": data_hub["sort_order"],
+                "is_active": data_hub["is_active"],
+            }
+            xlsx_upsert_v093_(db, "sections", "section_code", data_core, update_existing)
+        except Exception as exc:
+            result["errors"].append(f"Sekce: {exc}")
+
+    # Podsekce -> hub_subsections + subsections
+    for row in xlsx_rows_v093_(wb, "Podsekce"):
+        result["subsections"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_podsekce")).upper()
+            section_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Sekce_ID")).upper()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev podsekce", "Název podsekce"))
+            if not code or not section_code or not name:
+                continue
+            data_hub = {
+                "subsection_code": code,
+                "section_code": section_code,
+                "subsection_name": name,
+                "sort_order": xlsx_num_v093_(xlsx_pick_v093_(row, "Poradi", "Pořadí"), 100),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Popis")),
+            }
+            created = xlsx_upsert_v093_(db, "hub_subsections", "subsection_code", data_hub, update_existing)
+            result["subsections"]["created"] += created
+            result["subsections"]["updated_or_skipped"] += 0 if created else 1
+
+            data_core = {
+                "subsection_code": code,
+                "section_code": section_code,
+                "name": name,
+                "sort_order": data_hub["sort_order"],
+                "is_active": data_hub["is_active"],
+            }
+            xlsx_upsert_v093_(db, "subsections", "subsection_code", data_core, update_existing)
+        except Exception as exc:
+            result["errors"].append(f"Podsekce: {exc}")
+
+    # Specialisté
+    # v1.2.6: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
+    for row in xlsx_rows_v093_(wb, "Specialisté"):
+        result["specialists"]["rows"] += 1
+        try:
+            advisor_id = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_poradce"))
+            section_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_sekce")).upper()
+            subsection_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_podsekce")).upper()
+            email = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email")).lower()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno", "Jméno"))
+            if not advisor_id or not section_code or not email or not name:
+                continue
+
+            data = {
+                "advisor_id": advisor_id,
+                "specialist_name": name,
+                "email": email,
+                "phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Telefon")),
+                "section_code": section_code,
+                "subsection_code": subsection_code,
+                "role_description": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Role")),
+                "region": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Region")),
+                "if_share": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "IF_podil", "IF podíl")),
+                "ps_share": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "PS_podil", "PS podíl")),
+                "available": xlsx_bool_v093_(xlsx_pick_v093_(row, "Dostupny", "Dostupný", "Aktivni", default="ANO")),
+                "unavailable_reason": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Duvod nedostupnosti", "Důvod nedostupnosti")),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+            }
+            cols = list(data.keys())
+            params = data
+            sql = f"""
+                INSERT INTO specialists ({", ".join(cols)})
+                VALUES ({", ".join([":" + c for c in cols])})
+                ON CONFLICT (advisor_id, section_code, subsection_code, email)
+                DO {"UPDATE SET " + ", ".join([c + "=EXCLUDED." + c for c in cols if c not in ["advisor_id","section_code","subsection_code","email"]]) if update_existing else "NOTHING"}
+            """
+            created = db.execute(text(sql), params).rowcount or 0
+            result["specialists"]["created"] += created
+            result["specialists"]["updated_or_skipped"] += 0 if created else 1
+        except Exception as exc:
+            result["errors"].append(f"Specialisté: {exc}")
+
+    # Import_Partners + Vypovedi_Pojistovny
+    for sheet_name in ["Import_Partners", "Vypovedi_Pojistovny"]:
+        for row in xlsx_rows_v093_(wb, sheet_name):
+            result["partners" if sheet_name == "Import_Partners" else "terminations_partners"]["rows"] += 1
+            try:
+                code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID")).upper()
+                name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev", "Název"))
+                if not code or not name:
+                    continue
+                data = {
+                    "partner_code": code,
+                    "name": name,
+                    "address_full": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Adresa")),
+                    "registry_email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email_podatelna", "Email", "E-mail")),
+                    "data_box": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Datova_schranka", "Datová schránka")),
+                    "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                    "source": "xlsx_import",
+                    "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+                }
+                created = xlsx_upsert_v093_(db, "partners", "partner_code", data, update_existing)
+                key = "partners" if sheet_name == "Import_Partners" else "terminations_partners"
+                result[key]["created"] += created
+                result[key]["updated_or_skipped"] += 0 if created else 1
+            except Exception as exc:
+                result["errors"].append(f"{sheet_name}: {exc}")
+
+    # Kontakty
+    for row in xlsx_rows_v093_(wb, "Import_Partner_Contacts"):
+        result["contacts"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID")).upper()
+            name = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno", "Jméno"))
+            role = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Role"))
+            if not code or (not name and not role):
+                continue
+            db.execute(text("""
+                INSERT INTO partner_contacts
+                (partner_code, full_name, role, phone, email, specialization, territory, is_top, is_vip, note, original_note, is_active)
+                VALUES
+                (:partner_code, :full_name, :role, :phone, :email, :specialization, :territory, :is_top, :is_vip, :note, :original_note, TRUE)
+            """), {
+                "partner_code": code,
+                "full_name": name or role,
+                "role": role,
+                "phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Telefon")),
+                "email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email")),
+                "specialization": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Specikace", "Specifikace")),
+                "territory": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Region")),
+                "is_top": xlsx_bool_v093_(xlsx_pick_v093_(row, "TOP")),
+                "is_vip": xlsx_bool_v093_(xlsx_pick_v093_(row, "VIP")),
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                "original_note": "Import_Partner_Contacts",
+            })
+            result["contacts"]["created"] += 1
+        except Exception as exc:
+            result["contacts"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Kontakty: {exc}")
+
+    # Odkazy partnerů + online kalkulačky + odkazy ASTORIE
+    for sheet_name, is_global in [("Import_Partner_Links", False), ("Import_Online kalkulacky_Links", False), ("Import_Astorie_Links", True)]:
+        for row in xlsx_rows_v093_(wb, sheet_name):
+            result["links"]["rows"] += 1
+            try:
+                code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID", default="ASTORIE")).upper()
+                title = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev", "Název"))
+                url = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "URL"))
+                if is_global and not code:
+                    code = "ASTORIE"
+                if not code or not title or not url:
+                    continue
+                db.execute(text("""
+                    INSERT INTO partner_links
+                    (partner_code, title, url, category, note, visibility, is_active)
+                    VALUES
+                    (:partner_code, :title, :url, :category, :note, :visibility, TRUE)
+                """), {
+                    "partner_code": code,
+                    "title": title,
+                    "url": url,
+                    "category": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ", "Kategorie")),
+                    "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                    "visibility": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Viditelnost")),
+                })
+                result["links"]["created"] += 1
+            except Exception as exc:
+                result["links"]["updated_or_skipped"] += 1
+                result["errors"].append(f"{sheet_name}: {exc}")
+
+    # Produkty
+    for row in xlsx_rows_v093_(wb, "Import_Products"):
+        result["products"]["rows"] += 1
+        try:
+            code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner_ID")).upper()
+            product = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Produkt"))
+            if not code or not product:
+                continue
+            db.execute(text("""
+                INSERT INTO partner_products
+                (partner_code, area, subarea, product_name, note, risks, client_type, keywords, priority, is_active)
+                VALUES
+                (:partner_code, :area, :subarea, :product_name, :note, :risks, :client_type, :keywords, :priority, :is_active)
+            """), {
+                "partner_code": code,
+                "area": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Oblast")),
+                "subarea": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Podoblast")),
+                "product_name": product,
+                "note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                "risks": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Rizika")),
+                "client_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ_klienta")),
+                "keywords": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Klicova_slova")),
+                "priority": xlsx_num_v093_(xlsx_pick_v093_(row, "Priorita"), 100),
+                "is_active": xlsx_bool_v093_(xlsx_pick_v093_(row, "Aktivni", "Aktivní", default="ANO")),
+            })
+            result["products"]["created"] += 1
+        except Exception as exc:
+            result["products"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Produkty: {exc}")
+
+    # Provize
+    for row in xlsx_rows_v093_(wb, "Provize_TIPHub"):
+        result["commission_rates"]["rows"] += 1
+        try:
+            section_code = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_sekce")).upper()
+            partner = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Partner"))
+            if not section_code or not partner:
+                continue
+            db.execute(text("""
+                INSERT INTO commission_rates
+                (id, section_code, subsection_code, partner_name, base_type, product_type, rate_percent, priority, is_active, business_type, area)
+                VALUES
+                (:id, :section_code, :subsection_code, :partner_name, :base_type, :product_type, :rate_percent, :priority, TRUE, :business_type, :area)
+            """), {
+                "id": str(uuid.uuid4()),
+                "section_code": section_code,
+                "subsection_code": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID_podsekce")).upper(),
+                "partner_name": partner,
+                "base_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ_pojistneho")),
+                "product_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Typ_obchodu")),
+                "rate_percent": xlsx_decimal_v093_(xlsx_pick_v093_(row, "Sazba_provize_%")),
+                "priority": xlsx_num_v093_(xlsx_pick_v093_(row, "Priorita"), 100),
+                "business_type": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Druh obchodu")),
+                "area": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Oblast")),
+            })
+            result["commission_rates"]["created"] += 1
+        except Exception as exc:
+            result["commission_rates"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Provize_TIPHub: {exc}")
+
+    # TIPy
+    for row in xlsx_rows_v093_(wb, "Tipy"):
+        result["tips"]["rows"] += 1
+        try:
+            client = xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno Klienta", "Jméno Klienta"))
+            if not client:
+                continue
+            tip_id = str(uuid.uuid4())
+            db.execute(text("""
+                INSERT INTO tips
+                (id, adviser_original_id, adviser_name, adviser_email,
+                 specialist_name, specialist_email, client_name, client_phone, client_identifier,
+                 potential_amount, adviser_note, status, policy_no, final_volume, specialist_feedback,
+                 section_code, subsection_code, section_name, subsection_name,
+                 imported_source, imported_original_id, adviser_last_message, final_report, last_update_at)
+                VALUES
+                (:id, :adviser_original_id, :adviser_name, :adviser_email,
+                 :specialist_name, :specialist_email, :client_name, :client_phone, :client_identifier,
+                 :potential_amount, :adviser_note, :status, :policy_no, :final_volume, :specialist_feedback,
+                 :section_code, :subsection_code, :section_name, :subsection_name,
+                 'xlsx_Aktivni_29032026_ASTORIE_HUB', :imported_original_id, :adviser_last_message, :final_report, now())
+            """), {
+                "id": tip_id,
+                "adviser_original_id": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID Poradce")),
+                "adviser_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno Poradce", "Jméno Poradce")),
+                "adviser_email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email Poradce")).lower(),
+                "specialist_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Jmeno Specialisty", "Jméno Specialisty")),
+                "specialist_email": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Email Specialisty")).lower(),
+                "client_name": client,
+                "client_phone": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Kontakt Klienta")),
+                "client_identifier": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Identifikace RČ IČO Datum nar", "Identifikace (RČ/IČO/Datum nar.)")),
+                "potential_amount": xlsx_decimal_v093_(xlsx_pick_v093_(row, "Potencial", "Potenciál")),
+                "adviser_note": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Poznamka", "Poznámka")),
+                "status": normalize_tip_status_v090_(xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Stav", default="Nový"))),
+                "policy_no": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Cislo smlouvy", "Číslo smlouvy")),
+                "final_volume": xlsx_decimal_v093_(xlsx_pick_v093_(row, "Vyse obchodu", "Výše obchodu")),
+                "specialist_feedback": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Vyjadreni specialisty", "Vyjádření specialisty")),
+                "section_code": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID Sekce")).upper(),
+                "subsection_code": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "ID Podsekce")).upper(),
+                "section_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev Sekce", "Název Sekce")),
+                "subsection_name": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Nazev Podsekce", "Název Podsekce")),
+                "imported_original_id": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Datum vytvoření", "Datum vytvoreni")),
+                "adviser_last_message": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Vyjadreni specialisty", "Vyjádření specialisty")),
+                "final_report": xlsx_cell_to_str_v093_(xlsx_pick_v093_(row, "Vyjadreni specialisty", "Vyjádření specialisty")),
+            })
+            result["tips"]["created"] += 1
+        except Exception as exc:
+            result["tips"]["updated_or_skipped"] += 1
+            result["errors"].append(f"Tipy: {exc}")
+
+    db.commit()
+    return result
 
 
 @router.get("/admin/import/hub-xlsx", response_class=HTMLResponse)
@@ -2690,7 +3847,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
     })
 
 
@@ -2707,7 +3864,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "1.3.0-professional-sections-safe",
+            "version": "1.2.6-main-route-bridge-safe",
         })
 
     raw = await file.read()
@@ -2722,7 +3879,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
     })
 
 
@@ -2730,7 +3887,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -2753,7 +3910,7 @@ def api_import_hub_xlsx_expected_sheets_v093():
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import hardening endpoints
+# v1.2.6 import hardening endpoints
 # - chybějící /api/admin/summary
 # - aliasy pro import route
 # - JSON upload endpoint
@@ -2814,7 +3971,7 @@ def api_admin_summary_v094(db: Session = Depends(get_db)):
     ]
     return {
         "ok": True,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
         "counts": {t: safe_count_table_v094_(db, t) for t in tables},
     }
@@ -2836,14 +3993,14 @@ def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
         """)
         return {
             "ok": True,
-            "version": "1.3.0-professional-sections-safe",
+            "version": "1.2.6-main-route-bridge-safe",
             "running": False,
             "last_job": dict(last_job) if last_job else None,
         }
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.3.0-professional-sections-safe",
+            "version": "1.2.6-main-route-bridge-safe",
             "running": False,
             "error": str(exc),
         }
@@ -2866,12 +4023,12 @@ async def api_import_hub_xlsx_upload_v094(
         result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
         result["ok"] = len(result.get("errors", [])) == 0
         result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
-        result["version"] = "1.3.0-professional-sections-safe"
+        result["version"] = "1.2.6-main-route-bridge-safe"
         return result
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.3.0-professional-sections-safe",
+            "version": "1.2.6-main-route-bridge-safe",
             "errors": [str(exc)],
         }
 
@@ -2911,7 +4068,7 @@ def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import transaction fix
+# v1.2.6 import transaction fix
 # Oprava: current transaction is aborted před CREATE UNIQUE INDEX
 # -------------------------------------------------------------------
 
@@ -3002,7 +4159,7 @@ ensure_xlsx_import_structures_v093_ = ensure_xlsx_import_structures_v095_
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import index fix
+# v1.2.6 import index fix
 # Definitivní oprava: odstranění inline CREATE UNIQUE INDEX z importní transakce
 # a bezpečné čištění transakce před vlastním importem.
 # -------------------------------------------------------------------
@@ -3155,7 +4312,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
     errors = ensure_xlsx_import_structures_v096_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Importní struktury byly zkontrolovány a opraveny. Původní Google Sheet se nemění.",
         "errors": errors,
     }
@@ -3165,7 +4322,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import user id fix
+# v1.2.6 import user id fix
 # Oprava: users.id nemá serverový default a raw SQL insert bez id padal.
 # -------------------------------------------------------------------
 
@@ -3220,7 +4377,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
     errors = repair_uuid_defaults_v097_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Opraveny UUID defaulty pro users a další hlavní tabulky. Import zároveň posílá id explicitně.",
         "errors": errors,
     }
@@ -3229,7 +4386,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import timestamps fix
+# v1.2.6 import timestamps fix
 # Oprava: users.created_at / users.updated_at NOT NULL při importu poradců
 # -------------------------------------------------------------------
 
@@ -3265,7 +4422,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
     errors = repair_users_timestamps_v098_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Opraveny created_at/updated_at defaulty pro users. Import poradců nyní posílá timestampy explicitně.",
         "errors": errors,
     }
@@ -3273,7 +4430,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import schema canonical fix
+# v1.2.6 import schema canonical fix
 # Profesionální oprava: sjednocení schématu všech importních tabulek před importem.
 # -------------------------------------------------------------------
 
@@ -3517,7 +4674,7 @@ def api_import_repair_all_v099(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Kompletní oprava importního schématu dokončena. Opraveny created_at/updated_at a chybějící importní sloupce.",
         "errors": errors,
     }
@@ -3539,7 +4696,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.3.0 full import schema fix
+# v1.2.6 full import schema fix
 # Jednorázová profesionální oprava importního schématu:
 # doplní přesně ty sloupce, které import reálně používá.
 # -------------------------------------------------------------------
@@ -3879,7 +5036,7 @@ def api_import_repair_database_v100(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Databáze byla sjednocena pro import XLSX. Doplněny sloupce sections/subsections/partners a další importní tabulky.",
         "errors": errors,
     }
@@ -3910,7 +5067,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import relationship fix
+# v1.2.6 import relationship fix
 # Oprava vazeb: subsections.section_id se dopočítá ze sections.section_code.
 # Přidán preflight, který odhalí základní problémy před importem.
 # -------------------------------------------------------------------
@@ -4059,7 +5216,7 @@ def api_import_repair_relationships_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Opraveny vazby pro import. Subsections.section_id se doplňuje podle sections.section_code.",
         "errors": errors,
         "preflight_issues": issues,
@@ -4072,7 +5229,7 @@ def api_import_preflight_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Předimportní kontrola databáze.",
         "errors": errors,
         "issues": issues,
@@ -4096,7 +5253,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.3.0 uuid relationship fix endpoint
+# v1.2.6 uuid relationship fix endpoint
 # -------------------------------------------------------------------
 
 @router.get("/api/import/hub-xlsx/repair-uuid-relationships")
@@ -4147,7 +5304,7 @@ def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
 
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Opravena UUID vazba subsections.section_id bez neplatného porovnání s prázdným řetězcem.",
         "errors": errors,
         "issues": issues,
@@ -4158,7 +5315,7 @@ def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 import cleanup + partner UI completion
+# v1.2.6 import cleanup + partner UI completion
 # Cíl:
 # - odstranit duplicitně nahraná data po opakovaných importech
 # - oddělit Kontakty ASTORIE od kontaktů partnerů
@@ -4493,7 +5650,7 @@ def api_import_cleanup_duplicates_v103(db: Session = Depends(get_db)):
     errors = cleanup_import_duplicates_v103(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Duplicitní záznamy po opakovaném importu byly vyčištěny. Zachován je vždy první záznam.",
         "errors": errors,
     }
@@ -4505,7 +5662,7 @@ def api_import_repair_display_data_v103(db: Session = Depends(get_db)):
     errors.extend(cleanup_import_duplicates_v103(db))
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Doplněny tabulky pro globální kontakty, FAQ partnerů a návrhy změn. Vyčištěny duplicity.",
         "errors": errors,
     }
@@ -4637,9 +5794,9 @@ def hub_contacts_astorie_v103(request: Request, q: str = "", db: Session = Depen
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Partner Workflow Core
+# v1.2.6 Partner Workflow Core
 # -------------------------------------------------------------------
-PARTNER_WORKFLOW_VERSION = "1.3.0-professional-sections-safe"
+PARTNER_WORKFLOW_VERSION = "1.2.6-main-route-bridge-safe"
 
 
 def v110_exec(db: Session, sql: str, params: dict | None = None):
@@ -4946,12 +6103,12 @@ def admin_partner_request_comment_v110(request_id: str, comment_text: str = Form
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Partner Workflow UX Upgrade
+# v1.2.6 Partner Workflow UX Upgrade
 # Premium partner workspace: dashboard counters, history timeline,
 # request badges, favorite button, compact fulltext and better data cards.
 # -------------------------------------------------------------------
 
-PARTNER_WORKFLOW_UX_VERSION = "1.3.0-professional-sections-safe"
+PARTNER_WORKFLOW_UX_VERSION = "1.2.6-main-route-bridge-safe"
 
 
 def ensure_partner_ux_v111(db: Session):
@@ -4966,7 +6123,7 @@ def ensure_partner_ux_v111(db: Session):
             except Exception as exc:
                 errors.append(f"{fn_name}: {exc}")
 
-    # Doplnit drobné tabulky, pokud v1.3.0 nebyla nasazená.
+    # Doplnit drobné tabulky, pokud v1.2.6 nebyla nasazená.
     if globals().get("v110_exec"):
         exec_fn = v110_exec
     elif globals().get("v103_exec"):
@@ -5109,10 +6266,10 @@ def hub_partner_favorite_v111(
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Partner hotfix safe UI
+# v1.2.6 Partner hotfix safe UI
 # /hub/partners uses safe template. No import/data destructive changes.
 # -------------------------------------------------------------------
-PARTNER_HOTFIX_VERSION = "1.3.0-professional-sections-safe"
+PARTNER_HOTFIX_VERSION = "1.2.6-main-route-bridge-safe"
 
 def ensure_partner_hotfix_v112(db: Session):
     errors = []
@@ -5133,7 +6290,7 @@ def api_partner_hotfix_status_v112(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Partner safe route fix
+# v1.2.6 Partner safe route fix
 # Oprava: /hub/partners nesmí padat na nedefinované dashboard/history/request proměnné.
 # -------------------------------------------------------------------
 
@@ -5141,7 +6298,7 @@ def api_partner_hotfix_status_v112(db: Session = Depends(get_db)):
 def api_partner_safe_route_status_v113(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Route /hub/partners má bezpečné fallback proměnné a nesmí spadnout na dashboard/history/requests.",
         "errors": []
     }
@@ -5170,7 +6327,7 @@ def api_partner_safe_route_status_v114(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Uživatelská sekce /hub/partners je napojena na admin číselník partnerů a má bezpečné fallbacky.",
         "tables": tables,
         "errors": errors,
@@ -5200,7 +6357,7 @@ def api_partner_figma_ui_status_v116(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Sekce Partneři používá nový Figma-like layout dle odsouhlaseného vizuálu. Backend/import/workflow nebyly měněny.",
         "tables": tables,
         "errors": errors,
@@ -5212,7 +6369,7 @@ def api_partner_figma_ui_status_v116(db: Session = Depends(get_db)):
 @router.get("/api/partners-restore-visual/status")
 def api_partners_restore_visual_status_v118(db: Session = Depends(get_db)):
     """
-    v1.3.0 – kontrola opravné verze sekce Partneři.
+    v1.2.6 – kontrola opravné verze sekce Partneři.
     Nic nemaže, nic nemigruje, nemění import ani workflow.
     """
     tables = {}
@@ -5234,7 +6391,7 @@ def api_partners_restore_visual_status_v118(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Opravná verze: vrácen původní vizuál partner workspace, doplněno seskupení kontaktů a produktů bez zásahu do backendu.",
         "tables": tables,
         "errors": errors,
@@ -5246,7 +6403,7 @@ def api_partners_restore_visual_status_v118(db: Session = Depends(get_db)):
 @router.get("/api/safe-rollback-visual-shell/status")
 def api_safe_rollback_visual_shell_status_v120(db: Session = Depends(get_db)):
     """
-    v1.3.0 – bezpečný rollback destruktivních UI zásahů.
+    v1.2.6 – bezpečný rollback destruktivních UI zásahů.
     Neprovádí migrace, nemaže data, nemění import ani workflow.
     """
     tables = {}
@@ -5272,8 +6429,8 @@ def api_safe_rollback_visual_shell_status_v120(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
-        "message": "Stabilní rollback na funkční šablony v1.3.0 + neinvazivní sjednocení vizuálu. DB/import/workflow beze změny.",
+        "version": "1.2.6-main-route-bridge-safe",
+        "message": "Stabilní rollback na funkční šablony v1.2.6 + neinvazivní sjednocení vizuálu. DB/import/workflow beze změny.",
         "tables": tables,
         "errors": errors,
     }
@@ -5284,7 +6441,7 @@ def api_safe_rollback_visual_shell_status_v120(db: Session = Depends(get_db)):
 @router.get("/api/compact-shell-tables/status")
 def api_compact_shell_tables_status_v121(db: Session = Depends(get_db)):
     """
-    v1.3.0 – kompaktní HUB shell + fulltext v tabulkách.
+    v1.2.6 – kompaktní HUB shell + fulltext v tabulkách.
     Bez migrací, bez změny importu a workflow.
     """
     tables = {}
@@ -5310,7 +6467,7 @@ def api_compact_shell_tables_status_v121(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Kompaktní uživatelský shell bez velké petrolejové hero hlavičky + bezpečný fulltext v tabulkách.",
         "tables": tables,
         "errors": errors,
@@ -5320,7 +6477,7 @@ def api_compact_shell_tables_status_v121(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Admin Taxonomy + Specialists + Links Safe
+# v1.2.6 Admin Taxonomy + Specialists + Links Safe
 # -------------------------------------------------------------------
 
 def normalize_label_v122_(value: str) -> str:
@@ -5423,7 +6580,7 @@ def api_admin_taxonomy_health_v122(db: Session = Depends(get_db)):
     visible = dedupe_taxonomy_sections_v122_(sections)
     return {
         "ok": True,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "sections_total": len(sections),
         "sections_visible_after_dedupe": len(visible),
         "subsections_total": len(subsections),
@@ -5547,13 +6704,13 @@ def admin_specialist_create_from_user_v122(
 @router.get("/api/admin/links-health")
 def api_admin_links_health_v122(db: Session = Depends(get_db)):
     if not table_exists_v084_(db, "partner_links"):
-        return {"ok": True, "version": "1.3.0-professional-sections-safe", "astorie": 0, "partners": 0}
+        return {"ok": True, "version": "1.2.6-main-route-bridge-safe", "astorie": 0, "partners": 0}
     rows = fetch_all_safe_v084_(db, "SELECT * FROM partner_links LIMIT 2000")
     astorie = [r for r in rows if classify_link_scope_v122_(r) == "astorie"]
     partner = [r for r in rows if classify_link_scope_v122_(r) == "partner"]
     return {
         "ok": True,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "astorie": len(astorie),
         "partners": len(partner),
         "note": "ASTORIE odkazy jsou partner_code prázdné/AST/ASTORIE nebo kategorie obsahuje Astorie/interní.",
@@ -5581,7 +6738,7 @@ def api_release_122_status(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": not errors,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Opravy: deduplikace sekcí pro TIPy, editace sekcí/podsekcí, specialista ze seznamu uživatelů, rozdělení odkazů ASTORIE/partneři.",
         "tables": tables,
         "errors": errors,
@@ -5590,7 +6747,7 @@ def api_release_122_status(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 Contacts + Calculators + Rates Safe
+# v1.2.6 Contacts + Calculators + Rates Safe
 # -------------------------------------------------------------------
 
 
@@ -5710,7 +6867,7 @@ def api_release_124_status(db: Session = Depends(get_db)):
     return {
         "ok": not errors and not operational_issues,
         "technical_ok": not errors,
-        "version":"1.3.0-professional-sections-safe",
+        "version":"1.2.6-main-route-bridge-safe",
         "message":"Oprava zdrojů pro Kontakty ASTORIE a přesnější provozní kontrola.",
         "global_contacts_source":source,
         "global_contacts_count":len(contacts),
@@ -5726,7 +6883,7 @@ def api_release_124_status(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.3.0 HUB Route Aliases Safe
+# v1.2.6 HUB Route Aliases Safe
 # -------------------------------------------------------------------
 # Důvod: menu používá nové URL (/hub/calculators apod.), ale OpenAPI ukázalo,
 # že v aplikaci zůstaly jen staré route -old-v083. Tato oprava přidává
@@ -5839,7 +6996,7 @@ def api_release_125_status(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": not errors,
-        "version": "1.3.0-professional-sections-safe",
+        "version": "1.2.6-main-route-bridge-safe",
         "message": "Bezpečná oprava chybějících HUB route aliasů. DB ani Partneři se nemění.",
         "routes_fixed": routes_fixed,
         "tables": tables,
@@ -5847,95 +7004,69 @@ def api_release_125_status(db: Session = Depends(get_db)):
     }
 
 @router.get("/hub/calculators", response_class=HTMLResponse)
-def hub_calculators_v130(request: Request, q: str = "", db: Session = Depends(get_db)):
-    calculators = hub_links_v130_(db, q=q, only_calculators=True)
-    rates, rate_source = hub_rates_v130_(db)
+def hub_calculators_v125(request: Request, q: str = "", db: Session = Depends(get_db)):
+    qn = (q or "").strip().lower()
+    calculators = fetch_hub_links_by_kind_v125_(db, ["kalkula", "calculator", "výpočet", "vypocet", "web"], limit=2000)
+    if qn:
+        calculators = [r for r in calculators if qn in " ".join(str(v or "") for v in r.values()).lower()]
+    rate_rows, rate_source = fetch_rate_rows_v125_(db)
     return render(request, "hub_calculators.html", {
         "active": "calculators",
         "q": q,
         "calculators": calculators,
         "links": calculators,
-        "commission_rates": rates,
-        "rates": rates,
-        "rate_rows": rates,
-        "rate_source": rate_source
+        "commission_rates": rate_rows,
+        "rates": rate_rows,
+        "rate_rows": rate_rows,
+        "rate_source": rate_source,
     })
-
-
-@router.get("/api/release-1-3-0/router-status")
-def api_release_130_router_status(db: Session = Depends(get_db)):
-    tables = {}
-    for t in ["hub_sections","hub_subsections","specialists","partner_links","partner_contacts","commission_rates","partners"]:
-        try:
-            exists = table_exists_v084_(db, t)
-            count = int(db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar() or 0) if exists else 0
-            db.commit()
-            tables[t] = {"exists": bool(exists), "count": count}
-        except Exception as exc:
-            try: db.rollback()
-            except Exception: pass
-            tables[t] = {"exists": False, "count": 0, "error": str(exc)}
-    return {
-        "ok": True,
-        "version": "1.3.0-professional-sections-safe",
-        "message": "Router sekce jsou napojené na skutečné stránky, nikoli na nouzové redirecty.",
-        "tables": tables
-    }
-
-
-@router.get("/hub/new-tip", response_class=HTMLResponse)
-def hub_new_tip_v130(request: Request, db: Session = Depends(get_db)):
-    return render(request, "hub_new_tip.html", {
-        "active": "new-tip",
-        "sections": hub_sections_v130_(db),
-        "subsections": hub_subsections_v130_(db),
-        "specialists": hub_specialists_v130_(db)
-    })
-
-
 
 @router.get("/hub/help", response_class=HTMLResponse)
-def hub_help_v130(request: Request, q: str = "", db: Session = Depends(get_db)):
-    links = hub_links_v130_(db, q=q, only_calculators=False)
-    astorie_links = []
-    partner_links = []
-    for l in links:
-        pc = hub_norm_v130_(l.get("partner_code") or l.get("partner")).upper()
-        if pc in ("", "AST", "ASTORIE", "ASTORIEAS"):
-            astorie_links.append(l)
-        else:
-            partner_links.append(l)
-    return render(request, "hub_help.html", {
-        "active": "help",
-        "q": q,
-        "links": links,
-        "astorie_links": astorie_links,
-        "partner_links": partner_links
-    })
-
-
+def hub_help_v125(request: Request, q: str = "", db: Session = Depends(get_db)):
+    qn = (q or "").strip().lower()
+    links = fetch_hub_links_by_kind_v125_(db, [], limit=2000)
+    # primárně interní odkazy ASTORIE, ale zobrazí se i partnerské ve druhém bloku šablony
+    if qn:
+        links = [r for r in links if qn in " ".join(str(v or "") for v in r.values()).lower()]
+    return render(request, "hub_help.html", {"active": "help", "q": q, "links": links})
 
 @router.get("/hub/forms", response_class=HTMLResponse)
-def hub_forms_v130(request: Request, q: str = "", db: Session = Depends(get_db)):
-    partners = hub_partners_v130_(db)
-    return render(request, "hub_forms.html", {
-        "active": "forms",
-        "q": q,
-        "partners": partners
-    })
-
-
+def hub_forms_v125(request: Request, q: str = "", db: Session = Depends(get_db)):
+    partners = []
+    try:
+        if table_exists_v084_(db, "partners"):
+            partners = fetch_all_safe_v084_(db, """
+                SELECT *
+                FROM partners
+                ORDER BY partner_name
+                LIMIT 1000
+            """)
+    except Exception:
+        try: db.rollback()
+        except Exception: pass
+    return render(request, "hub_forms.html", {"active": "forms", "q": q, "partners": partners})
 
 @router.get("/hub/stats", response_class=HTMLResponse)
-def hub_stats_v130(request: Request, db: Session = Depends(get_db)):
+def hub_stats_v125(request: Request, db: Session = Depends(get_db)):
     stats = {}
-    for key, table in [("tips","tips"),("partners","partners"),("links","partner_links"),("rates","commission_rates"),("sections","hub_sections"),("subsections","hub_subsections"),("specialists","specialists")]:
+    for name, table in [("tips", "tips"), ("partners", "partners"), ("links", "partner_links"), ("rates", "commission_rates")]:
         try:
-            stats[key] = int(db.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar() or 0) if table_exists_v084_(db, table) else 0
+            stats[name] = int(db.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar() or 0) if table_exists_v084_(db, table) else 0
             db.commit()
         except Exception:
             try: db.rollback()
             except Exception: pass
-            stats[key] = 0
+            stats[name] = 0
     return render(request, "hub_stats.html", {"active": "stats", "stats": stats})
 
+@router.get("/hub/new-tip", response_class=HTMLResponse)
+def hub_new_tip_v125(request: Request, db: Session = Depends(get_db)):
+    sections = fetch_hub_visible_sections_v125_(db)
+    subsections = fetch_hub_visible_subsections_v125_(db)
+    specialists = fetch_hub_specialists_v125_(db)
+    return render(request, "hub_new_tip.html", {
+        "active": "new-tip",
+        "sections": sections,
+        "subsections": subsections,
+        "specialists": specialists,
+    })
