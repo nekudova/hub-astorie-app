@@ -1,145 +1,274 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
-<div class="hub-card">
-  <h1>Nový TIP</h1>
-  <p class="page-subtitle">Sekce, podsekce a specialisté jsou načtené z administrace.</p>
+<style id="new-tip-v135-premium-safe">
+  .tip-v135{display:grid;gap:18px;color:#102A33}
+  .tip-v135 *{box-sizing:border-box}
+  .tip-head-v135{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;background:#fff;border:1px solid #DCE9ED;border-radius:24px;padding:22px 24px;box-shadow:0 12px 34px rgba(0,61,76,.06)}
+  .tip-head-v135 h1{margin:0;color:#003D4C;font-size:34px;line-height:1.1;letter-spacing:-.03em}
+  .tip-head-v135 p{margin:8px 0 0;color:#5F7680;font-size:15px}.tip-head-actions-v135{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.tip-mini-btn-v135{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#003D4C;background:#fff;border:1px solid #DCE9ED;border-radius:14px;padding:11px 14px;font-weight:900;box-shadow:0 8px 18px rgba(0,61,76,.04)}
+  .tip-progress-v135{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;background:#fff;border:1px solid #DCE9ED;border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(0,61,76,.045)}
+  .tip-step-v135{display:flex;align-items:center;gap:12px;min-width:0}.tip-step-no-v135{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid #CFE0E5;color:#003D4C;font-weight:900;background:#fff}.tip-step-v135.active .tip-step-no-v135{background:#FC4C02;color:#fff;border-color:#FC4C02;box-shadow:0 8px 18px rgba(252,76,2,.22)}.tip-step-v135.done .tip-step-no-v135{background:#003D4C;color:#fff;border-color:#003D4C}.tip-step-v135 strong{display:block;color:#003D4C;font-size:14px}.tip-step-v135 span{display:block;color:#5F7680;font-size:12px;margin-top:2px}.tip-step-line-v135{height:1px;background:#DCE9ED;align-self:center;margin:0 4px;display:none}
+  .tip-workspace-v135{display:grid;grid-template-columns:minmax(310px,.92fr) minmax(360px,1.12fr) minmax(360px,1.12fr);gap:18px;align-items:start}.tip-panel-v135{background:#fff;border:1px solid #DCE9ED;border-radius:24px;padding:20px;box-shadow:0 14px 38px rgba(0,61,76,.055);min-height:420px}.tip-panel-v135 h2{margin:0;color:#003D4C;font-size:24px;letter-spacing:-.025em}.tip-panel-v135 .hint{margin:7px 0 18px;color:#5F7680;line-height:1.35}.tip-panel-title-v135{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.tip-count-v135{background:#EEF7F8;color:#003D4C;border-radius:999px;padding:5px 9px;font-weight:900;font-size:12px;white-space:nowrap}
+  .tip-section-grid-v135{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tip-section-btn-v135{border:1px solid #DCE9ED;background:#fff;border-radius:18px;padding:14px 12px;min-height:104px;cursor:pointer;text-align:left;display:grid;align-content:center;justify-items:center;gap:6px;box-shadow:0 10px 24px rgba(0,61,76,.04);transition:.16s ease}.tip-section-btn-v135:hover{transform:translateY(-1px);border-color:#BFD5DC;box-shadow:0 14px 28px rgba(0,61,76,.07)}.tip-section-btn-v135.selected{border-color:#FC4C02;background:linear-gradient(180deg,#FFF8F4,#fff);box-shadow:0 16px 34px rgba(252,76,2,.12)}.tip-icon-v135{width:42px;height:42px;border-radius:14px;background:#EEF7F8;display:grid;place-items:center;font-size:24px}.tip-section-btn-v135 strong{display:block;color:#003D4C;text-align:center;font-size:18px;line-height:1.05}.tip-section-btn-v135 small{display:block;color:#496473;font-weight:900;text-transform:uppercase;font-size:12px}.tip-section-btn-v135.selected small{color:#FC4C02}
+  .tip-list-v135{display:grid;gap:10px}.tip-sub-btn-v135{width:100%;border:1px solid #DCE9ED;background:#fff;border-radius:17px;padding:14px;display:grid;grid-template-columns:42px 1fr 28px;gap:12px;align-items:center;text-align:left;cursor:pointer;box-shadow:0 9px 20px rgba(0,61,76,.035);transition:.16s ease}.tip-sub-btn-v135:hover{border-color:#BFD5DC;transform:translateY(-1px)}.tip-sub-btn-v135.selected{border-color:#FC4C02;background:#FFF8F4;box-shadow:0 14px 28px rgba(252,76,2,.10)}.tip-sub-icon-v135{width:42px;height:42px;border-radius:14px;background:#EEF7F8;display:grid;place-items:center;font-size:20px}.tip-sub-btn-v135 strong{display:block;color:#003D4C;font-size:16px}.tip-sub-btn-v135 small{color:#5F7680;font-weight:900;text-transform:uppercase}.tip-check-v135{width:26px;height:26px;border-radius:50%;border:1px solid #CFE0E5;display:grid;place-items:center;color:transparent;font-weight:900}.tip-sub-btn-v135.selected .tip-check-v135,.tip-specialist-card-v135.selected .tip-radio-v135{background:#FC4C02;border-color:#FC4C02;color:#fff}
+  .tip-empty-v135{border:1px dashed #CFE0E5;background:#FAFDFD;border-radius:18px;padding:20px;color:#5F7680;font-weight:800;line-height:1.45}.tip-help-v135{margin-top:14px;border:1px solid #DCE9ED;border-radius:16px;padding:12px 13px;background:#F7FBFC;color:#496473;font-size:13px}.tip-help-v135 strong{color:#003D4C}
+  .tip-specialist-card-v135{width:100%;border:1px solid #DCE9ED;background:#fff;border-radius:20px;padding:15px;display:grid;grid-template-columns:58px 1fr 28px;gap:13px;text-align:left;align-items:center;cursor:pointer;box-shadow:0 10px 24px rgba(0,61,76,.04);position:relative;overflow:hidden}.tip-specialist-card-v135:hover{border-color:#BFD5DC;transform:translateY(-1px)}.tip-specialist-card-v135.selected{border-color:#FC4C02;background:linear-gradient(90deg,#FFF8F4,#fff);box-shadow:0 16px 32px rgba(252,76,2,.10)}.tip-specialist-avatar-v135{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#EEF7F8,#fff);border:1px solid #DCE9ED;display:grid;place-items:center;color:#003D4C;font-weight:1000;font-size:16px}.tip-specialist-main-v135 strong{display:block;color:#003D4C;font-size:18px}.tip-specialist-main-v135 span,.tip-specialist-main-v135 small{display:block;color:#5F7680;margin-top:3px}.tip-specialist-main-v135 em{display:inline-flex;margin-top:8px;border:1px solid #DCE9ED;border-radius:999px;padding:4px 8px;color:#003D4C;font-style:normal;font-weight:900;font-size:12px;background:#fff}.tip-radio-v135{width:24px;height:24px;border-radius:50%;border:1px solid #CFE0E5;display:grid;place-items:center;color:transparent;font-weight:900}.tip-badge-v135{position:absolute;right:0;top:0;background:#DFFBE9;color:#137D38;padding:5px 11px;border-radius:0 0 0 12px;font-size:11px;font-weight:1000;text-transform:uppercase}.tip-more-v135{width:100%;border:1px solid #DCE9ED;background:#fff;border-radius:15px;padding:11px;color:#003D4C;font-weight:900;cursor:pointer}.tip-specialist-extra-v135{display:none}.tip-specialist-extra-v135.open{display:grid;gap:10px}
+  .tip-choice-bar-v135{position:sticky;bottom:14px;z-index:20;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border:1px solid #DCE9ED;border-radius:22px;padding:14px 18px;box-shadow:0 18px 45px rgba(0,61,76,.14)}.tip-choice-bar-v135 h3{margin:0;color:#003D4C}.tip-crumbs-v135{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.tip-crumb-v135{display:inline-flex;align-items:center;gap:8px;border:1px solid #DCE9ED;background:#fff;border-radius:14px;padding:9px 11px;color:#003D4C;font-weight:900}.tip-crumb-v135.muted{color:#81939B;background:#F7FBFC}.tip-arrow-v135{color:#81939B}.tip-continue-v135{border:0;background:#FC4C02;color:#fff;border-radius:16px;padding:15px 24px;font-weight:1000;cursor:pointer;box-shadow:0 16px 28px rgba(252,76,2,.22);white-space:nowrap}.tip-continue-v135:disabled{background:#C8D5DA;box-shadow:none;cursor:not-allowed}
+  .tip-form-panel-v135{background:#fff;border:1px solid #DCE9ED;border-radius:24px;padding:22px;box-shadow:0 14px 38px rgba(0,61,76,.055)}.tip-form-panel-v135 h2{margin:0 0 6px;color:#003D4C}.tip-form-grid-v135{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}.tip-field-v135 label{display:block;color:#607681;font-weight:1000;font-size:12px;text-transform:uppercase;margin-bottom:6px}.tip-field-v135 input,.tip-field-v135 textarea{width:100%;border:1px solid #DCE9ED;border-radius:14px;padding:12px 13px;font:inherit;background:#fff}.tip-field-v135 textarea{min-height:110px;resize:vertical}.tip-field-v135.span-3{grid-column:span 3}.tip-submit-row-v135{display:flex;justify-content:flex-end;margin-top:16px}.tip-submit-v135{border:0;background:#FC4C02;color:white;border-radius:16px;padding:15px 22px;font-weight:1000;cursor:pointer;box-shadow:0 16px 28px rgba(252,76,2,.22)}
+  @media(max-width:1250px){.tip-workspace-v135{grid-template-columns:1fr}.tip-panel-v135{min-height:auto}.tip-section-grid-v135{grid-template-columns:repeat(3,minmax(0,1fr))}.tip-choice-bar-v135{grid-template-columns:1fr}.tip-continue-v135{width:100%}}
+  @media(max-width:760px){.tip-head-v135{display:block}.tip-head-actions-v135{margin-top:12px}.tip-progress-v135{grid-template-columns:1fr}.tip-section-grid-v135{grid-template-columns:repeat(2,minmax(0,1fr))}.tip-form-grid-v135{grid-template-columns:1fr}.tip-field-v135.span-3{grid-column:span 1}}
+</style>
 
-  <form method="post" action="/hub/tips/create" class="hub-form">
+<div class="tip-v135">
+  <div class="tip-head-v135">
+    <div>
+      <h1>Nový TIP</h1>
+      <p>Rychlé zadání TIPu pro poradce: vyberte oblast, podsekci a vhodného specialistu. Bez zbytečných rozbalovacích seznamů.</p>
+    </div>
+    <div class="tip-head-actions-v135">
+      <a class="tip-mini-btn-v135" href="/hub/help">❔ Nápověda</a>
+      <a class="tip-mini-btn-v135" href="/api/hub/taxonomy-status" target="_blank">✅ Kontrola dat</a>
+    </div>
+  </div>
+
+  <form method="post" action="/hub/tips/create" class="hub-form" id="newTipFormV135">
     <input type="hidden" name="section_code" id="section_code">
     <input type="hidden" name="subsection_code" id="subsection_code_hidden">
     <input type="hidden" name="specialist_email" id="specialist_email">
     <input type="hidden" name="specialist_name" id="specialist_name">
 
-    <div class="hub-card inner">
-      <div class="section-head-row">
-        <div>
-          <h2>Vyberte oblast</h2>
-          <p class="page-subtitle">Oblasti odpovídají sekcím nastaveným v administraci.</p>
+    <div class="tip-progress-v135" aria-label="Postup zadání TIPu">
+      <div class="tip-step-v135 active" id="stepSectionV135"><span class="tip-step-no-v135">1</span><div><strong>Oblast</strong><span>Vyberte hlavní oblast</span></div></div>
+      <div class="tip-step-v135" id="stepSubsectionV135"><span class="tip-step-no-v135">2</span><div><strong>Podsekce</strong><span>Zvolte konkrétní typ</span></div></div>
+      <div class="tip-step-v135" id="stepSpecialistV135"><span class="tip-step-no-v135">3</span><div><strong>Specialista</strong><span>Vyberte příjemce TIPu</span></div></div>
+    </div>
+
+    <div class="tip-workspace-v135">
+      <section class="tip-panel-v135">
+        <div class="tip-panel-title-v135">
+          <div><h2>1. Vyberte oblast</h2><p class="hint">Klikněte na oblast, která nejlépe vystihuje TIP.</p></div>
+          <span class="tip-count-v135" id="sectionCountV135">{{ sections|length }} oblastí</span>
         </div>
-        <a class="mini-link" href="/api/hub/taxonomy-status" target="_blank">kontrola dat</a>
-      </div>
+        <div class="tip-section-grid-v135" id="sectionGridV135">
+          {% for s in sections %}
+            <button type="button" class="tip-section-btn-v135" data-section="{{ s.section_code }}" data-name="{{ s.section_name }}" onclick="selectSectionTile(this)">
+              <span class="tip-icon-v135">{{ s.icon or '•' }}</span>
+              <strong>{{ s.section_name }}</strong>
+              <small>{{ s.section_code }}</small>
+            </button>
+          {% else %}
+            <div class="tip-empty-v135">V administraci zatím nejsou aktivní sekce.</div>
+          {% endfor %}
+        </div>
+        <div class="tip-help-v135"><strong>Nevíte si rady?</strong><br>Vyberte nejbližší oblast. Specialistu lze zvolit podle působnosti a zaměření.</div>
+      </section>
 
-      <div class="section-tile-grid">
-        {% for s in sections %}
-          <button type="button" class="section-tile" data-section="{{ s.section_code }}" onclick="selectSectionTile(this)">
-            <span>{{ s.icon or '•' }}</span>
-            <strong>{{ s.section_name }}</strong>
-            <small>{{ s.section_code }}</small>
-          </button>
-        {% else %}
-          <div class="empty-state">V administraci zatím nejsou aktivní sekce.</div>
-        {% endfor %}
-      </div>
-
-      <div class="subsection-area">
-        <h3>Podsekce</h3>
-        <div class="subsection-chip-grid" id="subsection_chip_grid">
+      <section class="tip-panel-v135">
+        <div class="tip-panel-title-v135">
+          <div><h2>2. Vyberte podsekci</h2><p class="hint" id="subsectionHintV135">Podsekce se zobrazí po výběru oblasti.</p></div>
+          <span class="tip-count-v135" id="subsectionCountV135">0</span>
+        </div>
+        <div class="tip-list-v135" id="subsection_chip_grid">
           {% for ss in subsections %}
-            <button type="button" class="subsection-chip" data-section="{{ ss.section_code }}" data-subsection="{{ ss.subsection_code }}" onclick="selectSubsectionChip(this)" style="display:none;">
-              {{ ss.subsection_name }}
+            <button type="button" class="tip-sub-btn-v135 subsection-chip" data-section="{{ ss.section_code }}" data-subsection="{{ ss.subsection_code }}" data-name="{{ ss.subsection_name }}" onclick="selectSubsectionChip(this)" style="display:none;">
+              <span class="tip-sub-icon-v135">{{ ss.icon or '▫️' }}</span>
+              <span><strong>{{ ss.subsection_name }}</strong><small>{{ ss.subsection_code }}</small></span>
+              <span class="tip-check-v135">✓</span>
             </button>
           {% endfor %}
         </div>
-        <div class="empty-subsection-note" id="empty_subsection_note">Nejprve vyberte oblast.</div>
-      </div>
+        <div class="tip-empty-v135" id="empty_subsection_note">Nejprve vyberte oblast.</div>
+      </section>
+
+      <section class="tip-panel-v135">
+        <div class="tip-panel-title-v135">
+          <div><h2>3. Vyberte specialistu</h2><p class="hint">Zobrazují se aktivní specialisté pro vybranou oblast a podsekci.</p></div>
+          <span class="tip-count-v135" id="specialistCountV135">0</span>
+        </div>
+        <div class="tip-list-v135" id="specialist_grid">
+          {% for s in specialists %}
+            <button type="button" class="tip-specialist-card-v135 specialist-card"
+                    data-section="{{ s.section_code or '' }}"
+                    data-subsection="{{ s.subsection_code or '' }}"
+                    data-email="{{ s.email or '' }}"
+                    data-name="{{ s.specialist_name or '' }}"
+                    data-role="{{ s.role_description or 'Specialista' }}"
+                    onclick="selectSpecialist(this)" style="display:none;">
+              <span class="tip-badge-v135">Přijímá TIPy</span>
+              <span class="tip-specialist-avatar-v135">{{ (s.specialist_name or 'S')[:2] }}</span>
+              <span class="tip-specialist-main-v135">
+                <strong>{{ s.specialist_name }}</strong>
+                <span>{{ s.role_description or 'Specialista' }}</span>
+                <small>Působnost: {{ s.region or 'ČR' }}</small>
+                <small>{{ s.email }}{% if s.phone %} · {{ s.phone }}{% endif %}</small>
+                <em>IF/PS: {{ s.if_share or '—' }} / {{ s.ps_share or '—' }}</em>
+              </span>
+              <span class="tip-radio-v135">✓</span>
+            </button>
+          {% else %}
+            <div class="tip-empty-v135">Zatím nejsou založení dostupní specialisté.</div>
+          {% endfor %}
+        </div>
+        <div class="tip-empty-v135" id="empty_specialist_note">Vyberte oblast, aby se zobrazili specialisté.</div>
+      </section>
     </div>
 
-    <div class="hub-card inner">
-      <h2>Specialista</h2>
-      <p class="page-subtitle">Zobrazí se jen aktivní a dostupní specialisté pro vybranou oblast.</p>
-
-      <div class="specialist-grid" id="specialist_grid">
-        {% for s in specialists %}
-          <button type="button" class="specialist-card"
-                  data-section="{{ s.section_code or '' }}"
-                  data-subsection="{{ s.subsection_code or '' }}"
-                  data-email="{{ s.email or '' }}"
-                  data-name="{{ s.specialist_name or '' }}"
-                  onclick="selectSpecialist(this)" style="display:none;">
-            <strong>{{ s.specialist_name }}</strong>
-            <span>{{ s.role_description or 'Specialista' }}</span>
-            <span>{{ s.section_name or s.section_code }}{% if s.subsection_name %} / {{ s.subsection_name }}{% endif %}</span>
-            <span>{{ s.region or 'ČR' }}</span>
-            <span>{{ s.email }}</span>
-            <em>IF/PS: {{ s.if_share or '—' }} / {{ s.ps_share or '—' }}</em>
-          </button>
-        {% else %}
-          <div class="empty-state">Zatím nejsou založení dostupní specialisté.</div>
-        {% endfor %}
+    <div class="tip-choice-bar-v135">
+      <h3>Váš výběr</h3>
+      <div class="tip-crumbs-v135">
+        <span class="tip-crumb-v135 muted" id="crumbSectionV135">Oblast nevybrána</span>
+        <span class="tip-arrow-v135">›</span>
+        <span class="tip-crumb-v135 muted" id="crumbSubsectionV135">Podsekce nevybrána</span>
+        <span class="tip-arrow-v135">›</span>
+        <span class="tip-crumb-v135 muted" id="crumbSpecialistV135">Specialista nevybrán</span>
       </div>
-      <div class="empty-subsection-note" id="empty_specialist_note">Vyberte oblast, aby se zobrazili specialisté.</div>
+      <button type="button" class="tip-continue-v135" id="continueTipV135" onclick="scrollToTipFormV135()" disabled>Zadat TIP →</button>
     </div>
 
-    <div class="hub-card inner orange-border">
-      <h2>Formulář TIPu</h2>
-      <div class="hub-grid three">
-        <div><label>Poradce</label><input value="{{ user.name }}" readonly></div>
-        <div><label>E-mail IF</label><input value="{{ user.email }}" readonly></div>
-        <div><label>Telefon IF</label><input value="{{ user.phone }}" readonly></div>
+    <section class="tip-form-panel-v135" id="tipFormPanelV135">
+      <h2>Zadat TIP</h2>
+      <p class="hint">Po výběru oblasti, podsekce a specialisty doplňte klienta a stručný popis případu.</p>
+
+      <div class="tip-form-grid-v135">
+        <div class="tip-field-v135"><label>Poradce</label><input value="{{ user.name }}" readonly></div>
+        <div class="tip-field-v135"><label>E-mail IF</label><input value="{{ user.email }}" readonly></div>
+        <div class="tip-field-v135"><label>Telefon IF</label><input value="{{ user.phone }}" readonly></div>
       </div>
 
-      <div class="hub-grid three">
-        <div><label>Klient</label><input name="client_name" placeholder="jméno / název klienta" required></div>
-        <div><label>Kontakt na klienta</label><input name="client_phone" placeholder="telefon, e-mail"></div>
-        <div><label>RČ / IČO / datum nar.</label><input name="client_identifier" placeholder="identifikace"></div>
+      <div class="tip-form-grid-v135">
+        <div class="tip-field-v135"><label>Klient</label><input name="client_name" placeholder="jméno / název klienta" required></div>
+        <div class="tip-field-v135"><label>Kontakt na klienta</label><input name="client_phone" placeholder="telefon, e-mail"></div>
+        <div class="tip-field-v135"><label>RČ / IČO / datum nar.</label><input name="client_identifier" placeholder="identifikace"></div>
+        <div class="tip-field-v135"><label>Odhad potenciálu / objemu</label><input name="potential_amount" placeholder="např. 25 000 Kč / rok"></div>
+        <div class="tip-field-v135"><label>Smlouva č.</label><input name="policy_no"></div>
+        <div class="tip-field-v135 span-3"><label>Popis případu</label><textarea name="adviser_note" placeholder="Stručně popište situaci klienta, co řešíte a co očekáváte od specialisty."></textarea></div>
       </div>
 
-      <div><label>Odhad potenciálu / objemu</label><input name="potential_amount" placeholder="např. 25 000 Kč / rok"></div>
-      <div><label>Smlouva č.</label><input name="policy_no"></div>
-      <div><label>Popis případu</label><textarea name="adviser_note" placeholder="Stručně popište situaci klienta, co řešíte a co očekáváte od specialisty."></textarea></div>
-
-      <div class="form-actions"><button class="btn orange" type="submit">Odeslat TIP</button></div>
-    </div>
+      <div class="tip-submit-row-v135"><button class="tip-submit-v135" type="submit">Odeslat TIP</button></div>
+    </section>
   </form>
 </div>
 
 <script>
-function selectSectionTile(btn){
-  document.querySelectorAll(".section-tile").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
-  const section = btn.dataset.section || "";
-  document.getElementById("section_code").value = section;
-  document.getElementById("subsection_code_hidden").value = "";
-  document.getElementById("specialist_email").value = "";
-  document.getElementById("specialist_name").value = "";
-  let anySub = false;
-  document.querySelectorAll(".subsection-chip").forEach(chip => {
-    const visible = chip.dataset.section === section;
-    chip.style.display = visible ? "" : "none";
-    chip.classList.remove("selected");
-    if(visible) anySub = true;
+(function initNewTipV135(){
+  const seenSections = new Set();
+  document.querySelectorAll('.tip-section-btn-v135').forEach(btn => {
+    const key = (btn.dataset.section || '').trim().toLowerCase();
+    if(key && seenSections.has(key)){ btn.remove(); return; }
+    if(key) seenSections.add(key);
   });
-  document.getElementById("empty_subsection_note").style.display = anySub ? "none" : "";
-  filterHubSpecialists();
+  const seenSubs = new Set();
+  document.querySelectorAll('.subsection-chip').forEach(btn => {
+    const key = ((btn.dataset.section || '') + '|' + (btn.dataset.subsection || '')).trim().toLowerCase();
+    if(key && seenSubs.has(key)){ btn.remove(); return; }
+    if(key) seenSubs.add(key);
+  });
+  const count = document.querySelectorAll('.tip-section-btn-v135').length;
+  const el = document.getElementById('sectionCountV135');
+  if(el) el.textContent = count + (count === 1 ? ' oblast' : count < 5 ? ' oblasti' : ' oblastí');
+  updateTipSummaryV135();
+})();
+
+function setStepStateV135(){
+  const section = !!document.getElementById('section_code').value;
+  const subsection = !!document.getElementById('subsection_code_hidden').value;
+  const specialist = !!document.getElementById('specialist_email').value;
+  const s1 = document.getElementById('stepSectionV135');
+  const s2 = document.getElementById('stepSubsectionV135');
+  const s3 = document.getElementById('stepSpecialistV135');
+  [s1,s2,s3].forEach(x => x && x.classList.remove('active','done'));
+  if(section){ s1.classList.add('done'); } else { s1.classList.add('active'); }
+  if(section && !subsection){ s2.classList.add('active'); }
+  if(subsection){ s2.classList.add('done'); }
+  if(subsection && !specialist){ s3.classList.add('active'); }
+  if(specialist){ s3.classList.add('done'); }
 }
+
+function updateTipSummaryV135(){
+  const selectedSection = document.querySelector('.tip-section-btn-v135.selected');
+  const selectedSub = document.querySelector('.subsection-chip.selected');
+  const selectedSpec = document.querySelector('.specialist-card.selected');
+  const setCrumb = (id, text, ok) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.textContent = text;
+    el.classList.toggle('muted', !ok);
+  };
+  setCrumb('crumbSectionV135', selectedSection ? selectedSection.dataset.name : 'Oblast nevybrána', !!selectedSection);
+  setCrumb('crumbSubsectionV135', selectedSub ? selectedSub.dataset.name : 'Podsekce nevybrána', !!selectedSub);
+  setCrumb('crumbSpecialistV135', selectedSpec ? selectedSpec.dataset.name : 'Specialista nevybrán', !!selectedSpec);
+  const canContinue = !!selectedSection && !!selectedSub;
+  const cont = document.getElementById('continueTipV135');
+  if(cont) cont.disabled = !canContinue;
+  setStepStateV135();
+}
+
+function selectSectionTile(btn){
+  document.querySelectorAll('.tip-section-btn-v135').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const section = btn.dataset.section || '';
+  const sectionName = btn.dataset.name || section;
+  document.getElementById('section_code').value = section;
+  document.getElementById('subsection_code_hidden').value = '';
+  document.getElementById('specialist_email').value = '';
+  document.getElementById('specialist_name').value = '';
+
+  let anySub = false;
+  let countSub = 0;
+  document.querySelectorAll('.subsection-chip').forEach(chip => {
+    const visible = chip.dataset.section === section;
+    chip.style.display = visible ? '' : 'none';
+    chip.classList.remove('selected');
+    if(visible){ anySub = true; countSub++; }
+  });
+  document.getElementById('empty_subsection_note').style.display = anySub ? 'none' : '';
+  const subHint = document.getElementById('subsectionHintV135');
+  if(subHint) subHint.textContent = anySub ? 'Zobrazují se podsekce pro oblast ' + sectionName + '.' : 'Pro vybranou oblast zatím nejsou aktivní podsekce.';
+  const subCount = document.getElementById('subsectionCountV135');
+  if(subCount) subCount.textContent = String(countSub);
+  filterHubSpecialists();
+  updateTipSummaryV135();
+}
+
 function selectSubsectionChip(btn){
-  document.querySelectorAll(".subsection-chip").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
-  document.getElementById("subsection_code_hidden").value = btn.dataset.subsection || "";
-  document.getElementById("specialist_email").value = "";
-  document.getElementById("specialist_name").value = "";
+  document.querySelectorAll('.subsection-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('subsection_code_hidden').value = btn.dataset.subsection || '';
+  document.getElementById('specialist_email').value = '';
+  document.getElementById('specialist_name').value = '';
   filterHubSpecialists();
+  updateTipSummaryV135();
 }
+
 function filterHubSpecialists(){
-  const section = document.getElementById("section_code").value;
-  const subsection = document.getElementById("subsection_code_hidden").value;
+  const section = document.getElementById('section_code').value;
+  const subsection = document.getElementById('subsection_code_hidden').value;
   let any = false;
-  document.querySelectorAll(".specialist-card").forEach(card => {
+  let count = 0;
+  document.querySelectorAll('.specialist-card').forEach(card => {
     const secOk = !section || card.dataset.section === section;
     const subOk = !subsection || !card.dataset.subsection || card.dataset.subsection === subsection;
     const show = secOk && subOk && !!section;
-    card.style.display = show ? "" : "none";
-    card.classList.remove("selected");
-    if(show) any = true;
+    card.style.display = show ? '' : 'none';
+    card.classList.remove('selected');
+    if(show){ any = true; count++; }
   });
-  document.getElementById("empty_specialist_note").style.display = any ? "none" : "";
+  document.getElementById('empty_specialist_note').style.display = any ? 'none' : '';
+  const spCount = document.getElementById('specialistCountV135');
+  if(spCount) spCount.textContent = String(count);
 }
+
 function selectSpecialist(btn){
-  document.querySelectorAll(".specialist-card").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
-  document.getElementById("specialist_email").value = btn.dataset.email || "";
-  document.getElementById("specialist_name").value = btn.dataset.name || "";
+  document.querySelectorAll('.specialist-card').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('specialist_email').value = btn.dataset.email || '';
+  document.getElementById('specialist_name').value = btn.dataset.name || '';
+  updateTipSummaryV135();
+}
+
+function scrollToTipFormV135(){
+  const panel = document.getElementById('tipFormPanelV135');
+  if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
 }
 </script>
 {% endblock %}
