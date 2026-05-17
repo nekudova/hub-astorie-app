@@ -3,18 +3,22 @@
 <div class="page-toolbar">
   <div>
     <h1 class="page-title">Sekce / podsekce</h1>
-    <p class="page-subtitle">Taxonomie HUBu. Sekce a podsekce se používají pro specialisty, routing TIPů a budoucí dlaždice v uživatelském HUBu.</p>
+    <p class="page-subtitle">Správa taxonomie pro TIPy, specialisty a uživatelský HUB. Existující sekce i podsekce lze upravit přímo v tabulce.</p>
   </div>
-  <form method="post" action="/admin/sections/seed-defaults">
-    <button class="btn orange" type="submit">Doplnit výchozí sekce</button>
-  </form>
+  <div class="toolbar-actions">
+    <a class="btn soft" href="/api/admin/taxonomy-health" target="_blank">Kontrola taxonomie</a>
+    <form method="post" action="/admin/sections/seed-defaults">
+      <button class="btn orange" type="submit">Doplnit výchozí sekce</button>
+    </form>
+  </div>
 </div>
 
 <section class="grid cols-2">
   <div class="card">
-    <h2 style="margin-top:0;color:var(--petrol);">Sekce</h2>
+    <h2 style="margin-top:0;color:var(--petrol);">Nová / přepsaná sekce</h2>
+    <p style="color:#637386;font-weight:700;">Pokud zadáte existující kód, sekce se bezpečně aktualizuje.</p>
     <form method="post" action="/admin/sections/create" class="admin-form-grid single">
-      <div><label>Kód sekce</label><input name="section_code" required placeholder="např. FLOTILY"></div>
+      <div><label>Kód sekce</label><input name="section_code" required placeholder="např. FLO"></div>
       <div><label>Název sekce</label><input name="section_name" required placeholder="např. Flotily"></div>
       <div><label>Ikona / emoji</label><input name="icon" placeholder="např. 🚗"></div>
       <div><label>URL obrázku</label><input name="image_url" placeholder="https://..."></div>
@@ -26,7 +30,8 @@
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0;color:var(--petrol);">Podsekce</h2>
+    <h2 style="margin-top:0;color:var(--petrol);">Nová / přepsaná podsekce</h2>
+    <p style="color:#637386;font-weight:700;">Podsekce se váže na nadřazenou sekci. Existující kód se aktualizuje.</p>
     <form method="post" action="/admin/subsections/create" class="admin-form-grid single">
       <div>
         <label>Nadřazená sekce</label>
@@ -37,7 +42,7 @@
           {% endfor %}
         </select>
       </div>
-      <div><label>Kód podsekce</label><input name="subsection_code" required placeholder="např. FLOTILY_FIREMNI"></div>
+      <div><label>Kód podsekce</label><input name="subsection_code" required placeholder="např. FLO_FIREMNI"></div>
       <div><label>Název podsekce</label><input name="subsection_name" required placeholder="např. Firemní flotily"></div>
       <div><label>Pořadí</label><input type="number" name="sort_order" value="100"></div>
       <div class="checkline"><input type="checkbox" name="is_active" value="1" checked><label style="margin:0;">Aktivní</label></div>
@@ -48,22 +53,27 @@
 </section>
 
 <section class="card table-card section-space">
-  <div class="table-head">Přehled sekcí</div>
+  <div class="table-head"><span>Přehled sekcí</span><span style="font-size:13px;color:#637386;">Zobrazeno: {{ sections|length }}</span></div>
+  <div class="quick-filter"><input id="sections-filter" placeholder="Filtrovat sekce…"></div>
   <div class="table-scroll">
-    <table>
-      <thead><tr><th>Pořadí</th><th>Kód</th><th>Název</th><th>Ikona</th><th>Obrázek</th><th>Stav</th></tr></thead>
+    <table id="sections-table">
+      <thead><tr><th>Pořadí</th><th>Kód</th><th>Název</th><th>Ikona</th><th>Obrázek</th><th>Poznámka</th><th>Stav</th><th>Akce</th></tr></thead>
       <tbody>
         {% for s in sections %}
         <tr>
-          <td>{{ s.sort_order }}</td>
-          <td><strong>{{ s.section_code }}</strong></td>
-          <td>{{ s.section_name }}</td>
-          <td>{{ s.icon }}</td>
-          <td>{% if s.image_url %}<a href="{{ s.image_url }}" target="_blank">Otevřít</a>{% else %}—{% endif %}</td>
-          <td>{% if s.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
+          <form method="post" action="/admin/sections/{{ s.section_code }}/update">
+            <td><input class="table-input small-cell" type="number" name="sort_order" value="{{ s.sort_order }}"></td>
+            <td><strong>{{ s.section_code }}</strong></td>
+            <td><input class="table-input" name="section_name" value="{{ s.section_name }}" required></td>
+            <td><input class="table-input small-cell" name="icon" value="{{ s.icon or '' }}"></td>
+            <td><input class="table-input" name="image_url" value="{{ s.image_url or '' }}"></td>
+            <td><input class="table-input" name="note" value="{{ s.note or '' }}"></td>
+            <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if s.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><button class="btn soft micro" type="submit">Uložit</button></td>
+          </form>
         </tr>
         {% else %}
-        <tr><td colspan="6">Zatím nejsou založené žádné sekce.</td></tr>
+        <tr><td colspan="8">Zatím nejsou založené žádné sekce.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -71,24 +81,44 @@
 </section>
 
 <section class="card table-card section-space">
-  <div class="table-head">Přehled podsekcí</div>
+  <div class="table-head"><span>Přehled podsekcí</span><span style="font-size:13px;color:#637386;">Zobrazeno: {{ subsections|length }}</span></div>
+  <div class="quick-filter"><input id="subsections-filter" placeholder="Filtrovat podsekce…"></div>
   <div class="table-scroll">
-    <table>
-      <thead><tr><th>Sekce</th><th>Kód podsekce</th><th>Název</th><th>Pořadí</th><th>Stav</th></tr></thead>
+    <table id="subsections-table">
+      <thead><tr><th>Sekce</th><th>Kód podsekce</th><th>Název</th><th>Pořadí</th><th>Poznámka</th><th>Stav</th><th>Akce</th></tr></thead>
       <tbody>
-        {% for s in subsections %}
+        {% for ss in subsections %}
         <tr>
-          <td>{{ s.section_name or s.section_code }}</td>
-          <td><strong>{{ s.subsection_code }}</strong></td>
-          <td>{{ s.subsection_name }}</td>
-          <td>{{ s.sort_order }}</td>
-          <td>{% if s.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
+          <form method="post" action="/admin/subsections/{{ ss.subsection_code }}/update">
+            <td>
+              <select class="table-input" name="section_code">
+                {% for sec in sections %}
+                  <option value="{{ sec.section_code }}" {% if ss.section_code == sec.section_code %}selected{% endif %}>{{ sec.section_name }} ({{ sec.section_code }})</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><strong>{{ ss.subsection_code }}</strong></td>
+            <td><input class="table-input" name="subsection_name" value="{{ ss.subsection_name }}" required></td>
+            <td><input class="table-input small-cell" type="number" name="sort_order" value="{{ ss.sort_order }}"></td>
+            <td><input class="table-input" name="note" value="{{ ss.note or '' }}"></td>
+            <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if ss.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><button class="btn soft micro" type="submit">Uložit</button></td>
+          </form>
         </tr>
         {% else %}
-        <tr><td colspan="5">Zatím nejsou založené žádné podsekce.</td></tr>
+        <tr><td colspan="7">Zatím nejsou založené žádné podsekce.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.HubSmart){
+    HubSmart.initTableFilter('#sections-filter','#sections-table');
+    HubSmart.initTableFilter('#subsections-filter','#subsections-table');
+  }
+});
+</script>
 {% endblock %}

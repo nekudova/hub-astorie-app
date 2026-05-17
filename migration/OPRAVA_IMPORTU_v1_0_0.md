@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.2.1 full-import-schema-fix
+# HUB ASTORIE – v1.2.2 full-import-schema-fix
 
 ## Problém
 Import padal proto, že produkční databáze vznikala postupně ve starších verzích.

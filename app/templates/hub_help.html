@@ -1,26 +1,48 @@
-
 {% extends "hub_base.html" %}
 {% block content %}
 <div class="hub-card">
-  <h1>Nápověda</h1>
-  <p class="page-subtitle">První datové napojení nápovědy na odkazy/metodiky z administrace.</p>
+  <h1>Odkazy ASTORIE</h1>
+  <p class="page-subtitle">Rychlý přístup k interním firemním aplikacím, portálům a důležitým odkazům. Partnerské odkazy patří primárně do detailu partnera.</p>
 
   <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat v odkazech, metodikách a nápovědě…">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat odkaz, portál, kategorii…">
     <button class="btn orange">Hledat</button>
   </form>
 
+  <h2>Interní odkazy ASTORIE</h2>
   <div class="portal-grid">
     {% for l in links %}
-      <div class="portal-card">
-        <span class="portal-letter">?</span>
-        <h3>{{ l.title }}</h3>
-        <p>{{ l.category or '' }}</p>
-        <p class="muted">{{ l.note or '' }}</p>
-        <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
-      </div>
+      {% set pc = (l.partner_code or '')|upper %}
+      {% set cat = (l.category or '')|lower %}
+      {% if pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat %}
+        <div class="portal-card">
+          <span class="portal-letter">🔗</span>
+          <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
+          <p>{{ l.category or 'ASTORIE' }}</p>
+          <p class="muted">{{ l.note or '' }}</p>
+          <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít portál</a>
+        </div>
+      {% endif %}
     {% else %}
-      <div class="empty-state">Zatím nejsou vložené žádné odkazy/metodiky pro nápovědu.</div>
+      <div class="empty-state">Zatím nejsou vložené interní odkazy ASTORIE.</div>
+    {% endfor %}
+  </div>
+
+  <h2 style="margin-top:28px;">Partnerské odkazy</h2>
+  <p class="page-subtitle">Tyto odkazy se zobrazují také v detailu partnera.</p>
+  <div class="portal-grid">
+    {% for l in links %}
+      {% set pc = (l.partner_code or '')|upper %}
+      {% set cat = (l.category or '')|lower %}
+      {% if not (pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat) %}
+        <div class="portal-card">
+          <span class="portal-letter">{{ (l.partner_code or 'P')[:1] }}</span>
+          <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
+          <p>{{ l.partner_code }}</p>
+          <p class="muted">{{ l.category or '' }}</p>
+          <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
+        </div>
+      {% endif %}
     {% endfor %}
   </div>
 </div>

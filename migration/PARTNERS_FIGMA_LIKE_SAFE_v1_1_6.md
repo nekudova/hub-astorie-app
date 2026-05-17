@@ -1,10 +1,10 @@
-# HUB ASTORIE APP – v1.2.1 Partners Figma-like Safe
+# HUB ASTORIE APP – v1.2.2 Partners Figma-like Safe
 
 ## Cíl
 Přiblížit uživatelskou sekci Partneři odsouhlasenému vizuálu č. 2.
 
 ## Bezpečnost
-- backend route zůstává postavená na bezpečné v1.2.1,
+- backend route zůstává postavená na bezpečné v1.2.2,
 - import se nemění,
 - databázové workflow se nemění,
 - mění se hlavně template a CSS sekce `/hub/partners`,

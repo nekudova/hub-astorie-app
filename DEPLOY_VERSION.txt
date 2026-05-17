@@ -1,8 +1,9 @@
-HUB ASTORIE APP v1.2.1-compact-shell-tables-safe
+HUB ASTORIE APP v1.2.2-admin-taxonomy-specialists-links-safe
 
-Bezpečný UI patch:
-- skrytí široké pravé hero hlavičky
-- zachování funkčních šablon
-- zachování Partnerů z v1.1.8/v1.2.0
-- fulltext nad dlouhé tabulky, včetně Sazebníku
-- bez zásahu do DB/import/workflow
+Bezpečná opravná verze:
+- deduplikace sekcí v Novém TIPu pouze pro zobrazení
+- editace sekcí a podsekcí v adminu
+- specialista zakládaný výběrem ze seznamu uživatelů
+- rozdělení odkazů na ASTORIE a partnerské
+- kontrolní endpointy
+- bez mazání dat, bez zásahu do importu a partner workspace

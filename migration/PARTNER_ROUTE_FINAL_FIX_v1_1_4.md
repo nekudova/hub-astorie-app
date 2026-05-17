@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.2.1 Partner Route Final Fix
+# HUB ASTORIE APP – v1.2.2 Partner Route Final Fix
 
 ## Co opravuje
 - `/hub/partners` už neskončí na `Interní chyba serveru`.

@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.2.1 import-cleanup-partner-ui
+# HUB ASTORIE – v1.2.2 import-cleanup-partner-ui
 
 ## Co tato verze řeší
 

@@ -3,27 +3,44 @@
 <div class="page-toolbar">
   <div>
     <h1 class="page-title">Specialisté</h1>
-    <p class="page-subtitle">Specialisté se nyní váží na číselník sekcí a podsekcí. Sekce a podsekce už se nepíší ručně.</p>
+    <p class="page-subtitle">Specialistu vybíráte z existujících poradců/uživatelů. Ruční psaní jména a e-mailu už není nutné.</p>
   </div>
-  <button class="btn orange" type="button" onclick="toggleSpecialistForm()">+ Nový specialista</button>
+  <div class="toolbar-actions">
+    <a class="btn soft" href="/api/hub/taxonomy-status" target="_blank">Kontrola TIP routingu</a>
+    <button class="btn orange" type="button" onclick="toggleSpecialistForm()">+ Nový specialista</button>
+  </div>
 </div>
 
 <section id="specialist-form-panel" class="card collapsible-panel" style="display:none;">
   <div class="panel-head">
     <div>
       <h2 style="margin:0;color:var(--petrol);">Nový specialista / odbornost</h2>
-      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Nejprve založte sekci a podsekci v menu Sekce / podsekce.</p>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Vyberte osobu ze seznamu uživatelů, sekci a případně podsekci.</p>
     </div>
     <button class="btn soft" type="button" onclick="toggleSpecialistForm()">Zavřít</button>
   </div>
 
-  <form method="post" action="/admin/specialists/create" class="admin-form-grid">
-    <div><label>ID poradce / specialisty</label><input type="text" name="advisor_id"></div>
-    <div><label>Region</label><input type="text" name="region" placeholder="např. ČR, Morava, Praha"></div>
-    <div><label>Jméno specialisty</label><input type="text" name="specialist_name" required></div>
-    <div><label>E-mail</label><input type="email" name="email"></div>
-    <div><label>Telefon</label><input type="text" name="phone"></div>
-    <div><label>Role / odbornost</label><input type="text" name="role_description" placeholder="např. Hypotéky, flotily, investice"></div>
+  <form method="post" action="/admin/specialists/create-from-user" class="admin-form-grid">
+    <div class="span-2">
+      <label>Osoba ze seznamu uživatelů</label>
+      <select name="advisor_id" id="specialist_user_select" required>
+        <option value="">— vyberte uživatele —</option>
+        {% for u in users %}
+          <option value="{{ u.advisor_id }}" data-name="{{ u.name }}" data-email="{{ u.email }}" data-phone="{{ u.phone or '' }}" data-role="{{ u.role or '' }}">
+            {{ u.name }} · {{ u.email }} · ID {{ u.advisor_id }} · {{ u.role }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label>Náhled jména</label>
+      <input id="preview_name" readonly placeholder="doplní se po výběru">
+    </div>
+    <div>
+      <label>Náhled e-mailu</label>
+      <input id="preview_email" readonly placeholder="doplní se po výběru">
+    </div>
 
     <div>
       <label>Sekce</label>
@@ -38,23 +55,42 @@
     <div>
       <label>Podsekce</label>
       <select name="subsection_code" id="new_subsection">
-        <option value="">— bez podsekce / celá sekce —</option>
+        <option value="">— celá sekce / bez podsekce —</option>
         {% for ss in subsections %}
           <option value="{{ ss.code }}" data-section="{{ ss.section_code }}">{{ ss.name }} ({{ ss.code }})</option>
         {% endfor %}
       </select>
     </div>
 
+    <div><label>Role / odbornost</label><input type="text" name="role_description" placeholder="např. flotily, investice, penze"></div>
+    <div><label>Region</label><input type="text" name="region" placeholder="např. ČR, Morava, Praha"></div>
     <div><label>IF podíl</label><input type="text" name="if_share" placeholder="např. 0.3"></div>
     <div><label>PS podíl</label><input type="text" name="ps_share" placeholder="např. 0.7"></div>
-    <div class="span-2 check-grid">
-      <label><input type="checkbox" name="available" value="1" checked> Dostupný pro TIPy</label>
-      <label><input type="checkbox" name="is_active" value="1" checked> Aktivní</label>
-    </div>
-    <div class="span-2"><label>Důvod nedostupnosti</label><input type="text" name="unavailable_reason"></div>
-    <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
-    <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit specialistu</button></div>
+    <div class="span-2 form-actions"><button class="btn orange" type="submit">Založit specialistu z uživatele</button></div>
   </form>
+
+  <details style="margin-top:18px;">
+    <summary style="font-weight:900;color:var(--petrol);cursor:pointer;">Pokročilé: ruční zadání specialisty</summary>
+    <form method="post" action="/admin/specialists/create" class="admin-form-grid" style="margin-top:14px;">
+      <div><label>ID poradce / specialisty</label><input type="text" name="advisor_id"></div>
+      <div><label>Region</label><input type="text" name="region"></div>
+      <div><label>Jméno specialisty</label><input type="text" name="specialist_name" required></div>
+      <div><label>E-mail</label><input type="email" name="email"></div>
+      <div><label>Telefon</label><input type="text" name="phone"></div>
+      <div><label>Role / odbornost</label><input type="text" name="role_description"></div>
+      <div><label>Sekce</label><select name="section_code" required>{% for s in sections %}<option value="{{ s.code }}">{{ s.name }} ({{ s.code }})</option>{% endfor %}</select></div>
+      <div><label>Podsekce</label><select name="subsection_code"><option value="">—</option>{% for ss in subsections %}<option value="{{ ss.code }}">{{ ss.name }} ({{ ss.code }})</option>{% endfor %}</select></div>
+      <div><label>IF podíl</label><input type="text" name="if_share"></div>
+      <div><label>PS podíl</label><input type="text" name="ps_share"></div>
+      <div class="span-2 check-grid">
+        <label><input type="checkbox" name="available" value="1" checked> Dostupný pro TIPy</label>
+        <label><input type="checkbox" name="is_active" value="1" checked> Aktivní</label>
+      </div>
+      <div class="span-2"><label>Důvod nedostupnosti</label><input type="text" name="unavailable_reason"></div>
+      <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
+      <div class="span-2 form-actions"><button class="btn soft" type="submit">Uložit ručně</button></div>
+    </form>
+  </details>
 </section>
 
 <section class="card section-space">
@@ -111,13 +147,8 @@
               <input class="table-input" name="unavailable_reason" value="{{ s.unavailable_reason or '' }}" placeholder="důvod">
               <input type="hidden" name="note" value="{{ s.note or '' }}">
             </td>
-            <td>
-              <div class="small-actions">
-                <button class="btn soft micro" type="submit">Uložit</button>
+            <td><button class="btn soft micro" type="submit">Uložit</button></td>
           </form>
-                <form method="post" action="/admin/specialists/{{ s.id }}/toggle"><button class="btn soft micro" type="submit">{% if s.is_active %}Vypnout{% else %}Zapnout{% endif %}</button></form>
-              </div>
-            </td>
         </tr>
         {% else %}
         <tr><td colspan="10">Zatím nejsou vložení žádní specialisté.</td></tr>
@@ -143,5 +174,15 @@ function filterSubsections(sectionId, subsectionId){
   });
   sub.value = "";
 }
+document.addEventListener("DOMContentLoaded", function(){
+  const sel = document.getElementById("specialist_user_select");
+  if(sel){
+    sel.addEventListener("change", function(){
+      const opt = sel.options[sel.selectedIndex];
+      document.getElementById("preview_name").value = opt?.dataset?.name || "";
+      document.getElementById("preview_email").value = opt?.dataset?.email || "";
+    });
+  }
+});
 </script>
 {% endblock %}

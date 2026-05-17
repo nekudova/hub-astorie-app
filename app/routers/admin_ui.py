@@ -27,7 +27,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.2.1",
+        "version": "v1.2.2",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1341,11 +1341,13 @@ def specialists_page(
         ORDER BY sort_order, subsection_name
     """)).mappings().all()
 
+    users = get_admin_users_for_specialists_v122_(db)
     return render(request, "specialists.html", {
         "active": "specialists",
         "specialists": rows,
         "sections": sections,
         "subsections": subsections,
+        "users": users,
         "q": q,
         "section": section,
         "available_filter": available,
@@ -1816,7 +1818,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Specialist Profile & Sections Fix
+# v1.2.2 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2015,7 +2017,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Visible Sections Fix
+# v1.2.2 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2085,7 +2087,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2104,7 +2106,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v1.2.1 – bezpečné tabulky pro TIPy.
+    v1.2.2 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2163,18 +2165,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "1.2.1-compact-shell-tables-safe",
+            "version": "1.2.2-admin-taxonomy-specialists-links-safe",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "1.2.1-compact-shell-tables-safe", "error": str(e)}
+        return {"ok": False, "version": "1.2.2-admin-taxonomy-specialists-links-safe", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Adviser HUB routes fix
+# v1.2.2 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2191,7 +2193,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2371,7 +2373,7 @@ def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: st
     partner_history = fetch_partner_history_v111(db, selected) if selected else []
     partner_requests = fetch_partner_requests_v111(db, selected) if selected else []
 
-    # v1.2.1 safe route fix: proměnné pro šablonu musí existovat vždy.
+    # v1.2.2 safe route fix: proměnné pro šablonu musí existovat vždy.
     try:
         dashboard = fetch_partner_dashboard_v111(db, selected) if selected and globals().get("fetch_partner_dashboard_v111") else {}
     except Exception:
@@ -2441,7 +2443,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v1.2.2 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2493,7 +2495,7 @@ def hub_partners_v084(
     db: Session = Depends(get_db),
 ):
     """
-    v1.2.1 – definitivní bezpečná uživatelská sekce Partneři.
+    v1.2.2 – definitivní bezpečná uživatelská sekce Partneři.
     Tato route nesmí spadnout kvůli chybějící proměnné dashboard/partner_history/partner_requests.
     Používá pouze bezpečné SELECT * dotazy a vše ostatní dopočítává v Pythonu.
     """
@@ -2661,13 +2663,13 @@ def hub_partners_v084(
         "selected": selected or "",
         "tab": tab or "contacts",
         "route_error": getattr(request.state, "partner_route_error", ""),
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
     })
 
 
 @router.get("/hub/contacts", response_class=HTMLResponse)
 def hub_contacts_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
-    # v1.2.1: hlavní menu Kontakty zobrazuje pouze globální kontakty ASTORIE.
+    # v1.2.2: hlavní menu Kontakty zobrazuje pouze globální kontakty ASTORIE.
     # Kontakty partnerů zůstávají v detailu partnera na záložce Kontakty.
     ensure_v103_tables(db)
     rows = []
@@ -2838,7 +2840,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "tables": result,
     }
 
@@ -2846,7 +2848,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v1.2.2 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2878,6 +2880,7 @@ def get_hub_taxonomy_v085_(db: Session):
         WHERE COALESCE(is_active, TRUE) = TRUE
         ORDER BY section_code, sort_order, subsection_name
     """)
+    sections = dedupe_taxonomy_sections_v122_(sections)
     return sections, subsections
 
 
@@ -3078,7 +3081,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -3089,14 +3092,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Partner autocomplete & Forms data source
+# v1.2.2 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "1.2.1-compact-shell-tables-safe", "items": []}
+        return {"ok": True, "version": "1.2.2-admin-taxonomy-specialists-links-safe", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3127,7 +3130,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "items": [dict(r) for r in rows],
     }
 
@@ -3136,7 +3139,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "1.2.1-compact-shell-tables-safe", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "1.2.2-admin-taxonomy-specialists-links-safe", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3146,7 +3149,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "1.2.1-compact-shell-tables-safe", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "1.2.2-admin-taxonomy-specialists-links-safe", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3184,7 +3187,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3200,7 +3203,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3260,7 +3263,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Operational TIP Workflow
+# v1.2.2 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3434,7 +3437,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
     })
 
 
@@ -3454,7 +3457,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
     })
 
 
@@ -3681,7 +3684,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
     })
 
 
@@ -3797,7 +3800,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "stats": dict(stats or {}),
     }
 
@@ -3806,7 +3809,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v1.2.2 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3965,7 +3968,7 @@ def hub_tip_unified_specialist_update_v091(
 
 
 # -------------------------------------------------------------------
-# v1.2.1 XLSX importer – import přímo ze staženého Google Sheetu
+# v1.2.2 XLSX importer – import přímo ze staženého Google Sheetu
 # -------------------------------------------------------------------
 
 def xlsx_cell_to_str_v093_(value):
@@ -4061,7 +4064,7 @@ def xlsx_pick_v093_(row, *keys, default=""):
 def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     """
     Bezpečný UPSERT pro XLSX import.
-    v1.2.1: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
+    v1.2.2: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
     nemají vždy serverový DEFAULT pro id a raw SQL nepoužije SQLAlchemy default.
     """
     uuid_tables = {
@@ -4080,7 +4083,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     if table in uuid_tables and "id" not in data:
         data["id"] = str(uuid.uuid4())
 
-    # v1.2.1: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
+    # v1.2.2: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
     # Proto timestampy doplňujeme přímo do importních dat.
     timestamp_tables = {
         "users",
@@ -4103,7 +4106,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
         if "updated_at" not in data:
             data["updated_at"] = datetime.utcnow()
 
-    # v1.2.1: tabulka subsections má v produkci povinný section_id.
+    # v1.2.2: tabulka subsections má v produkci povinný section_id.
     # Excel/import pracuje se section_code, proto ID dohledáme před UPSERTem.
     if table == "subsections" and "section_id" not in data:
         section_code = str(data.get("section_code") or "").strip()
@@ -4276,7 +4279,7 @@ def import_hub_xlsx_data_v093_(db, wb, update_existing=False):
             result["errors"].append(f"Podsekce: {exc}")
 
     # Specialisté
-    # v1.2.1: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
+    # v1.2.2: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
     for row in xlsx_rows_v093_(wb, "Specialisté"):
         result["specialists"]["rows"] += 1
         try:
@@ -4525,7 +4528,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
     })
 
 
@@ -4542,7 +4545,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "1.2.1-compact-shell-tables-safe",
+            "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         })
 
     raw = await file.read()
@@ -4557,7 +4560,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
     })
 
 
@@ -4565,7 +4568,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -4588,7 +4591,7 @@ def api_import_hub_xlsx_expected_sheets_v093():
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import hardening endpoints
+# v1.2.2 import hardening endpoints
 # - chybějící /api/admin/summary
 # - aliasy pro import route
 # - JSON upload endpoint
@@ -4649,7 +4652,7 @@ def api_admin_summary_v094(db: Session = Depends(get_db)):
     ]
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
         "counts": {t: safe_count_table_v094_(db, t) for t in tables},
     }
@@ -4671,14 +4674,14 @@ def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
         """)
         return {
             "ok": True,
-            "version": "1.2.1-compact-shell-tables-safe",
+            "version": "1.2.2-admin-taxonomy-specialists-links-safe",
             "running": False,
             "last_job": dict(last_job) if last_job else None,
         }
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.2.1-compact-shell-tables-safe",
+            "version": "1.2.2-admin-taxonomy-specialists-links-safe",
             "running": False,
             "error": str(exc),
         }
@@ -4701,12 +4704,12 @@ async def api_import_hub_xlsx_upload_v094(
         result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
         result["ok"] = len(result.get("errors", [])) == 0
         result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
-        result["version"] = "1.2.1-compact-shell-tables-safe"
+        result["version"] = "1.2.2-admin-taxonomy-specialists-links-safe"
         return result
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.2.1-compact-shell-tables-safe",
+            "version": "1.2.2-admin-taxonomy-specialists-links-safe",
             "errors": [str(exc)],
         }
 
@@ -4746,7 +4749,7 @@ def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import transaction fix
+# v1.2.2 import transaction fix
 # Oprava: current transaction is aborted před CREATE UNIQUE INDEX
 # -------------------------------------------------------------------
 
@@ -4837,7 +4840,7 @@ ensure_xlsx_import_structures_v093_ = ensure_xlsx_import_structures_v095_
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import index fix
+# v1.2.2 import index fix
 # Definitivní oprava: odstranění inline CREATE UNIQUE INDEX z importní transakce
 # a bezpečné čištění transakce před vlastním importem.
 # -------------------------------------------------------------------
@@ -4990,7 +4993,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
     errors = ensure_xlsx_import_structures_v096_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Importní struktury byly zkontrolovány a opraveny. Původní Google Sheet se nemění.",
         "errors": errors,
     }
@@ -5000,7 +5003,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import user id fix
+# v1.2.2 import user id fix
 # Oprava: users.id nemá serverový default a raw SQL insert bez id padal.
 # -------------------------------------------------------------------
 
@@ -5055,7 +5058,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
     errors = repair_uuid_defaults_v097_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Opraveny UUID defaulty pro users a další hlavní tabulky. Import zároveň posílá id explicitně.",
         "errors": errors,
     }
@@ -5064,7 +5067,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import timestamps fix
+# v1.2.2 import timestamps fix
 # Oprava: users.created_at / users.updated_at NOT NULL při importu poradců
 # -------------------------------------------------------------------
 
@@ -5100,7 +5103,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
     errors = repair_users_timestamps_v098_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Opraveny created_at/updated_at defaulty pro users. Import poradců nyní posílá timestampy explicitně.",
         "errors": errors,
     }
@@ -5108,7 +5111,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import schema canonical fix
+# v1.2.2 import schema canonical fix
 # Profesionální oprava: sjednocení schématu všech importních tabulek před importem.
 # -------------------------------------------------------------------
 
@@ -5352,7 +5355,7 @@ def api_import_repair_all_v099(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Kompletní oprava importního schématu dokončena. Opraveny created_at/updated_at a chybějící importní sloupce.",
         "errors": errors,
     }
@@ -5374,7 +5377,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.2.1 full import schema fix
+# v1.2.2 full import schema fix
 # Jednorázová profesionální oprava importního schématu:
 # doplní přesně ty sloupce, které import reálně používá.
 # -------------------------------------------------------------------
@@ -5714,7 +5717,7 @@ def api_import_repair_database_v100(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Databáze byla sjednocena pro import XLSX. Doplněny sloupce sections/subsections/partners a další importní tabulky.",
         "errors": errors,
     }
@@ -5745,7 +5748,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import relationship fix
+# v1.2.2 import relationship fix
 # Oprava vazeb: subsections.section_id se dopočítá ze sections.section_code.
 # Přidán preflight, který odhalí základní problémy před importem.
 # -------------------------------------------------------------------
@@ -5894,7 +5897,7 @@ def api_import_repair_relationships_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Opraveny vazby pro import. Subsections.section_id se doplňuje podle sections.section_code.",
         "errors": errors,
         "preflight_issues": issues,
@@ -5907,7 +5910,7 @@ def api_import_preflight_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Předimportní kontrola databáze.",
         "errors": errors,
         "issues": issues,
@@ -5931,7 +5934,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.2.1 uuid relationship fix endpoint
+# v1.2.2 uuid relationship fix endpoint
 # -------------------------------------------------------------------
 
 @router.get("/api/import/hub-xlsx/repair-uuid-relationships")
@@ -5982,7 +5985,7 @@ def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
 
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Opravena UUID vazba subsections.section_id bez neplatného porovnání s prázdným řetězcem.",
         "errors": errors,
         "issues": issues,
@@ -5993,7 +5996,7 @@ def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 import cleanup + partner UI completion
+# v1.2.2 import cleanup + partner UI completion
 # Cíl:
 # - odstranit duplicitně nahraná data po opakovaných importech
 # - oddělit Kontakty ASTORIE od kontaktů partnerů
@@ -6328,7 +6331,7 @@ def api_import_cleanup_duplicates_v103(db: Session = Depends(get_db)):
     errors = cleanup_import_duplicates_v103(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Duplicitní záznamy po opakovaném importu byly vyčištěny. Zachován je vždy první záznam.",
         "errors": errors,
     }
@@ -6340,7 +6343,7 @@ def api_import_repair_display_data_v103(db: Session = Depends(get_db)):
     errors.extend(cleanup_import_duplicates_v103(db))
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Doplněny tabulky pro globální kontakty, FAQ partnerů a návrhy změn. Vyčištěny duplicity.",
         "errors": errors,
     }
@@ -6472,9 +6475,9 @@ def hub_contacts_astorie_v103(request: Request, q: str = "", db: Session = Depen
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Partner Workflow Core
+# v1.2.2 Partner Workflow Core
 # -------------------------------------------------------------------
-PARTNER_WORKFLOW_VERSION = "1.2.1-compact-shell-tables-safe"
+PARTNER_WORKFLOW_VERSION = "1.2.2-admin-taxonomy-specialists-links-safe"
 
 
 def v110_exec(db: Session, sql: str, params: dict | None = None):
@@ -6781,12 +6784,12 @@ def admin_partner_request_comment_v110(request_id: str, comment_text: str = Form
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Partner Workflow UX Upgrade
+# v1.2.2 Partner Workflow UX Upgrade
 # Premium partner workspace: dashboard counters, history timeline,
 # request badges, favorite button, compact fulltext and better data cards.
 # -------------------------------------------------------------------
 
-PARTNER_WORKFLOW_UX_VERSION = "1.2.1-compact-shell-tables-safe"
+PARTNER_WORKFLOW_UX_VERSION = "1.2.2-admin-taxonomy-specialists-links-safe"
 
 
 def ensure_partner_ux_v111(db: Session):
@@ -6801,7 +6804,7 @@ def ensure_partner_ux_v111(db: Session):
             except Exception as exc:
                 errors.append(f"{fn_name}: {exc}")
 
-    # Doplnit drobné tabulky, pokud v1.2.1 nebyla nasazená.
+    # Doplnit drobné tabulky, pokud v1.2.2 nebyla nasazená.
     if globals().get("v110_exec"):
         exec_fn = v110_exec
     elif globals().get("v103_exec"):
@@ -6944,10 +6947,10 @@ def hub_partner_favorite_v111(
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Partner hotfix safe UI
+# v1.2.2 Partner hotfix safe UI
 # /hub/partners uses safe template. No import/data destructive changes.
 # -------------------------------------------------------------------
-PARTNER_HOTFIX_VERSION = "1.2.1-compact-shell-tables-safe"
+PARTNER_HOTFIX_VERSION = "1.2.2-admin-taxonomy-specialists-links-safe"
 
 def ensure_partner_hotfix_v112(db: Session):
     errors = []
@@ -6968,7 +6971,7 @@ def api_partner_hotfix_status_v112(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.2.1 Partner safe route fix
+# v1.2.2 Partner safe route fix
 # Oprava: /hub/partners nesmí padat na nedefinované dashboard/history/request proměnné.
 # -------------------------------------------------------------------
 
@@ -6976,7 +6979,7 @@ def api_partner_hotfix_status_v112(db: Session = Depends(get_db)):
 def api_partner_safe_route_status_v113(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Route /hub/partners má bezpečné fallback proměnné a nesmí spadnout na dashboard/history/requests.",
         "errors": []
     }
@@ -7005,7 +7008,7 @@ def api_partner_safe_route_status_v114(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Uživatelská sekce /hub/partners je napojena na admin číselník partnerů a má bezpečné fallbacky.",
         "tables": tables,
         "errors": errors,
@@ -7035,7 +7038,7 @@ def api_partner_figma_ui_status_v116(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Sekce Partneři používá nový Figma-like layout dle odsouhlaseného vizuálu. Backend/import/workflow nebyly měněny.",
         "tables": tables,
         "errors": errors,
@@ -7047,7 +7050,7 @@ def api_partner_figma_ui_status_v116(db: Session = Depends(get_db)):
 @router.get("/api/partners-restore-visual/status")
 def api_partners_restore_visual_status_v118(db: Session = Depends(get_db)):
     """
-    v1.2.1 – kontrola opravné verze sekce Partneři.
+    v1.2.2 – kontrola opravné verze sekce Partneři.
     Nic nemaže, nic nemigruje, nemění import ani workflow.
     """
     tables = {}
@@ -7069,7 +7072,7 @@ def api_partners_restore_visual_status_v118(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Opravná verze: vrácen původní vizuál partner workspace, doplněno seskupení kontaktů a produktů bez zásahu do backendu.",
         "tables": tables,
         "errors": errors,
@@ -7081,7 +7084,7 @@ def api_partners_restore_visual_status_v118(db: Session = Depends(get_db)):
 @router.get("/api/safe-rollback-visual-shell/status")
 def api_safe_rollback_visual_shell_status_v120(db: Session = Depends(get_db)):
     """
-    v1.2.1 – bezpečný rollback destruktivních UI zásahů.
+    v1.2.2 – bezpečný rollback destruktivních UI zásahů.
     Neprovádí migrace, nemaže data, nemění import ani workflow.
     """
     tables = {}
@@ -7107,8 +7110,8 @@ def api_safe_rollback_visual_shell_status_v120(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
-        "message": "Stabilní rollback na funkční šablony v1.2.1 + neinvazivní sjednocení vizuálu. DB/import/workflow beze změny.",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+        "message": "Stabilní rollback na funkční šablony v1.2.2 + neinvazivní sjednocení vizuálu. DB/import/workflow beze změny.",
         "tables": tables,
         "errors": errors,
     }
@@ -7119,7 +7122,7 @@ def api_safe_rollback_visual_shell_status_v120(db: Session = Depends(get_db)):
 @router.get("/api/compact-shell-tables/status")
 def api_compact_shell_tables_status_v121(db: Session = Depends(get_db)):
     """
-    v1.2.1 – kompaktní HUB shell + fulltext v tabulkách.
+    v1.2.2 – kompaktní HUB shell + fulltext v tabulkách.
     Bez migrací, bez změny importu a workflow.
     """
     tables = {}
@@ -7145,8 +7148,279 @@ def api_compact_shell_tables_status_v121(db: Session = Depends(get_db)):
             errors.append(f"{t}: {exc}")
     return {
         "ok": len(errors) == 0,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Kompaktní uživatelský shell bez velké petrolejové hero hlavičky + bezpečný fulltext v tabulkách.",
+        "tables": tables,
+        "errors": errors,
+    }
+
+
+
+
+# -------------------------------------------------------------------
+# v1.2.2 Admin Taxonomy + Specialists + Links Safe
+# -------------------------------------------------------------------
+
+def normalize_label_v122_(value: str) -> str:
+    """Jednoduchá normalizace pro odstranění duplicitních dlaždic v Novém TIPu."""
+    import unicodedata
+    value = (value or "").strip().lower()
+    value = "".join(ch for ch in unicodedata.normalize("NFD", value) if unicodedata.category(ch) != "Mn")
+    value = re.sub(r"[^a-z0-9]+", "", value)
+    # sjednocení nejčastějších historických duplicit
+    aliases = {
+        "flotily": "flotily",
+        "flotila": "flotily",
+        "majetek": "majetek",
+        "zivot": "zivot",
+        "zivotnipojisteni": "zivot",
+        "podnikatel": "podnikatele",
+        "podnikatele": "podnikatele",
+        "podnikatelskarizika": "podnikatele",
+        "penze": "penze",
+        "dps": "penze",
+        "uvery": "uvery",
+        "hypoteky": "uvery",
+        "obnova": "obnova",
+        "retence": "obnova",
+        "investice": "investice",
+        "zlato": "zlato",
+        "zvire": "zvire",
+        "zvirata": "zvire",
+    }
+    return aliases.get(value, value)
+
+
+def dedupe_taxonomy_sections_v122_(sections):
+    """
+    Bezpečné odstranění duplicit pouze pro zobrazení v poradenském HUBu.
+    DB nemažeme. Preferujeme sekci, která už má podsekce/specialisty nebo importovaný kratší kód.
+    """
+    result = []
+    seen = set()
+    for s in sections or []:
+        name = ""
+        code = ""
+        try:
+            name = s.get("section_name") or s.get("name") or ""
+            code = s.get("section_code") or s.get("code") or ""
+        except Exception:
+            name = getattr(s, "section_name", "") or getattr(s, "name", "")
+            code = getattr(s, "section_code", "") or getattr(s, "code", "")
+        key = normalize_label_v122_(name or code)
+        if not key:
+            key = normalize_label_v122_(code)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(s)
+    return result
+
+
+def get_admin_users_for_specialists_v122_(db: Session):
+    try:
+        if not table_exists_v084_(db, "users"):
+            return []
+        return fetch_all_safe_v084_(db, """
+            SELECT advisor_id, name, email, phone, role, is_active
+            FROM users
+            WHERE COALESCE(is_active, TRUE) = TRUE
+            ORDER BY name
+            LIMIT 1000
+        """)
+    except Exception:
+        return []
+
+
+def classify_link_scope_v122_(row) -> str:
+    try:
+        pc = (row.get("partner_code") or "").strip().upper()
+        cat = (row.get("category") or "").strip().lower()
+    except Exception:
+        pc = (getattr(row, "partner_code", "") or "").strip().upper()
+        cat = (getattr(row, "category", "") or "").strip().lower()
+    if pc in ("", "AST", "ASTORIE", "ASTORIEAS", "ASTORIE_A_S") or "astorie" in cat or "intern" in cat:
+        return "astorie"
+    return "partner"
+
+
+@router.get("/api/admin/taxonomy-health")
+def api_admin_taxonomy_health_v122(db: Session = Depends(get_db)):
+    ensure_visible_hub_sections_(db)
+    sections = fetch_all_safe_v084_(db, """
+        SELECT section_code, section_name, icon, sort_order, is_active
+        FROM hub_sections
+        ORDER BY sort_order, section_name
+    """)
+    subsections = fetch_all_safe_v084_(db, """
+        SELECT subsection_code, subsection_name, section_code, sort_order, is_active
+        FROM hub_subsections
+        ORDER BY section_code, sort_order, subsection_name
+    """)
+    specialists = get_specialists_for_hub_v085_(db)
+    visible = dedupe_taxonomy_sections_v122_(sections)
+    return {
+        "ok": True,
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+        "sections_total": len(sections),
+        "sections_visible_after_dedupe": len(visible),
+        "subsections_total": len(subsections),
+        "specialists_active_available": len(specialists),
+        "note": "Duplicity sekcí se nemažou z DB, pouze se bezpečně skrývají v poradenském Nový TIP.",
+        "sections": [dict(s) for s in sections],
+        "visible_sections": [dict(s) for s in visible],
+    }
+
+
+@router.post("/admin/sections/{section_code}/update")
+def admin_section_update_v122(
+    section_code: str,
+    section_name: str = Form(...),
+    icon: str = Form(""),
+    image_url: str = Form(""),
+    sort_order: int = Form(100),
+    is_active: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("""
+        UPDATE hub_sections
+        SET section_name = :section_name,
+            icon = :icon,
+            image_url = :image_url,
+            sort_order = :sort_order,
+            is_active = :is_active,
+            note = :note
+        WHERE upper(section_code) = upper(:section_code)
+    """), {
+        "section_code": section_code,
+        "section_name": section_name,
+        "icon": icon,
+        "image_url": image_url,
+        "sort_order": sort_order,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.post("/admin/subsections/{subsection_code}/update")
+def admin_subsection_update_v122(
+    subsection_code: str,
+    section_code: str = Form(...),
+    subsection_name: str = Form(...),
+    sort_order: int = Form(100),
+    is_active: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("""
+        UPDATE hub_subsections
+        SET section_code = :section_code,
+            subsection_name = :subsection_name,
+            sort_order = :sort_order,
+            is_active = :is_active,
+            note = :note
+        WHERE upper(subsection_code) = upper(:subsection_code)
+    """), {
+        "subsection_code": subsection_code,
+        "section_code": section_code.upper().strip(),
+        "subsection_name": subsection_name,
+        "sort_order": sort_order,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.post("/admin/specialists/create-from-user")
+def admin_specialist_create_from_user_v122(
+    advisor_id: str = Form(...),
+    section_code: str = Form(...),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form(""),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    user = fetch_one_safe_v084_(db, """
+        SELECT advisor_id, name, email, phone
+        FROM users
+        WHERE advisor_id = :advisor_id
+        LIMIT 1
+    """, {"advisor_id": advisor_id})
+    if not user:
+        return RedirectResponse("/admin/specialists?error=user_not_found", status_code=303)
+
+    db.execute(text("""
+        INSERT INTO specialists
+        (advisor_id, specialist_name, email, phone, section_code, subsection_code, role_description, region,
+         if_share, ps_share, available, unavailable_reason, is_active, note)
+        VALUES
+        (:advisor_id, :specialist_name, :email, :phone, :section_code, :subsection_code, :role_description, :region,
+         :if_share, :ps_share, TRUE, '', TRUE, '')
+        ON CONFLICT DO NOTHING
+    """), {
+        "advisor_id": user["advisor_id"],
+        "specialist_name": user["name"],
+        "email": user["email"],
+        "phone": user["phone"] or "",
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+    })
+    db.commit()
+    return RedirectResponse("/admin/specialists?created=1", status_code=303)
+
+
+@router.get("/api/admin/links-health")
+def api_admin_links_health_v122(db: Session = Depends(get_db)):
+    if not table_exists_v084_(db, "partner_links"):
+        return {"ok": True, "version": "1.2.2-admin-taxonomy-specialists-links-safe", "astorie": 0, "partners": 0}
+    rows = fetch_all_safe_v084_(db, "SELECT * FROM partner_links LIMIT 2000")
+    astorie = [r for r in rows if classify_link_scope_v122_(r) == "astorie"]
+    partner = [r for r in rows if classify_link_scope_v122_(r) == "partner"]
+    return {
+        "ok": True,
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+        "astorie": len(astorie),
+        "partners": len(partner),
+        "note": "ASTORIE odkazy jsou partner_code prázdné/AST/ASTORIE nebo kategorie obsahuje Astorie/interní.",
+    }
+
+
+@router.get("/api/release-1-2-2/status")
+def api_release_122_status(db: Session = Depends(get_db)):
+    tables = {}
+    errors = []
+    for t in ["users", "hub_sections", "hub_subsections", "specialists", "partner_links", "global_contacts", "tips"]:
+        try:
+            exists = table_exists_v084_(db, t)
+            count = 0
+            if exists:
+                count = int(db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar() or 0)
+                db.commit()
+            tables[t] = {"exists": bool(exists), "count": count}
+        except Exception as exc:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            tables[t] = {"exists": False, "count": 0, "error": str(exc)}
+            errors.append(f"{t}: {exc}")
+    return {
+        "ok": not errors,
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+        "message": "Opravy: deduplikace sekcí pro TIPy, editace sekcí/podsekcí, specialista ze seznamu uživatelů, rozdělení odkazů ASTORIE/partneři.",
         "tables": tables,
         "errors": errors,
     }

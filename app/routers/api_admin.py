@@ -23,7 +23,7 @@ def safe_count_table(db: Session, table_name: str):
 def admin_summary(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "1.2.1-compact-shell-tables-safe",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
         "message": "Admin Core + Visible Sections Fix běží.",
         "counts": {table: safe_count_table(db, table) for table in TABLES},
     }
