@@ -1,9 +1,10 @@
-HUB ASTORIE APP v1.1.7-partners-workspace-pro-safe
+HUB ASTORIE APP v1.1.8-partners-restore-visual-plus-grouping
 
-Profesionální bezpečné doladění sekce Partneři:
-- bez dvojité HUB hlavičky
-- fulltext ve workspace
-- inteligentně rozdělené kontakty
-- seskupené produkty
-- abecední řazení
-- bez zásahu do importu, DB a workflow
+Opravná bezpečná verze:
+- vrácen původní partner workspace vizuál
+- zachována uživatelská hlavička a ovládání
+- kontakty rozdělené do rozklikávacích kategorií
+- produkty seskupené podle sekcí
+- odkazy řazené abecedně
+- fulltext zachován
+- bez zásahu do DB, importu a workflow

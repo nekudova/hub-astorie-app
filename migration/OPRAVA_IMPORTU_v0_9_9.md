@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.1.7 import-schema-canonical-fix
+# HUB ASTORIE – v1.1.8 import-schema-canonical-fix
 
 ## Problém
 Import už posílal `created_at` a `updated_at`, ale starší tabulky v produkční DB tyto sloupce vůbec neměly.
@@ -31,7 +31,7 @@ Tato verze sjednocuje schéma všech importovaných tabulek před importem:
 
 ## Postup
 1. Nasadit ZIP.
-2. Ověřit `/version` = `1.1.7-partners-workspace-pro-safe`.
+2. Ověřit `/version` = `1.1.8-partners-restore-visual-plus-grouping`.
 3. Otevřít `/api/import/hub-xlsx/repair-all`.
 4. Otevřít `/api/admin/summary`.
 5. Spustit import na `/admin/import/hub-xlsx`.
