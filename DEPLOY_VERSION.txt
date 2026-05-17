@@ -1,9 +1,9 @@
-HUB ASTORIE APP v1.1.9-unified-hub-shell-safe
+HUB ASTORIE APP v1.2.0-safe-rollback-visual-shell
 
-Bezpečné sjednocení uživatelského HUBu:
-- jednotnější UI shell
-- méně prostoru zabraného horní hero hlavičkou
-- kompaktní stránkové hlavičky
-- profesionálnější Kontakty ASTORIE a Kalkulačky
-- zachování sekce Partneři z v1.1.8 včetně seskupení kontaktů/produktů
+Opravná bezpečná verze:
+- rollback na stabilní v1.1.8
+- odstranění destruktivních zásahů z v1.1.9
+- neinvazivní globální visual shell
+- zachování původních šablon Kalkulačky, TIPy, Kontakty atd.
+- zachování Partneři v1.1.8
 - bez zásahu do DB, importu a workflow

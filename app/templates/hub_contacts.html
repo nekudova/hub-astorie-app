@@ -1,55 +1,70 @@
 {% extends "hub_base.html" %}
 {% block content %}
-{% set safe_contacts = contacts if contacts is defined and contacts else [] %}
-{% set safe_global_contacts = global_contacts if global_contacts is defined and global_contacts else safe_contacts %}
-<div class="hub-section-head-v119">
-  <div class="hub-section-title-v119">
-    <div class="hub-section-icon-v119">☎</div>
-    <div>
-      <h1>Kontakty ASTORIE</h1>
-      <p>Interní kontakty ASTORIE. Kontakty partnerů jsou dostupné v detailu konkrétního partnera.</p>
-    </div>
-  </div>
-  <div class="hub-section-actions-v119">
-    <form method="get" class="hub-search-v119">
-      <input id="contactsSearchV119" name="q" value="{{ q if q is defined else '' }}" placeholder="Hledat jméno, oddělení, telefon, e-mail, lokalitu…">
-      <button>Hledat</button>
-    </form>
-    <button class="hub-secondary-v119" type="button" onclick="alert('Návrh bude předán BackOffice ke zpracování.')">+ Navrhnout doplnění</button>
-  </div>
-</div>
+<div class="hub-card">
+  <h1>Kontakty ASTORIE</h1>
+  <p class="page-subtitle">Tato sekce zobrazuje pouze interní kontakty ASTORIE. Kontakty partnerů jsou v detailu konkrétního partnera.</p>
 
-<div class="hub-card-v119">
-  <h3>Rychlá orientace</h3>
-  <p>Pro běžné dotazy použijte vyhledávání. Partnerští pracovníci patří do sekce Partneři.</p>
-</div>
+  {% if request.query_params.get('workflow') == 'ok' or request.query_params.get('suggestion') == 'ok' %}
+    <div class="notice ok">Návrh byl uložen pro BackOffice ke kontrole.</div>
+  {% endif %}
 
-<div id="contactsGridV119" class="hub-grid-v119" style="margin-top:14px;">
-  {% for c in safe_global_contacts %}
-    <article class="hub-card-v119 contact-global-card-v119" data-search="{{ ((c.full_name or c.name or c.contact_name or '') ~ ' ' ~ (c.role or c.department or c.position or '') ~ ' ' ~ (c.phone or '') ~ ' ' ~ (c.email or '') ~ ' ' ~ (c.location or c.region or ''))|lower }}">
-      <h3>{{ c.full_name or c.name or c.contact_name or 'Kontakt' }}</h3>
-      <p><strong>{{ c.role or c.department or c.position or 'ASTORIE' }}</strong></p>
-      {% if c.phone %}<p>☎ {{ c.phone }}</p>{% endif %}
-      {% if c.email %}<p>✉ <a href="mailto:{{ c.email }}">{{ c.email }}</a></p>{% endif %}
-      {% if c.location or c.region %}<p>📍 {{ c.location or c.region }}</p>{% endif %}
-    </article>
-  {% else %}
-    <div class="hub-empty-v119">Zatím nejsou načtené žádné interní kontakty ASTORIE nebo neodpovídají filtru.</div>
-  {% endfor %}
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat jméno, oddělení, telefon, e-mail, lokalitu…">
+    <button class="btn orange">Hledat</button>
+    <button type="button" class="btn soft" onclick="toggleSuggest('global-contact-suggest')">+ Navrhnout doplnění</button>
+  </form>
+
+  <form id="global-contact-suggest" method="post" action="/hub/partner-workflow/request" class="suggest-form" style="display:none;">
+    <input type="hidden" name="request_area" value="contacts">
+    <input type="hidden" name="item_type" value="global_contact">
+    <input type="hidden" name="request_type" value="Doplnění / oprava kontaktu ASTORIE">
+    <label>Název / kontakt</label>
+    <input name="title" placeholder="např. doplnit telefon na BO">
+    <label>Popis návrhu</label>
+    <textarea name="description"></textarea>
+    <button class="btn orange">Odeslat návrh</button>
+  </form>
+
+  <div class="contact-grid">
+    {% for c in rows %}
+      <div class="contact-card">
+        <h3>{{ c.contact_name }}</h3>
+        {% if c.is_vip %}<span class="status ok">VIP</span>{% endif %}
+        <p><strong>{{ c.department or 'ASTORIE' }}</strong></p>
+        <p>{{ c.role_description or '' }}{% if c.location %} · {{ c.location }}{% endif %}</p>
+        <p>{{ c.phone or '' }}<br>{{ c.email or '' }}</p>
+        {% if c.note %}<p class="muted">{{ c.note }}</p>{% endif %}
+        <button type="button" class="link-button" onclick="openGlobalContactSuggest('{{ c.id }}','{{ c.contact_name|e }}')">Nahlásit změnu</button>
+      </div>
+    {% else %}
+      <div class="empty-state">Zatím nejsou načtené žádné kontakty ASTORIE nebo neodpovídají filtru.</div>
+    {% endfor %}
+  </div>
+
+  <form id="global-contact-change" method="post" action="/hub/partner-workflow/request" class="suggest-form" style="display:none;">
+    <input type="hidden" name="request_area" value="contacts">
+    <input type="hidden" name="item_type" value="global_contact">
+    <input type="hidden" id="globalContactId" name="item_id">
+    <input type="hidden" name="request_type" value="Neaktuální kontakt ASTORIE">
+    <label>Nahlášení změny kontaktu</label>
+    <input id="globalContactTitle" name="title" readonly>
+    <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>
+    <button class="btn orange">Odeslat změnu</button>
+  </form>
 </div>
 
 <script>
-(function(){
-  var input=document.getElementById("contactsSearchV119");
-  var grid=document.getElementById("contactsGridV119");
-  if(!input||!grid) return;
-  function n(v){return (v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
-  input.addEventListener("input",function(){
-    var q=n(input.value);
-    grid.querySelectorAll(".contact-global-card-v119").forEach(function(card){
-      card.style.display=n(card.dataset.search).indexOf(q)>=0?"":"none";
-    });
-  });
-})();
+function toggleSuggest(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+function openGlobalContactSuggest(id, title){
+  const form = document.getElementById("global-contact-change");
+  document.getElementById("globalContactId").value = id || "";
+  document.getElementById("globalContactTitle").value = title || "Kontakt";
+  form.style.display = "block";
+  form.scrollIntoView({behavior:"smooth", block:"center"});
+}
 </script>
 {% endblock %}
