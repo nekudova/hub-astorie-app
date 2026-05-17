@@ -2891,6 +2891,7 @@ def get_specialists_for_hub_v085_(db: Session):
         return []
     return fetch_all_safe_v084_(db, """
         SELECT s.*,
+               '' AS photo_url,
                COALESCE(hs.section_name, s.section_code) AS section_name,
                COALESCE(hss.subsection_name, s.subsection_code) AS subsection_name
         FROM specialists s
@@ -2930,8 +2931,21 @@ def hub_create_tip_v085(
     policy_no: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    ensure_tips_columns_v085_(db)
+    ensure_tip_workflow_v090_(db)
     user = hub_user_context_v083_()
+
+    missing_fields = []
+    if not section_code.strip(): missing_fields.append("oblast")
+    if not subsection_code.strip(): missing_fields.append("podsekce")
+    if not specialist_email.strip(): missing_fields.append("specialista")
+    if not client_name.strip(): missing_fields.append("klient")
+    if not client_phone.strip(): missing_fields.append("kontakt na klienta")
+    if not client_identifier.strip(): missing_fields.append("RČ / IČO / datum nar.")
+    if not potential_amount.strip(): missing_fields.append("odhad potenciálu / objemu")
+    if not policy_no.strip(): missing_fields.append("smlouva č.")
+    if not adviser_note.strip(): missing_fields.append("popis případu")
+    if missing_fields:
+        return JSONResponse({"ok": False, "error": "Chybí povinné údaje: " + ", ".join(missing_fields)}, status_code=400)
 
     section = fetch_one_safe_v084_(db, """
         SELECT section_code, section_name
@@ -2996,7 +3010,77 @@ def hub_create_tip_v085(
         "adviser_note": adviser_note,
         "policy_no": policy_no,
     })
+    db.execute(text("""
+        INSERT INTO tip_updates
+          (id, tip_id, author_name, author_email, author_role, update_type, old_status, new_status, message_to_adviser, internal_note)
+        VALUES
+          (:id, :tip_id, :author_name, :author_email, 'Poradce', 'Založení TIPu', '', 'Nový', :msg_adv, :msg_int)
+    """), {
+        "id": str(uuid.uuid4()),
+        "tip_id": tip_id,
+        "author_name": user["name"],
+        "author_email": user["email"],
+        "msg_adv": "TIP byl založen a předán specialistovi.",
+        "msg_int": f"Nový TIP pro specialistu {specialist_name or specialist_email}: {client_name}",
+    })
     db.commit()
+
+    # E-mailové notifikace jsou bezpečné: když SMTP není nastavené, TIP zůstane uložený a chyba se zapíše do historie TIPu.
+    try:
+        section_label = section["section_name"] if section else section_code
+        subsection_label = subsection["subsection_name"] if subsection else subsection_code
+        spec_subject = "Nový TIP v HUB ASTORIE"
+        spec_body = (
+            "Dobrý den,\n\n"
+            "byl Vám předán nový TIP.\n\n"
+            f"Poradce: {user['name']} ({user['email']})\n"
+            f"Klient: {client_name}\n"
+            f"Kontakt na klienta: {client_phone}\n"
+            f"Identifikace: {client_identifier}\n"
+            f"Oblast: {section_label}\n"
+            f"Podsekce: {subsection_label}\n"
+            f"Smlouva č.: {policy_no}\n"
+            f"Odhad potenciálu / objemu: {potential_amount}\n\n"
+            f"Popis případu:\n{adviser_note}\n\n"
+            "Prosíme o převzetí a další zpracování v aplikaci HUB ASTORIE.\n\nASTORIE a.s."
+        )
+        adv_subject = "Potvrzení odeslání TIPu – HUB ASTORIE"
+        adv_body = (
+            "Dobrý den,\n\n"
+            "váš TIP byl úspěšně uložen a předán vybranému specialistovi.\n\n"
+            f"Specialista: {specialist_name or specialist_email}\n"
+            f"Klient: {client_name}\n"
+            f"Oblast: {section_label}\n"
+            f"Podsekce: {subsection_label}\n"
+            f"Stav: Nový\n\n"
+            "Další průběh uvidíte v sekci Moje TIPy.\n\nASTORIE a.s."
+        )
+        sent_spec, err_spec = send_partner_workflow_email_v110(db, specialist_email, spec_subject, spec_body)
+        sent_adv, err_adv = send_partner_workflow_email_v110(db, user.get('email',''), adv_subject, adv_body)
+        if (not sent_spec) or (not sent_adv):
+            db.execute(text("""
+                INSERT INTO tip_updates
+                  (id, tip_id, author_name, author_email, author_role, update_type, old_status, new_status, internal_note)
+                VALUES
+                  (:id, :tip_id, 'Systém', 'system@astorie.local', 'Systém', 'E-mail', 'Nový', 'Nový', :note)
+            """), {
+                "id": str(uuid.uuid4()),
+                "tip_id": tip_id,
+                "note": "E-mail nebyl odeslán všem příjemcům. Specialistovi: " + (err_spec or 'OK') + "; poradci: " + (err_adv or 'OK')
+            })
+            db.commit()
+    except Exception as exc:
+        try:
+            db.execute(text("""
+                INSERT INTO tip_updates
+                  (id, tip_id, author_name, author_email, author_role, update_type, old_status, new_status, internal_note)
+                VALUES
+                  (:id, :tip_id, 'Systém', 'system@astorie.local', 'Systém', 'E-mail chyba', 'Nový', 'Nový', :note)
+            """), {"id": str(uuid.uuid4()), "tip_id": tip_id, "note": str(exc)})
+            db.commit()
+        except Exception:
+            db.rollback()
+
     try:
         safe_audit(db, user["email"], "CREATE", "tips", tip_id, {}, {
             "client_name": client_name,
@@ -7498,4 +7582,23 @@ def api_release_136_status(db: Session = Depends(get_db)):
         "routes_expected": ["/hub/new-tip", "/hub/my-tips", "/hub/calculators", "/hub/partners", "/hub/contacts", "/admin/sections", "/admin/specialists"],
         "tables": tables,
         "errors": errors,
+    }
+
+
+@router.get("/api/release-1-3-9/status")
+def release_139_status():
+    return {
+        "ok": True,
+        "version": "1.3.9-new-tip-business-fix-safe",
+        "safe": True,
+        "db_changed": True,
+        "scope": "Pouze Nový TIP + bezpečné workflow TIPů",
+        "changes": [
+            "specialisté se zobrazí až po výběru podsekce",
+            "specialista je povinný pro založení TIPu",
+            "povinné položky formuláře jsou hlídané na frontendu i backendu",
+            "založení TIPu zapisuje zprávu do historie TIPu",
+            "pokud je SMTP nastavené, odešle se e-mail specialistovi i poradci",
+            "Správa TIPů je dostupná v administraci na /admin/tips"
+        ]
     }

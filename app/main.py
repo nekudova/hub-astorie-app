@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.3.8-new-tip-final-visual-safe"
+APP_VERSION = "1.3.9-new-tip-business-fix-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
