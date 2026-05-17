@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.0.3 import-timestamps-fix
+# HUB ASTORIE – v1.1.1 import-timestamps-fix
 
 Oprava chyby:
 `null value in column "created_at" of relation "users" violates not-null constraint`
@@ -9,7 +9,7 @@ Opraveno:
 - Přidán endpoint `/api/import/hub-xlsx/repair-users-timestamps`.
 
 Postup:
-1. `/version` = `1.0.3-import-cleanup-partner-ui`
+1. `/version` = `1.1.1-partner-workflow-ux-upgrade`
 2. `/api/import/hub-xlsx/repair-users-timestamps`
 3. `/api/import/hub-xlsx/repair-schema`
 4. `/admin/import/hub-xlsx`

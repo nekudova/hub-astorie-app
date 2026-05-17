@@ -4,7 +4,7 @@
   <h1>Kontakty ASTORIE</h1>
   <p class="page-subtitle">Tato sekce zobrazuje pouze interní kontakty ASTORIE. Kontakty partnerů jsou v detailu konkrétního partnera.</p>
 
-  {% if request.query_params.get('suggestion') == 'ok' %}
+  {% if request.query_params.get('workflow') == 'ok' or request.query_params.get('suggestion') == 'ok' %}
     <div class="notice ok">Návrh byl uložen pro BackOffice ke kontrole.</div>
   {% endif %}
 
@@ -14,10 +14,10 @@
     <button type="button" class="btn soft" onclick="toggleSuggest('global-contact-suggest')">+ Navrhnout doplnění</button>
   </form>
 
-  <form id="global-contact-suggest" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
-    <input type="hidden" name="module" value="contacts">
+  <form id="global-contact-suggest" method="post" action="/hub/partner-workflow/request" class="suggest-form" style="display:none;">
+    <input type="hidden" name="request_area" value="contacts">
     <input type="hidden" name="item_type" value="global_contact">
-    <input type="hidden" name="suggestion_type" value="Doplnění / oprava kontaktu ASTORIE">
+    <input type="hidden" name="request_type" value="Doplnění / oprava kontaktu ASTORIE">
     <label>Název / kontakt</label>
     <input name="title" placeholder="např. doplnit telefon na BO">
     <label>Popis návrhu</label>
@@ -41,11 +41,11 @@
     {% endfor %}
   </div>
 
-  <form id="global-contact-change" method="post" action="/hub/suggestions" class="suggest-form" style="display:none;">
-    <input type="hidden" name="module" value="contacts">
+  <form id="global-contact-change" method="post" action="/hub/partner-workflow/request" class="suggest-form" style="display:none;">
+    <input type="hidden" name="request_area" value="contacts">
     <input type="hidden" name="item_type" value="global_contact">
     <input type="hidden" id="globalContactId" name="item_id">
-    <input type="hidden" name="suggestion_type" value="Neaktuální kontakt ASTORIE">
+    <input type="hidden" name="request_type" value="Neaktuální kontakt ASTORIE">
     <label>Nahlášení změny kontaktu</label>
     <input id="globalContactTitle" name="title" readonly>
     <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>

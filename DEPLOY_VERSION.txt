@@ -1,10 +1,9 @@
-HUB ASTORIE APP v1.0.3-import-cleanup-partner-ui
+HUB ASTORIE APP v1.1.1-partner-workflow-ux-upgrade
 
-Opravy:
-- vyčištění duplicit po opakovaném importu
-- hlavní menu Kontakty = pouze kontakty ASTORIE
-- kontakty partnerů zůstávají v detailu partnera
-- produkty partnera jsou rozklikávací
-- partner FAQ záložka
-- návrhy změn/doplnění od poradců
-- nahlášení změny u každého kontaktu
+Přidáno:
+- premium Partner workspace
+- KPI dlaždice
+- sticky detail partnera
+- záložky Požadavky a Historie
+- oblíbený partner
+- lepší vizuál kontaktů, produktů, odkazů a FAQ

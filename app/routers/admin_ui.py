@@ -27,7 +27,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.0.3",
+        "version": "v1.1.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1816,7 +1816,7 @@ def api_routing_specialists(section_code: str = "", subsection_code: str = "", d
 
 
 # -------------------------------------------------------------------
-# v1.0.3 Specialist Profile & Sections Fix
+# v1.1.1 Specialist Profile & Sections Fix
 # -------------------------------------------------------------------
 
 def seed_default_hub_taxonomy_(db: Session):
@@ -2015,7 +2015,7 @@ def my_specialist_availability_v071(
 
 
 # -------------------------------------------------------------------
-# v1.0.3 Visible Sections Fix
+# v1.1.1 Visible Sections Fix
 # -------------------------------------------------------------------
 
 def ensure_visible_hub_sections_(db: Session):
@@ -2085,7 +2085,7 @@ def api_visible_sections_v072(db: Session = Depends(get_db)):
     """)).mappings().all()
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "sections": [dict(s) for s in sections],
         "subsections": [dict(s) for s in subsections],
     }
@@ -2104,7 +2104,7 @@ def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
 
 def ensure_user_hub_tables_v082_(db: Session):
     """
-    v1.0.3 – bezpečné tabulky pro TIPy.
+    v1.1.1 – bezpečné tabulky pro TIPy.
     Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
     """
     db.execute(text("""
@@ -2163,18 +2163,18 @@ def api_tips_status_v082(db: Session = Depends(get_db)):
         latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
         return {
             "ok": True,
-            "version": "1.0.3-import-cleanup-partner-ui",
+            "version": "1.1.1-partner-workflow-ux-upgrade",
             "count": count,
             "latest": [dict(r) for r in latest],
         }
     except Exception as e:
-        return {"ok": False, "version": "1.0.3-import-cleanup-partner-ui", "error": str(e)}
+        return {"ok": False, "version": "1.1.1-partner-workflow-ux-upgrade", "error": str(e)}
 
 
 
 
 # -------------------------------------------------------------------
-# v1.0.3 Adviser HUB routes fix
+# v1.1.1 Adviser HUB routes fix
 # -------------------------------------------------------------------
 
 def hub_user_context_v083_():
@@ -2191,7 +2191,7 @@ def hub_render_v083_(request: Request, template_name: str, context: dict):
     base = {
         "request": request,
         "app_name": "HUB ASTORIE",
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "user": hub_user_context_v083_(),
     }
     base.update(context)
@@ -2367,6 +2367,10 @@ def hub_calculators_v083(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/hub/partners-old-v083", response_class=HTMLResponse)
 def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: str = "contacts", db: Session = Depends(get_db)):
+    dashboard = fetch_partner_dashboard_v111(db, selected) if selected else {}
+    partner_history = fetch_partner_history_v111(db, selected) if selected else []
+    partner_requests = fetch_partner_requests_v111(db, selected) if selected else []
+
     return hub_render_v083_(request, "hub_partners.html", {
         "active": "partners", "partners": [], "partner": None,
         "contacts": [], "links": [], "products": [], "q": q, "selected": selected, "tab": tab
@@ -2411,7 +2415,7 @@ def hub_help_v083(request: Request):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 HUB Data Bridge – propojení uživatelského HUBu na admin data
+# v1.1.1 HUB Data Bridge – propojení uživatelského HUBu na admin data
 # -------------------------------------------------------------------
 
 def table_exists_v084_(db: Session, table_name: str) -> bool:
@@ -2554,6 +2558,9 @@ def hub_partners_v084(
         "links": links,
         "products": products,
         "faqs": faqs,
+        "dashboard": dashboard,
+        "partner_history": partner_history,
+        "partner_requests": partner_requests,
         "q": q,
         "selected": selected or "",
         "tab": tab,
@@ -2562,7 +2569,7 @@ def hub_partners_v084(
 
 @router.get("/hub/contacts", response_class=HTMLResponse)
 def hub_contacts_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
-    # v1.0.3: hlavní menu Kontakty zobrazuje pouze globální kontakty ASTORIE.
+    # v1.1.1: hlavní menu Kontakty zobrazuje pouze globální kontakty ASTORIE.
     # Kontakty partnerů zůstávají v detailu partnera na záložce Kontakty.
     ensure_v103_tables(db)
     rows = []
@@ -2733,7 +2740,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "tables": result,
     }
 
@@ -2741,7 +2748,7 @@ def api_hub_data_status_v084(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
+# v1.1.1 TIP Admin Data Flow – sekce/podsekce/specialisté z adminu do poradce
 # -------------------------------------------------------------------
 
 def ensure_tips_columns_v085_(db: Session):
@@ -2973,7 +2980,7 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
     specialists = get_specialists_for_hub_v085_(db)
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "sections_count": len(sections),
         "subsections_count": len(subsections),
         "specialists_count": len(specialists),
@@ -2984,14 +2991,14 @@ def api_hub_taxonomy_status_v085(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 Partner autocomplete & Forms data source
+# v1.1.1 Partner autocomplete & Forms data source
 # -------------------------------------------------------------------
 
 @router.get("/api/hub/partners/search")
 def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Depends(get_db)):
     """Našeptávač partnerů pro uživatelskou část HUBu."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": True, "version": "1.0.3-import-cleanup-partner-ui", "items": []}
+        return {"ok": True, "version": "1.1.1-partner-workflow-ux-upgrade", "items": []}
 
     q_clean = (q or "").strip().lower()
     params = {"limit": max(1, min(limit, 50))}
@@ -3022,7 +3029,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "items": [dict(r) for r in rows],
     }
 
@@ -3031,7 +3038,7 @@ def api_hub_partners_search_v086(q: str = "", limit: int = 20, db: Session = Dep
 def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(get_db)):
     """Kompletní zdrojová data partnera pro výpovědi a formuláře."""
     if not table_exists_v084_(db, "partners"):
-        return {"ok": False, "version": "1.0.3-import-cleanup-partner-ui", "error": "Tabulka partners neexistuje."}
+        return {"ok": False, "version": "1.1.1-partner-workflow-ux-upgrade", "error": "Tabulka partners neexistuje."}
 
     partner = fetch_one_safe_v084_(db, """
         SELECT *
@@ -3041,7 +3048,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
     """, {"code": partner_code})
 
     if not partner:
-        return {"ok": False, "version": "1.0.3-import-cleanup-partner-ui", "error": "Partner nenalezen."}
+        return {"ok": False, "version": "1.1.1-partner-workflow-ux-upgrade", "error": "Partner nenalezen."}
 
     contacts = []
     links = []
@@ -3079,7 +3086,7 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
 
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "partner": dict(partner),
         "contacts": [dict(c) for c in contacts],
         "links": [dict(l) for l in links],
@@ -3095,7 +3102,7 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         return data
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "partner": data["partner"],
         "counts": {
             "contacts": len(data["contacts"]),
@@ -3155,7 +3162,7 @@ def hub_forms_v086(request: Request, q: str = "", selected: str = "", db: Sessio
 
 
 # -------------------------------------------------------------------
-# v1.0.3 Operational TIP Workflow
+# v1.1.1 Operational TIP Workflow
 # Import dat + BO centrální evidence + specialista pracovní fronta
 # -------------------------------------------------------------------
 
@@ -3329,7 +3336,7 @@ def admin_all_tips_v090(
         "specialist": specialist,
         "adviser": adviser,
         "archive": archive,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
     })
 
 
@@ -3349,7 +3356,7 @@ def admin_tip_detail_v090(request: Request, tip_id: str, db: Session = Depends(g
         "active": "admin_tips",
         "tip": tip,
         "updates": updates,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
     })
 
 
@@ -3576,7 +3583,7 @@ def admin_import_legacy_tips_page_v090(request: Request, db: Session = Depends(g
         "request": request,
         "active": "import",
         "jobs": jobs,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
     })
 
 
@@ -3692,7 +3699,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "stats": dict(stats or {}),
     }
 
@@ -3701,7 +3708,7 @@ def api_tips_central_status_v090(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
+# v1.1.1 Unified TIP Inbox – jedna obrazovka jako ve stávající aplikaci
 # -------------------------------------------------------------------
 
 @router.get("/hub/my-tips", response_class=HTMLResponse)
@@ -3860,7 +3867,7 @@ def hub_tip_unified_specialist_update_v091(
 
 
 # -------------------------------------------------------------------
-# v1.0.3 XLSX importer – import přímo ze staženého Google Sheetu
+# v1.1.1 XLSX importer – import přímo ze staženého Google Sheetu
 # -------------------------------------------------------------------
 
 def xlsx_cell_to_str_v093_(value):
@@ -3956,7 +3963,7 @@ def xlsx_pick_v093_(row, *keys, default=""):
 def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     """
     Bezpečný UPSERT pro XLSX import.
-    v1.0.3: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
+    v1.1.1: u UUID tabulek doplňuje id ručně, protože starší PostgreSQL tabulky
     nemají vždy serverový DEFAULT pro id a raw SQL nepoužije SQLAlchemy default.
     """
     uuid_tables = {
@@ -3975,7 +3982,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
     if table in uuid_tables and "id" not in data:
         data["id"] = str(uuid.uuid4())
 
-    # v1.0.3: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
+    # v1.1.1: produkční tabulky mohou mít NOT NULL created_at/updated_at bez DB defaultu.
     # Proto timestampy doplňujeme přímo do importních dat.
     timestamp_tables = {
         "users",
@@ -3998,7 +4005,7 @@ def xlsx_upsert_v093_(db, table, conflict_col, data, update_existing=False):
         if "updated_at" not in data:
             data["updated_at"] = datetime.utcnow()
 
-    # v1.0.3: tabulka subsections má v produkci povinný section_id.
+    # v1.1.1: tabulka subsections má v produkci povinný section_id.
     # Excel/import pracuje se section_code, proto ID dohledáme před UPSERTem.
     if table == "subsections" and "section_id" not in data:
         section_code = str(data.get("section_code") or "").strip()
@@ -4171,7 +4178,7 @@ def import_hub_xlsx_data_v093_(db, wb, update_existing=False):
             result["errors"].append(f"Podsekce: {exc}")
 
     # Specialisté
-    # v1.0.3: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
+    # v1.1.1: index se nevytváří uvnitř importu. Připravuje se bezpečně před importem.
     for row in xlsx_rows_v093_(wb, "Specialisté"):
         result["specialists"]["rows"] += 1
         try:
@@ -4420,7 +4427,7 @@ def admin_import_hub_xlsx_page_v093(request: Request):
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": None,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
     })
 
 
@@ -4437,7 +4444,7 @@ async def admin_import_hub_xlsx_v093(
         return render(request, "admin_import_hub_xlsx.html", {
             "active": "import",
             "result": {"ok": False, "errors": [f"Chybí knihovna openpyxl: {exc}"]},
-            "version": "1.0.3-import-cleanup-partner-ui",
+            "version": "1.1.1-partner-workflow-ux-upgrade",
         })
 
     raw = await file.read()
@@ -4452,7 +4459,7 @@ async def admin_import_hub_xlsx_v093(
     return render(request, "admin_import_hub_xlsx.html", {
         "active": "import",
         "result": result,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
     })
 
 
@@ -4460,7 +4467,7 @@ async def admin_import_hub_xlsx_v093(
 def api_import_hub_xlsx_expected_sheets_v093():
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "mode_default": "safe_insert_only",
         "sheets": [
             "Poradci",
@@ -4483,7 +4490,7 @@ def api_import_hub_xlsx_expected_sheets_v093():
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import hardening endpoints
+# v1.1.1 import hardening endpoints
 # - chybějící /api/admin/summary
 # - aliasy pro import route
 # - JSON upload endpoint
@@ -4544,7 +4551,7 @@ def api_admin_summary_v094(db: Session = Depends(get_db)):
     ]
     return {
         "ok": True,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Admin summary endpoint běží. Počty jsou čtené bezpečně přes PostgreSQL.",
         "counts": {t: safe_count_table_v094_(db, t) for t in tables},
     }
@@ -4566,14 +4573,14 @@ def api_import_hub_xlsx_status_v094(db: Session = Depends(get_db)):
         """)
         return {
             "ok": True,
-            "version": "1.0.3-import-cleanup-partner-ui",
+            "version": "1.1.1-partner-workflow-ux-upgrade",
             "running": False,
             "last_job": dict(last_job) if last_job else None,
         }
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.0.3-import-cleanup-partner-ui",
+            "version": "1.1.1-partner-workflow-ux-upgrade",
             "running": False,
             "error": str(exc),
         }
@@ -4596,12 +4603,12 @@ async def api_import_hub_xlsx_upload_v094(
         result = import_hub_xlsx_data_v093_(db, wb, update_existing=(update_existing == "1"))
         result["ok"] = len(result.get("errors", [])) == 0
         result["mode"] = "update_existing" if update_existing == "1" else "safe_insert_only"
-        result["version"] = "1.0.3-import-cleanup-partner-ui"
+        result["version"] = "1.1.1-partner-workflow-ux-upgrade"
         return result
     except Exception as exc:
         return {
             "ok": False,
-            "version": "1.0.3-import-cleanup-partner-ui",
+            "version": "1.1.1-partner-workflow-ux-upgrade",
             "errors": [str(exc)],
         }
 
@@ -4641,7 +4648,7 @@ def api_import_hub_xlsx_summary_alias_v094(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import transaction fix
+# v1.1.1 import transaction fix
 # Oprava: current transaction is aborted před CREATE UNIQUE INDEX
 # -------------------------------------------------------------------
 
@@ -4732,7 +4739,7 @@ ensure_xlsx_import_structures_v093_ = ensure_xlsx_import_structures_v095_
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import index fix
+# v1.1.1 import index fix
 # Definitivní oprava: odstranění inline CREATE UNIQUE INDEX z importní transakce
 # a bezpečné čištění transakce před vlastním importem.
 # -------------------------------------------------------------------
@@ -4885,7 +4892,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
     errors = ensure_xlsx_import_structures_v096_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Importní struktury byly zkontrolovány a opraveny. Původní Google Sheet se nemění.",
         "errors": errors,
     }
@@ -4895,7 +4902,7 @@ def api_import_repair_schema_v096(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import user id fix
+# v1.1.1 import user id fix
 # Oprava: users.id nemá serverový default a raw SQL insert bez id padal.
 # -------------------------------------------------------------------
 
@@ -4950,7 +4957,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
     errors = repair_uuid_defaults_v097_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Opraveny UUID defaulty pro users a další hlavní tabulky. Import zároveň posílá id explicitně.",
         "errors": errors,
     }
@@ -4959,7 +4966,7 @@ def api_import_repair_users_v097(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import timestamps fix
+# v1.1.1 import timestamps fix
 # Oprava: users.created_at / users.updated_at NOT NULL při importu poradců
 # -------------------------------------------------------------------
 
@@ -4995,7 +5002,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
     errors = repair_users_timestamps_v098_(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Opraveny created_at/updated_at defaulty pro users. Import poradců nyní posílá timestampy explicitně.",
         "errors": errors,
     }
@@ -5003,7 +5010,7 @@ def api_import_repair_users_timestamps_v098(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import schema canonical fix
+# v1.1.1 import schema canonical fix
 # Profesionální oprava: sjednocení schématu všech importních tabulek před importem.
 # -------------------------------------------------------------------
 
@@ -5247,7 +5254,7 @@ def api_import_repair_all_v099(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Kompletní oprava importního schématu dokončena. Opraveny created_at/updated_at a chybějící importní sloupce.",
         "errors": errors,
     }
@@ -5269,7 +5276,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.0.3 full import schema fix
+# v1.1.1 full import schema fix
 # Jednorázová profesionální oprava importního schématu:
 # doplní přesně ty sloupce, které import reálně používá.
 # -------------------------------------------------------------------
@@ -5609,7 +5616,7 @@ def api_import_repair_database_v100(db: Session = Depends(get_db)):
     errors = v100_fix_all_import_tables(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Databáze byla sjednocena pro import XLSX. Doplněny sloupce sections/subsections/partners a další importní tabulky.",
         "errors": errors,
     }
@@ -5640,7 +5647,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import relationship fix
+# v1.1.1 import relationship fix
 # Oprava vazeb: subsections.section_id se dopočítá ze sections.section_code.
 # Přidán preflight, který odhalí základní problémy před importem.
 # -------------------------------------------------------------------
@@ -5789,7 +5796,7 @@ def api_import_repair_relationships_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Opraveny vazby pro import. Subsections.section_id se doplňuje podle sections.section_code.",
         "errors": errors,
         "preflight_issues": issues,
@@ -5802,7 +5809,7 @@ def api_import_preflight_v101(db: Session = Depends(get_db)):
     issues = v101_preflight_database(db)
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Předimportní kontrola databáze.",
         "errors": errors,
         "issues": issues,
@@ -5826,7 +5833,7 @@ except Exception:
 
 
 # -------------------------------------------------------------------
-# v1.0.3 uuid relationship fix endpoint
+# v1.1.1 uuid relationship fix endpoint
 # -------------------------------------------------------------------
 
 @router.get("/api/import/hub-xlsx/repair-uuid-relationships")
@@ -5877,7 +5884,7 @@ def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
 
     return {
         "ok": len(errors) == 0 and len(issues) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Opravena UUID vazba subsections.section_id bez neplatného porovnání s prázdným řetězcem.",
         "errors": errors,
         "issues": issues,
@@ -5888,7 +5895,7 @@ def api_import_repair_uuid_relationships_v102(db: Session = Depends(get_db)):
 
 
 # -------------------------------------------------------------------
-# v1.0.3 import cleanup + partner UI completion
+# v1.1.1 import cleanup + partner UI completion
 # Cíl:
 # - odstranit duplicitně nahraná data po opakovaných importech
 # - oddělit Kontakty ASTORIE od kontaktů partnerů
@@ -6223,7 +6230,7 @@ def api_import_cleanup_duplicates_v103(db: Session = Depends(get_db)):
     errors = cleanup_import_duplicates_v103(db)
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Duplicitní záznamy po opakovaném importu byly vyčištěny. Zachován je vždy první záznam.",
         "errors": errors,
     }
@@ -6235,7 +6242,7 @@ def api_import_repair_display_data_v103(db: Session = Depends(get_db)):
     errors.extend(cleanup_import_duplicates_v103(db))
     return {
         "ok": len(errors) == 0,
-        "version": "1.0.3-import-cleanup-partner-ui",
+        "version": "1.1.1-partner-workflow-ux-upgrade",
         "message": "Doplněny tabulky pro globální kontakty, FAQ partnerů a návrhy změn. Vyčištěny duplicity.",
         "errors": errors,
     }
@@ -6361,4 +6368,478 @@ def hub_contacts_v103(request: Request, q: str = "", db: Session = Depends(get_d
 @router.get("/hub/contacts-astorie", response_class=HTMLResponse)
 def hub_contacts_astorie_v103(request: Request, q: str = "", db: Session = Depends(get_db)):
     return hub_contacts_v103(request, q=q, db=db)
+
+
+
+
+
+# -------------------------------------------------------------------
+# v1.1.1 Partner Workflow Core
+# -------------------------------------------------------------------
+PARTNER_WORKFLOW_VERSION = "1.1.1-partner-workflow-ux-upgrade"
+
+
+def v110_exec(db: Session, sql: str, params: dict | None = None):
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    try:
+        db.execute(text(sql), params or {})
+        db.commit()
+        return None
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return str(exc)
+
+
+def v110_scalar(db: Session, sql: str, params: dict | None = None):
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    try:
+        val = db.execute(text(sql), params or {}).scalar()
+        db.commit()
+        return val
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return None
+
+
+def v110_table_exists(db: Session, table_name: str) -> bool:
+    return bool(v110_scalar(db, """
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema='public' AND table_name=:table_name
+        )
+    """, {"table_name": table_name}))
+
+
+def ensure_partner_workflow_v110(db: Session):
+    errors = []
+    for fn_name in ["ensure_v103_tables", "cleanup_import_duplicates_v103"]:
+        fn = globals().get(fn_name)
+        if fn:
+            try:
+                res = fn(db)
+                if isinstance(res, list):
+                    errors.extend([str(e) for e in res if e])
+            except Exception as exc:
+                errors.append(f"{fn_name}: {exc}")
+
+    ddl = [
+        """
+        CREATE TABLE IF NOT EXISTS partner_change_requests (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            partner_code TEXT DEFAULT '',
+            partner_name TEXT DEFAULT '',
+            request_type TEXT DEFAULT '',
+            request_area TEXT DEFAULT '',
+            priority TEXT DEFAULT 'normal',
+            status TEXT DEFAULT 'new',
+            title TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            current_value TEXT DEFAULT '',
+            proposed_value TEXT DEFAULT '',
+            contact_name TEXT DEFAULT '',
+            contact_phone TEXT DEFAULT '',
+            contact_email TEXT DEFAULT '',
+            item_type TEXT DEFAULT '',
+            item_id TEXT DEFAULT '',
+            tab TEXT DEFAULT '',
+            created_by_name TEXT DEFAULT '',
+            created_by_email TEXT DEFAULT '',
+            processed_by_name TEXT DEFAULT '',
+            processed_by_email TEXT DEFAULT '',
+            processed_at TIMESTAMPTZ,
+            admin_note TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS partner_request_comments (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            request_id TEXT NOT NULL,
+            author_name TEXT DEFAULT '',
+            author_email TEXT DEFAULT '',
+            comment_text TEXT DEFAULT '',
+            is_internal BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS partner_audit_log (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            entity_type TEXT DEFAULT '',
+            entity_id TEXT DEFAULT '',
+            partner_code TEXT DEFAULT '',
+            action_type TEXT DEFAULT '',
+            old_value TEXT DEFAULT '',
+            new_value TEXT DEFAULT '',
+            changed_by_name TEXT DEFAULT '',
+            changed_by_email TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS partner_history (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            partner_code TEXT DEFAULT '',
+            event_type TEXT DEFAULT '',
+            title TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            created_by_name TEXT DEFAULT '',
+            created_by_email TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS partner_favorites (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            partner_code TEXT DEFAULT '',
+            user_email TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS ix_partner_change_requests_status ON partner_change_requests(status)",
+        "CREATE INDEX IF NOT EXISTS ix_partner_change_requests_partner_code ON partner_change_requests(partner_code)",
+        "CREATE INDEX IF NOT EXISTS ix_partner_change_requests_created_at ON partner_change_requests(created_at)",
+        "CREATE INDEX IF NOT EXISTS ix_partner_history_partner_code ON partner_history(partner_code)"
+    ]
+    for sql in ddl:
+        err = v110_exec(db, sql)
+        if err: errors.append(err)
+
+    if v110_table_exists(db, 'data_suggestions'):
+        err = v110_exec(db, """
+            INSERT INTO partner_change_requests
+            (partner_code, request_type, request_area, status, title, description, item_type, item_id, tab,
+             created_by_name, created_by_email, created_at, updated_at)
+            SELECT COALESCE(partner_code,''), COALESCE(suggestion_type,'doplnění'), COALESCE(module,'partners'),
+                   CASE WHEN COALESCE(status,'nový') IN ('nový','new') THEN 'new' ELSE COALESCE(status,'new') END,
+                   COALESCE(title,''), COALESCE(description,''), COALESCE(item_type,''), COALESCE(item_id,''), COALESCE(tab,''),
+                   COALESCE(created_by_name,''), COALESCE(created_by_email,''), COALESCE(created_at,NOW()), COALESCE(updated_at,NOW())
+            FROM data_suggestions ds
+            WHERE NOT EXISTS (
+              SELECT 1 FROM partner_change_requests pcr
+              WHERE COALESCE(pcr.partner_code,'')=COALESCE(ds.partner_code,'')
+                AND COALESCE(pcr.title,'')=COALESCE(ds.title,'')
+                AND COALESCE(pcr.description,'')=COALESCE(ds.description,'')
+                AND COALESCE(pcr.created_by_email,'')=COALESCE(ds.created_by_email,'')
+            )
+        """)
+        if err: errors.append(f"migrate data_suggestions: {err}")
+    return [e for e in errors if e]
+
+
+def partner_name_by_code_v110(db: Session, partner_code: str) -> str:
+    if not partner_code or not v110_table_exists(db, 'partners'):
+        return partner_code or ''
+    val = v110_scalar(db, "SELECT name FROM partners WHERE upper(partner_code)=upper(:code) LIMIT 1", {"code": partner_code})
+    return str(val or partner_code or '')
+
+
+def status_label_v110(status: str) -> str:
+    return {'new':'Nový','processing':'V řešení','approved':'Schváleno','rejected':'Zamítnuto','completed':'Hotovo'}.get(status or '', status or 'Nový')
+
+
+def normalize_status_v110(status: str) -> str:
+    s=(status or '').strip().lower()
+    return {'nový':'new','new':'new','v řešení':'processing','processing':'processing','schváleno':'approved','approved':'approved','zamítnuto':'rejected','rejected':'rejected','hotovo':'completed','completed':'completed'}.get(s, s or 'new')
+
+
+def get_bo_email_v110(db: Session) -> str:
+    return 'backoffice@astorieas.cz'
+
+
+def send_partner_workflow_email_v110(db: Session, to_email: str, subject: str, body: str):
+    if not to_email:
+        return False, 'Chybí e-mail příjemce.'
+    try:
+        import os, smtplib
+        from email.mime.text import MIMEText
+        smtp_host=os.getenv('SMTP_HOST','')
+        smtp_port=int(os.getenv('SMTP_PORT','587'))
+        smtp_user=os.getenv('SMTP_USER','')
+        smtp_password=os.getenv('SMTP_PASSWORD','')
+        smtp_from=os.getenv('SMTP_FROM', smtp_user or 'no-reply@astorieas.cz')
+        if not smtp_host or not smtp_user or not smtp_password:
+            return False, 'SMTP není nakonfigurováno; požadavek byl uložen bez odeslání e-mailu.'
+        msg=MIMEText(body,'plain','utf-8')
+        msg['Subject']=subject
+        msg['From']=smtp_from
+        msg['To']=to_email
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_from,[to_email],msg.as_string())
+        return True,''
+    except Exception as exc:
+        return False,str(exc)
+
+
+def create_partner_request_v110(db: Session, partner_code: str, request_type: str, title: str, description: str, request_area: str='partners', item_type: str='', item_id: str='', tab: str='', contact_name: str='', contact_phone: str='', contact_email: str='', current_value: str='', proposed_value: str=''):
+    ensure_partner_workflow_v110(db)
+    user=hub_user_context_v083_()
+    partner_name=partner_name_by_code_v110(db, partner_code)
+    request_id=str(uuid.uuid4())
+    priority='high' if any(x in (request_type or '').lower() for x in ['kontakt','chyba','neaktu']) else 'normal'
+    err=v110_exec(db, """
+        INSERT INTO partner_change_requests
+        (id, partner_code, partner_name, request_type, request_area, priority, status, title, description,
+         current_value, proposed_value, contact_name, contact_phone, contact_email, item_type, item_id, tab,
+         created_by_name, created_by_email)
+        VALUES
+        (:id,:partner_code,:partner_name,:request_type,:request_area,:priority,'new',:title,:description,
+         :current_value,:proposed_value,:contact_name,:contact_phone,:contact_email,:item_type,:item_id,:tab,
+         :created_by_name,:created_by_email)
+    """, {"id":request_id,"partner_code":partner_code or '',"partner_name":partner_name or '',"request_type":request_type or 'doplnění',"request_area":request_area or 'partners',"priority":priority,"title":title or '',"description":description or '',"current_value":current_value or '',"proposed_value":proposed_value or '',"contact_name":contact_name or '',"contact_phone":contact_phone or '',"contact_email":contact_email or '',"item_type":item_type or '',"item_id":item_id or '',"tab":tab or '',"created_by_name":user.get('name',''),"created_by_email":user.get('email','')})
+    if err: return None, err
+    v110_exec(db, """INSERT INTO partner_history (partner_code,event_type,title,description,created_by_name,created_by_email) VALUES (:partner_code,'change_request_created',:title,:description,:created_by_name,:created_by_email)""", {"partner_code":partner_code or '',"title":f"Nový požadavek: {title or request_type}","description":description or '',"created_by_name":user.get('name',''),"created_by_email":user.get('email','')})
+    bo_subject=f"[HUB] Nový požadavek na partnera – {partner_name or partner_code or 'partner'}"
+    bo_body=f"Dobrý den,\n\nv HUB ASTORIE byl vložen nový požadavek v sekci Partneři.\n\nPartner: {partner_name or partner_code or '—'}\nTyp požadavku: {request_type or '—'}\nNázev: {title or '—'}\nVložil: {user.get('name','')} ({user.get('email','')})\n\nPopis:\n{description or '—'}\n\nAdministrace: /admin/partner-requests\n\nASTORIE HUB"
+    sent_bo, bo_error = send_partner_workflow_email_v110(db, get_bo_email_v110(db), bo_subject, bo_body)
+    sent_user, user_error = send_partner_workflow_email_v110(db, user.get('email',''), 'Potvrzení přijetí požadavku – HUB ASTORIE', f"Dobrý den,\n\nváš požadavek byl úspěšně přijat a předán BackOffice ke zpracování.\n\nPartner: {partner_name or partner_code or '—'}\nTyp požadavku: {request_type or '—'}\nNázev: {title or '—'}\n\nDěkujeme za spolupráci.\n\nASTORIE a.s.")
+    if not sent_bo or not sent_user:
+        v110_exec(db, """INSERT INTO partner_request_comments (request_id,author_name,author_email,comment_text,is_internal) VALUES (:request_id,'Systém','system',:comment_text,TRUE)""", {"request_id":request_id,"comment_text":f"E-mail info: BO={bo_error or 'odesláno'} | poradce={user_error or 'odesláno'}"})
+    return request_id, None
+
+
+@router.get('/api/partner-workflow/status')
+def api_partner_workflow_status_v110(db: Session = Depends(get_db)):
+    errors=ensure_partner_workflow_v110(db)
+    counts={}
+    if v110_table_exists(db,'partner_change_requests'):
+        try:
+            db.rollback(); rows=db.execute(text("SELECT status, COUNT(*) AS count FROM partner_change_requests GROUP BY status ORDER BY status")).mappings().all(); db.commit()
+            counts={r['status']: int(r['count']) for r in rows}
+        except Exception as exc:
+            errors.append(str(exc)); db.rollback()
+    return {'ok':len(errors)==0,'version':PARTNER_WORKFLOW_VERSION,'message':'Partner Workflow Core je připraven.','counts':counts,'errors':errors}
+
+
+@router.post('/hub/partner-workflow/request')
+async def hub_partner_workflow_request_v110(request: Request, partner_code: str = Form(''), request_type: str = Form('doplnění'), title: str = Form(''), description: str = Form(''), request_area: str = Form('partners'), item_type: str = Form(''), item_id: str = Form(''), tab: str = Form(''), contact_name: str = Form(''), contact_phone: str = Form(''), contact_email: str = Form(''), current_value: str = Form(''), proposed_value: str = Form(''), db: Session = Depends(get_db)):
+    rid, err = create_partner_request_v110(db, partner_code, request_type, title, description, request_area, item_type, item_id, tab, contact_name, contact_phone, contact_email, current_value, proposed_value)
+    back=str(request.headers.get('referer') or '/hub/partners')
+    return RedirectResponse(back + ('&' if '?' in back else '?') + ('workflow=ok' if not err else 'workflow=error'), status_code=303)
+
+
+@router.post('/api/partners/request-change')
+async def api_partners_request_change_v110(partner_code: str = Form(''), request_type: str = Form('doplnění'), title: str = Form(''), description: str = Form(''), request_area: str = Form('partners'), item_type: str = Form(''), item_id: str = Form(''), tab: str = Form(''), contact_name: str = Form(''), contact_phone: str = Form(''), contact_email: str = Form(''), current_value: str = Form(''), proposed_value: str = Form(''), db: Session = Depends(get_db)):
+    rid, err = create_partner_request_v110(db, partner_code, request_type, title, description, request_area, item_type, item_id, tab, contact_name, contact_phone, contact_email, current_value, proposed_value)
+    return {'ok': not bool(err), 'id': rid, 'error': err, 'version': PARTNER_WORKFLOW_VERSION}
+
+
+@router.get('/admin/partner-requests', response_class=HTMLResponse)
+def admin_partner_requests_v110(request: Request, status: str = '', q: str = '', db: Session = Depends(get_db)):
+    ensure_partner_workflow_v110(db)
+    where='WHERE 1=1'; params={}
+    if status:
+        where+=' AND status=:status'; params['status']=normalize_status_v110(status)
+    if q:
+        where += """ AND (lower(COALESCE(partner_name,'')) LIKE :q OR lower(COALESCE(partner_code,'')) LIKE :q OR lower(COALESCE(title,'')) LIKE :q OR lower(COALESCE(description,'')) LIKE :q OR lower(COALESCE(created_by_name,'')) LIKE :q OR lower(COALESCE(created_by_email,'')) LIKE :q)"""; params['q']=f"%{q.lower()}%"
+    rows=fetch_all_safe_v084_(db, f"""SELECT * FROM partner_change_requests {where} ORDER BY CASE status WHEN 'new' THEN 1 WHEN 'processing' THEN 2 WHEN 'approved' THEN 3 WHEN 'completed' THEN 4 WHEN 'rejected' THEN 5 ELSE 9 END, created_at DESC LIMIT 500""", params)
+    stats=fetch_one_safe_v084_(db, """SELECT COUNT(*) FILTER (WHERE status='new') AS new_count, COUNT(*) FILTER (WHERE status='processing') AS processing_count, COUNT(*) FILTER (WHERE status='approved') AS approved_count, COUNT(*) FILTER (WHERE status='completed') AS completed_count, COUNT(*) FILTER (WHERE status='rejected') AS rejected_count, COUNT(*) AS total_count FROM partner_change_requests""") or {}
+    return render(request, 'admin_partner_requests.html', {'active':'partner_requests','rows':rows,'stats':stats,'status':status,'q':q,'status_label_v110':status_label_v110})
+
+
+@router.get('/admin/partner-requests/{request_id}', response_class=HTMLResponse)
+def admin_partner_request_detail_v110(request: Request, request_id: str, db: Session = Depends(get_db)):
+    ensure_partner_workflow_v110(db)
+    row=fetch_one_safe_v084_(db, 'SELECT * FROM partner_change_requests WHERE id=:id LIMIT 1', {'id':request_id})
+    comments=fetch_all_safe_v084_(db, 'SELECT * FROM partner_request_comments WHERE request_id=:id ORDER BY created_at DESC', {'id':request_id})
+    return render(request, 'admin_partner_request_detail.html', {'active':'partner_requests','row':row,'comments':comments,'status_label_v110':status_label_v110})
+
+
+@router.post('/admin/partner-requests/{request_id}/status')
+def admin_partner_request_status_v110(request_id: str, status: str = Form('processing'), admin_note: str = Form(''), db: Session = Depends(get_db)):
+    ensure_partner_workflow_v110(db); user=hub_user_context_v083_(); normalized=normalize_status_v110(status)
+    old=fetch_one_safe_v084_(db, 'SELECT * FROM partner_change_requests WHERE id=:id LIMIT 1', {'id':request_id})
+    err=v110_exec(db, """UPDATE partner_change_requests SET status=:status, admin_note=:admin_note, processed_by_name=:processed_by_name, processed_by_email=:processed_by_email, processed_at=CASE WHEN :status IN ('approved','rejected','completed') THEN NOW() ELSE processed_at END, updated_at=NOW() WHERE id=:id""", {'id':request_id,'status':normalized,'admin_note':admin_note or '', 'processed_by_name':user.get('name',''), 'processed_by_email':user.get('email','')})
+    if not err:
+        v110_exec(db, """INSERT INTO partner_request_comments (request_id,author_name,author_email,comment_text,is_internal) VALUES (:request_id,:author_name,:author_email,:comment_text,TRUE)""", {'request_id':request_id,'author_name':user.get('name',''),'author_email':user.get('email',''),'comment_text':f"Změna stavu na {status_label_v110(normalized)}. {admin_note or ''}"})
+        if old and normalized in {'approved','rejected','completed'} and old.get('created_by_email'):
+            send_partner_workflow_email_v110(db, old.get('created_by_email'), f"HUB ASTORIE – stav požadavku: {status_label_v110(normalized)}", f"Dobrý den,\n\nu vašeho požadavku v sekci Partneři došlo ke změně stavu.\n\nPartner: {old.get('partner_name') or old.get('partner_code') or '—'}\nPožadavek: {old.get('title') or '—'}\nNový stav: {status_label_v110(normalized)}\n\nPoznámka BO:\n{admin_note or '—'}\n\nASTORIE a.s.")
+    return RedirectResponse(f'/admin/partner-requests/{request_id}', status_code=303)
+
+
+@router.post('/admin/partner-requests/{request_id}/comment')
+def admin_partner_request_comment_v110(request_id: str, comment_text: str = Form(''), db: Session = Depends(get_db)):
+    ensure_partner_workflow_v110(db); user=hub_user_context_v083_()
+    if comment_text:
+        v110_exec(db, """INSERT INTO partner_request_comments (request_id,author_name,author_email,comment_text,is_internal) VALUES (:request_id,:author_name,:author_email,:comment_text,TRUE)""", {'request_id':request_id,'author_name':user.get('name',''),'author_email':user.get('email',''),'comment_text':comment_text})
+    return RedirectResponse(f'/admin/partner-requests/{request_id}', status_code=303)
+
+
+
+
+# -------------------------------------------------------------------
+# v1.1.1 Partner Workflow UX Upgrade
+# Premium partner workspace: dashboard counters, history timeline,
+# request badges, favorite button, compact fulltext and better data cards.
+# -------------------------------------------------------------------
+
+PARTNER_WORKFLOW_UX_VERSION = "1.1.1-partner-workflow-ux-upgrade"
+
+
+def ensure_partner_ux_v111(db: Session):
+    errors = []
+    for fn_name in ["ensure_partner_workflow_v110", "ensure_v103_tables"]:
+        fn = globals().get(fn_name)
+        if fn:
+            try:
+                res = fn(db)
+                if isinstance(res, list):
+                    errors.extend([str(e) for e in res if e])
+            except Exception as exc:
+                errors.append(f"{fn_name}: {exc}")
+
+    # Doplnit drobné tabulky, pokud v1.1.1 nebyla nasazená.
+    if globals().get("v110_exec"):
+        exec_fn = v110_exec
+    elif globals().get("v103_exec"):
+        exec_fn = v103_exec
+    else:
+        return errors
+
+    for sql in [
+        """
+        CREATE TABLE IF NOT EXISTS partner_change_requests (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            partner_code TEXT DEFAULT '',
+            partner_name TEXT DEFAULT '',
+            request_type TEXT DEFAULT '',
+            request_area TEXT DEFAULT '',
+            priority TEXT DEFAULT 'normal',
+            status TEXT DEFAULT 'new',
+            title TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            item_type TEXT DEFAULT '',
+            item_id TEXT DEFAULT '',
+            tab TEXT DEFAULT '',
+            created_by_name TEXT DEFAULT '',
+            created_by_email TEXT DEFAULT '',
+            admin_note TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS partner_history (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            partner_code TEXT DEFAULT '',
+            event_type TEXT DEFAULT '',
+            title TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            created_by_name TEXT DEFAULT '',
+            created_by_email TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS partner_favorites (
+            id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+            partner_code TEXT DEFAULT '',
+            user_email TEXT DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """,
+    ]:
+        err = exec_fn(db, sql)
+        if err:
+            errors.append(err)
+
+    return [e for e in errors if e]
+
+
+def fetch_partner_dashboard_v111(db: Session, partner_code: str):
+    ensure_partner_ux_v111(db)
+    def count_sql(table, where):
+        try:
+            return int(db.execute(text(f"SELECT COUNT(*) FROM {table} WHERE {where}"), {"code": partner_code}).scalar() or 0)
+        except Exception:
+            try: db.rollback()
+            except Exception: pass
+            return 0
+
+    counts = {
+        "contacts": count_sql("partner_contacts", "upper(COALESCE(partner_code,'')) = upper(:code) AND COALESCE(is_active, TRUE)=TRUE") if table_exists_v084_(db, "partner_contacts") else 0,
+        "links": count_sql("partner_links", "upper(COALESCE(partner_code,'')) = upper(:code) AND COALESCE(is_active, TRUE)=TRUE") if table_exists_v084_(db, "partner_links") else 0,
+        "products": count_sql("partner_products", "upper(COALESCE(partner_code,'')) = upper(:code) AND COALESCE(is_active, TRUE)=TRUE") if table_exists_v084_(db, "partner_products") else 0,
+        "faq": count_sql("partner_faq", "(upper(COALESCE(partner_code,'')) = upper(:code) OR COALESCE(partner_code,'')='') AND COALESCE(is_active, TRUE)=TRUE") if table_exists_v084_(db, "partner_faq") else 0,
+        "requests_open": count_sql("partner_change_requests", "upper(COALESCE(partner_code,'')) = upper(:code) AND COALESCE(status,'new') IN ('new','processing')") if table_exists_v084_(db, "partner_change_requests") else 0,
+    }
+    return counts
+
+
+def fetch_partner_history_v111(db: Session, partner_code: str):
+    ensure_partner_ux_v111(db)
+    if not table_exists_v084_(db, "partner_history"):
+        return []
+    return fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM partner_history
+        WHERE upper(COALESCE(partner_code,'')) = upper(:code)
+        ORDER BY created_at DESC
+        LIMIT 30
+    """, {"code": partner_code})
+
+
+def fetch_partner_requests_v111(db: Session, partner_code: str):
+    ensure_partner_ux_v111(db)
+    if not table_exists_v084_(db, "partner_change_requests"):
+        return []
+    return fetch_all_safe_v084_(db, """
+        SELECT *
+        FROM partner_change_requests
+        WHERE upper(COALESCE(partner_code,'')) = upper(:code)
+        ORDER BY
+          CASE status WHEN 'new' THEN 1 WHEN 'processing' THEN 2 WHEN 'approved' THEN 3 WHEN 'completed' THEN 4 WHEN 'rejected' THEN 5 ELSE 9 END,
+          created_at DESC
+        LIMIT 50
+    """, {"code": partner_code})
+
+
+@router.get("/api/partner-workflow/ux-status")
+def api_partner_workflow_ux_status_v111(db: Session = Depends(get_db)):
+    errors = ensure_partner_ux_v111(db)
+    return {
+        "ok": len(errors) == 0,
+        "version": PARTNER_WORKFLOW_UX_VERSION,
+        "message": "Partner Workflow UX Upgrade je připraven.",
+        "errors": errors,
+    }
+
+
+@router.post("/hub/partners/favorite")
+def hub_partner_favorite_v111(
+    partner_code: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_partner_ux_v111(db)
+    user = hub_user_context_v083_()
+    email = user.get("email", "")
+    if partner_code and email:
+        exists = fetch_one_safe_v084_(db, """
+            SELECT id FROM partner_favorites
+            WHERE upper(partner_code)=upper(:code) AND lower(user_email)=lower(:email)
+            LIMIT 1
+        """, {"code": partner_code, "email": email})
+        if exists:
+            v110_exec(db, "DELETE FROM partner_favorites WHERE id=:id", {"id": exists.get("id")})
+        else:
+            v110_exec(db, """
+                INSERT INTO partner_favorites (partner_code, user_email)
+                VALUES (:code, :email)
+            """, {"code": partner_code, "email": email})
+    return RedirectResponse(f"/hub/partners?selected={partner_code}", status_code=303)
 
