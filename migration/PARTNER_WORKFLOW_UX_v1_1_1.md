@@ -1,4 +1,4 @@
-# HUB ASTORIE APP – v1.1.6 Partner Workflow UX Upgrade
+# HUB ASTORIE APP – v1.1.7 Partner Workflow UX Upgrade
 
 ## Přidáno
 - prémiový workspace sekce Partneři

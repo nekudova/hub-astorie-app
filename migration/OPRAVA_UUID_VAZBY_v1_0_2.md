@@ -1,4 +1,4 @@
-# HUB ASTORIE – v1.1.6 uuid-relationship-fix
+# HUB ASTORIE – v1.1.7 uuid-relationship-fix
 
 ## Opravená chyba
 
@@ -26,7 +26,7 @@ invalid input syntax for type uuid: ""
 
 ## Postup
 
-1. `/version` = `1.1.6-partners-figma-like-safe`
+1. `/version` = `1.1.7-partners-workspace-pro-safe`
 2. `/api/import/hub-xlsx/repair-database`
 3. `/api/import/hub-xlsx/repair-uuid-relationships`
 4. `/api/import/hub-xlsx/preflight`

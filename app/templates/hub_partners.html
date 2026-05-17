@@ -9,98 +9,94 @@
 {% set safe_products = products if products is defined and products else [] %}
 {% set active_tab = tab or 'overview' %}
 
-<div id="partnerLoading" class="partner-loading-v116">
-  <span class="partner-spinner-v116"></span>
+<div id="partnerLoading" class="partner-loading-v117">
+  <span class="partner-spinner-v117"></span>
   <span>Načítám data…</span>
 </div>
 
-<div class="partners-v116">
-  <header class="partners-page-head-v116">
+<div class="partners-v117" data-page="partners">
+  <header class="partners-commandbar-v117">
     <div>
-      <h1>🏛️ Partneři</h1>
-      <p>Přehled partnerů a detailní informace včetně kontaktů, produktů, dokumentů a změnových požadavků.</p>
+      <h1>Partneři</h1>
+      <p>Centrální workspace pro kontakty, produkty, odkazy, FAQ a změnové požadavky.</p>
     </div>
-    <div class="partners-top-actions-v116">
-      <form method="get" class="global-search-v116" onsubmit="showPartnerLoading()">
-        <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, IČO, kontakt…">
-        <button>⌘ K</button>
+    <div class="partners-command-actions-v117">
+      <form method="get" class="global-search-v117" onsubmit="showPartnerLoading()">
+        <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera, IČO, kontakt, e-mail…">
+        <button type="submit">Hledat</button>
       </form>
-      <button class="icon-btn-v116" type="button">🔔</button>
-      <div class="user-chip-v116">
-        <strong>{{ user.name if user is defined and user.name else 'Poradce' }}</strong>
-        <span>Poradce</span>
-      </div>
+      {% if partner %}
+        <button type="button" class="primary-mini-v117" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh</button>
+      {% endif %}
     </div>
   </header>
 
   {% if route_error %}
-    <div class="notice-v116 danger">Bezpečný režim partner modulu: {{ route_error }}</div>
+    <div class="notice-v117 danger">Bezpečný režim partner modulu: {{ route_error }}</div>
   {% endif %}
   {% if request.query_params.get('workflow') == 'ok' or request.query_params.get('suggestion') == 'ok' %}
-    <div class="notice-v116 ok">Požadavek byl uložen a předán BackOffice ke zpracování.</div>
+    <div class="notice-v117 ok">Požadavek byl uložen a předán BackOffice ke zpracování.</div>
+  {% elif request.query_params.get('workflow') == 'error' or request.query_params.get('suggestion') == 'error' %}
+    <div class="notice-v117 danger">Požadavek se nepodařilo uložit. Zkuste jej prosím odeslat znovu.</div>
   {% endif %}
 
-  <div class="partner-workspace-v116">
-    <aside class="partner-directory-v116">
-      <div class="filter-row-v116">
-        <a class="filter-pill-v116 active" href="/hub/partners">Všichni</a>
-        <button class="filter-pill-v116" type="button">Oblíbení ☆</button>
-        <button class="filter-pill-v116" type="button">Aktivní</button>
-        <button class="filter-pill-v116" type="button">VIP</button>
-        <button class="filter-icon-v116" type="button">⌕</button>
+  <div class="partner-workspace-v117">
+    <aside class="partner-directory-v117">
+      <div class="directory-controls-v117">
+        <button class="filter-pill-v117 active" type="button">Všichni</button>
+        <button class="filter-pill-v117" type="button">Aktivní</button>
+        <button class="filter-pill-v117" type="button">VIP</button>
       </div>
 
-      <form method="get" class="directory-search-v116" onsubmit="showPartnerLoading()">
-        <input name="q" value="{{ q or '' }}" placeholder="Hledat partnera…">
-      </form>
+      <input id="partnerListSearch" class="directory-search-v117" placeholder="Filtrovat seznam partnerů…">
 
-      <div class="partner-list-v116">
+      <div class="partner-count-v117">Zobrazeno: <strong>{{ partners|length if partners is defined else 0 }}</strong></div>
+
+      <div id="partnerListV117" class="partner-list-v117">
         {% for p in partners %}
-          <a class="partner-list-item-v116 {{ 'active' if selected == p.partner_code else '' }}"
+          <a class="partner-list-item-v117 {{ 'active' if selected == p.partner_code else '' }}"
+             data-search="{{ (p.name or p.partner_name or p.partner_code ~ ' ' ~ p.partner_code ~ ' ' ~ (p.ico or '') ~ ' ' ~ (p.registry_email or '') ~ ' ' ~ (p.city or ''))|lower }}"
              href="/hub/partners?selected={{ p.partner_code }}&tab=overview"
              onclick="showPartnerLoading()">
-            <div class="logo-placeholder-v116">{{ (p.name or p.partner_name or p.partner_code)[:2] }}</div>
-            <div>
+            <div class="logo-v117">{{ (p.name or p.partner_name or p.partner_code)[:2] }}</div>
+            <div class="partner-list-text-v117">
               <strong>{{ p.name or p.partner_name or p.partner_code }}</strong>
               <span>{{ p.partner_code }}</span>
               <em>Aktivní</em>
             </div>
-            <b>☆</b>
+            <b>›</b>
           </a>
         {% else %}
-          <div class="empty-v116">Nenalezen žádný partner.</div>
+          <div class="empty-v117">Nenalezen žádný partner.</div>
         {% endfor %}
       </div>
     </aside>
 
-    <main class="partner-panel-v116">
+    <main class="partner-main-v117">
       {% if partner %}
-        <section class="partner-hero-card-v116">
-          <div class="partner-logo-name-v116">
-            <div class="partner-brand-v116">{{ (partner.name or partner.partner_name or partner.partner_code)[:3] }}</div>
+        <section class="partner-compact-hero-v117">
+          <div class="partner-logo-name-v117">
+            <div class="partner-logo-v117">{{ (partner.name or partner.partner_name or partner.partner_code)[:3] }}</div>
             <div>
               <h2>{{ partner.name or partner.partner_name or partner.partner_code }}</h2>
-              <div class="badges-v116">
+              <div class="badges-v117">
                 <span>{{ partner.partner_code }}</span>
-                <span class="green">Aktivní partner</span>
-                <span class="gold">VIP partner</span>
+                <span class="green">Aktivní</span>
+                <span class="gold">VIP</span>
               </div>
               <p>
-                IČO: {{ partner.ico or '—' }} · Kód: {{ partner.partner_code or '—' }} · DS: {{ partner.data_box or '—' }}
+                IČO: {{ partner.ico or '—' }} · DS: {{ partner.data_box or '—' }} · E-mail: {{ partner.registry_email or '—' }}
               </p>
-              <p class="address-v116">📍 {{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</p>
+              <p class="address-v117">📍 {{ partner.address_full or partner.street or '—' }} {{ partner.city or '' }} {{ partner.zip_code or '' }}</p>
             </div>
           </div>
-
-          <div class="hero-actions-v116">
-            <button type="button" class="outline-btn-v116">☆ Přidat mezi oblíbené</button>
-            <button type="button" class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Navrhnout doplnění / změnu</button>
-            <button type="button" class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Nahlásit změnu údajů</button>
-            <button type="button" class="outline-btn-v116">↗ Sdílet partnera</button>
+          <div class="partner-actions-v117">
+            <button type="button" onclick="togglePartnerForm('partner-suggest-main')">+ Navrhnout změnu / doplnění</button>
+            <button type="button" onclick="togglePartnerForm('partner-suggest-main')">Nahlásit chybu</button>
           </div>
         </section>
 
-        <form id="partner-suggest-main" method="post" action="/hub/partner-workflow/request" class="request-form-v116" style="display:none;" onsubmit="showPartnerLoading()">
+        <form id="partner-suggest-main" method="post" action="/hub/partner-workflow/request" class="request-form-v117" style="display:none;" onsubmit="showPartnerLoading()">
           <input type="hidden" name="request_area" value="partners">
           <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
           <input type="hidden" name="tab" value="{{ active_tab }}">
@@ -123,25 +119,173 @@
             <label>Popis</label>
             <textarea name="description" placeholder="Popište, co má BackOffice ověřit nebo doplnit."></textarea>
           </div>
-          <div class="form-actions-v116">
-            <button type="button" class="btn-muted-v116" onclick="togglePartnerForm('partner-suggest-main')">Zavřít</button>
-            <button class="btn-primary-v116">Odeslat BO</button>
+          <div class="form-actions-v117">
+            <button type="button" class="muted-v117" onclick="togglePartnerForm('partner-suggest-main')">Zavřít</button>
+            <button class="submit-v117">Odeslat BO</button>
           </div>
         </form>
 
-        <nav class="partner-tabs-v116">
-          <a class="{{ 'active' if active_tab == 'overview' else '' }}" href="/hub/partners?selected={{ selected }}&tab=overview" onclick="showPartnerLoading()">▦ Přehled</a>
-          <a class="{{ 'active' if active_tab == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts" onclick="showPartnerLoading()">♙ Kontakty <span>{{ safe_contacts|length }}</span></a>
-          <a class="{{ 'active' if active_tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products" onclick="showPartnerLoading()">▧ Produkty <span>{{ safe_products|length }}</span></a>
-          <a class="{{ 'active' if active_tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links" onclick="showPartnerLoading()">🔗 Odkazy <span>{{ safe_links|length }}</span></a>
-          <a class="{{ 'active' if active_tab == 'faq' else '' }}" href="/hub/partners?selected={{ selected }}&tab=faq" onclick="showPartnerLoading()">? FAQ <span>{{ safe_faqs|length }}</span></a>
-          <a class="{{ 'active' if active_tab == 'requests' else '' }}" href="/hub/partners?selected={{ selected }}&tab=requests" onclick="showPartnerLoading()">□ Požadavky</a>
-          <a class="{{ 'active' if active_tab == 'history' else '' }}" href="/hub/partners?selected={{ selected }}&tab=history" onclick="showPartnerLoading()">↺ Historie</a>
+        <nav class="partner-tabs-v117">
+          <a class="{{ 'active' if active_tab == 'overview' else '' }}" href="/hub/partners?selected={{ selected }}&tab=overview" onclick="showPartnerLoading()">Přehled</a>
+          <a class="{{ 'active' if active_tab == 'contacts' else '' }}" href="/hub/partners?selected={{ selected }}&tab=contacts" onclick="showPartnerLoading()">Kontakty <span>{{ safe_contacts|length }}</span></a>
+          <a class="{{ 'active' if active_tab == 'products' else '' }}" href="/hub/partners?selected={{ selected }}&tab=products" onclick="showPartnerLoading()">Produkty <span>{{ safe_products|length }}</span></a>
+          <a class="{{ 'active' if active_tab == 'links' else '' }}" href="/hub/partners?selected={{ selected }}&tab=links" onclick="showPartnerLoading()">Odkazy <span>{{ safe_links|length }}</span></a>
+          <a class="{{ 'active' if active_tab == 'faq' else '' }}" href="/hub/partners?selected={{ selected }}&tab=faq" onclick="showPartnerLoading()">FAQ <span>{{ safe_faqs|length }}</span></a>
+          <a class="{{ 'active' if active_tab == 'requests' else '' }}" href="/hub/partners?selected={{ selected }}&tab=requests" onclick="showPartnerLoading()">Požadavky</a>
+          <a class="{{ 'active' if active_tab == 'history' else '' }}" href="/hub/partners?selected={{ selected }}&tab=history" onclick="showPartnerLoading()">Historie</a>
         </nav>
 
-        {% if active_tab == 'overview' %}
-          <div class="overview-grid-v116">
-            <section class="info-card-v116">
+        {% if active_tab == 'contacts' %}
+          <section class="tab-toolbar-v117">
+            <div>
+              <h3>Kontakty</h3>
+              <p>Kontakty jsou automaticky rozdělené podle významu a účelu. Vše je řazeno abecedně.</p>
+            </div>
+            <div class="tab-toolbar-actions-v117">
+              <input id="contactFulltextV117" placeholder="Fulltext v kontaktech: jméno, role, region, telefon, e-mail…">
+              <button type="button" onclick="togglePartnerForm('partner-suggest-main')">+ Nový kontakt</button>
+            </div>
+          </section>
+
+          <div class="contact-groups-v117">
+            <section class="contact-group-v117" data-group="vip">
+              <header><h4>⭐ VIP / TOP kontakty</h4><span data-count="vip">0</span></header>
+              <div id="contactsVipV117" class="contact-grid-v117"></div>
+            </section>
+
+            <section class="contact-group-v117" data-group="person">
+              <header><h4>👤 Osobní kontakty</h4><span data-count="person">0</span></header>
+              <div id="contactsPersonV117" class="contact-grid-v117"></div>
+            </section>
+
+            <section class="contact-group-v117" data-group="service">
+              <header><h4>🏢 Pobočky, hotline, metodika a servisní kontakty</h4><span data-count="service">0</span></header>
+              <div id="contactsServiceV117" class="contact-grid-v117"></div>
+            </section>
+          </div>
+
+          <div id="contactsRawV117" style="display:none;">
+            {% for c in safe_contacts %}
+              <article class="contact-card-v117"
+                data-name="{{ (c.full_name or c.contact_name or c.name or 'Kontakt')|lower }}"
+                data-search="{{ (c.full_name or c.contact_name or c.name or 'Kontakt' ~ ' ' ~ (c.role or c.role_description or c.contact_type or '') ~ ' ' ~ (c.territory or c.region or '') ~ ' ' ~ (c.phone or '') ~ ' ' ~ (c.email or '') ~ ' ' ~ (c.specialization or ''))|lower }}"
+                data-meta="{{ ((c.role or c.role_description or c.contact_type or '') ~ ' ' ~ (c.territory or c.region or '') ~ ' ' ~ (c.specialization or '') ~ ' ' ~ (c.note or ''))|lower }}">
+                <div class="contact-card-head-v117">
+                  <div>
+                    <h4>{{ c.full_name or c.contact_name or c.name or 'Kontakt' }}</h4>
+                    <p>{{ c.role or c.role_description or c.contact_type or 'Kontakt' }}</p>
+                  </div>
+                  {% if c.territory or c.region %}<span>{{ c.territory or c.region }}</span>{% endif %}
+                </div>
+                {% if c.specialization %}<small>{{ c.specialization }}</small>{% endif %}
+                <div class="contact-lines-v117">
+                  <p>☎ {{ c.phone or '—' }}</p>
+                  <p>✉ {{ c.email or '—' }}</p>
+                </div>
+                <button type="button" onclick="openContactSuggest('{{ c.id }}','{{ (c.full_name or c.contact_name or c.name or 'Kontakt')|e }}')">Nahlásit změnu</button>
+              </article>
+            {% else %}
+              <div class="empty-v117">U partnera nejsou zadané kontakty.</div>
+            {% endfor %}
+          </div>
+
+        {% elif active_tab == 'products' %}
+          <section class="tab-toolbar-v117">
+            <div>
+              <h3>Produkty</h3>
+              <p>Produkty jsou automaticky seskupené podle sekce a řazené abecedně.</p>
+            </div>
+            <div class="tab-toolbar-actions-v117">
+              <input id="productFulltextV117" placeholder="Fulltext v produktech…">
+              <button type="button" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh produktu</button>
+            </div>
+          </section>
+
+          <div id="productGroupsV117" class="product-groups-v117"></div>
+
+          <div id="productsRawV117" style="display:none;">
+            {% for pr in safe_products %}
+              <article class="product-item-v117"
+                data-area="{{ (pr.area or 'Ostatní')|lower }}"
+                data-title="{{ (pr.product_name or pr.name or 'Produkt')|lower }}"
+                data-search="{{ (pr.area or '') ~ ' ' ~ (pr.subarea or '') ~ ' ' ~ (pr.product_name or pr.name or '') ~ ' ' ~ (pr.client_type or '') ~ ' ' ~ (pr.keywords or '') ~ ' ' ~ (pr.note or '') }}">
+                <strong>{{ pr.product_name or pr.name or 'Produkt' }}</strong>
+                <span>{{ pr.area or 'Ostatní' }}{% if pr.subarea %} · {{ pr.subarea }}{% endif %}</span>
+                {% if pr.client_type %}<small>Typ klienta: {{ pr.client_type }}</small>{% endif %}
+                {% if pr.keywords %}<small>Klíčová slova: {{ pr.keywords }}</small>{% endif %}
+                {% if pr.note %}<p>{{ pr.note }}</p>{% endif %}
+              </article>
+            {% else %}
+              <div class="empty-v117">U partnera nejsou zadané produkty.</div>
+            {% endfor %}
+          </div>
+
+        {% elif active_tab == 'links' %}
+          <section class="tab-toolbar-v117">
+            <div><h3>Odkazy</h3><p>Užitečné odkazy partnera řazené abecedně.</p></div>
+            <div class="tab-toolbar-actions-v117"><input id="linkFulltextV117" placeholder="Fulltext v odkazech…"></div>
+          </section>
+          <div id="linksGridV117" class="links-grid-v117">
+            {% for l in safe_links %}
+              <a class="link-card-v117" data-search="{{ (l.title or l.link_name or l.name or 'Odkaz' ~ ' ' ~ (l.category or '') ~ ' ' ~ (l.url or ''))|lower }}" href="{{ l.url }}" target="_blank">
+                <strong>{{ l.title or l.link_name or l.name or 'Odkaz' }}</strong>
+                <span>{{ l.category or 'Odkaz' }}</span>
+                <small>{{ l.url }}</small>
+              </a>
+            {% else %}
+              <div class="empty-v117">U partnera nejsou zadané odkazy.</div>
+            {% endfor %}
+          </div>
+
+        {% elif active_tab == 'faq' %}
+          <section class="tab-toolbar-v117">
+            <div><h3>FAQ</h3><p>Knowledge base k partnerovi.</p></div>
+            <div class="tab-toolbar-actions-v117"><button type="button" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh FAQ</button></div>
+          </section>
+          {% for f in safe_faqs %}
+            <details class="accordion-v117" open>
+              <summary><strong>{{ f.question }}</strong><span>{{ f.category or 'FAQ' }}</span></summary>
+              <div>{{ f.answer or 'Odpověď zatím není doplněna.' }}</div>
+            </details>
+          {% else %}
+            <div class="empty-v117">FAQ zatím není evidované.</div>
+          {% endfor %}
+
+        {% elif active_tab == 'requests' %}
+          <section class="tab-toolbar-v117">
+            <div><h3>Požadavky</h3><p>Požadavky poradce k partnerovi.</p></div>
+            <div class="tab-toolbar-actions-v117"><button type="button" onclick="togglePartnerForm('partner-suggest-main')">+ Nový požadavek</button></div>
+          </section>
+          <div class="timeline-v117">
+            {% for r in safe_requests %}
+              <article>
+                <span>{{ r.status or 'new' }}</span>
+                <strong>{{ r.title or r.request_type or 'Požadavek' }}</strong>
+                <p>{{ r.description or '' }}</p>
+                <small>{{ r.created_at or '' }}</small>
+              </article>
+            {% else %}
+              <div class="empty-v117">Zatím žádné požadavky.</div>
+            {% endfor %}
+          </div>
+
+        {% elif active_tab == 'history' %}
+          <section class="tab-toolbar-v117"><div><h3>Historie</h3><p>Audit změn a úprav partnera.</p></div></section>
+          <div class="timeline-v117">
+            {% for h in safe_history %}
+              <article>
+                <strong>{{ h.title or h.event_type or 'Změna' }}</strong>
+                <p>{{ h.description or '' }}</p>
+                <small>{{ h.created_at or '' }}</small>
+              </article>
+            {% else %}
+              <div class="empty-v117">Historie zatím není dostupná.</div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <section class="overview-grid-v117">
+            <article class="overview-card-v117">
               <h3>O partnerovi</h3>
               <p>{{ partner.note or 'Partner je součástí centrální evidence ASTORIE HUB. Detail obsahuje kontakty, produkty, odkazy, FAQ a požadavky na změny.' }}</p>
               <dl>
@@ -149,146 +293,28 @@
                 <dt>Telefon</dt><dd>{{ partner.phone or '—' }}</dd>
                 <dt>E-mail</dt><dd>{{ partner.registry_email or '—' }}</dd>
               </dl>
-            </section>
-
-            <section class="info-card-v116 quick-info-v116">
+            </article>
+            <article class="overview-card-v117">
               <h3>Rychlé informace</h3>
-              <div class="mini-kpi-grid-v116">
+              <div class="mini-kpis-v117">
                 <div><strong>{{ safe_contacts|length }}</strong><span>Kontaktů</span></div>
                 <div><strong>{{ safe_products|length }}</strong><span>Produktů</span></div>
-                <div><strong>{{ safe_faqs|length }}</strong><span>FAQ</span></div>
                 <div><strong>{{ safe_links|length }}</strong><span>Odkazů</span></div>
+                <div><strong>{{ safe_faqs|length }}</strong><span>FAQ</span></div>
               </div>
-            </section>
-
-            <section class="info-card-v116 updated-v116">
-              <h3>Naposledy aktualizováno</h3>
-              <p>Údaje o partnerovi <strong>—</strong></p>
-              <p>Kontakty <strong>{{ safe_contacts|length }}</strong></p>
-              <p>Produkty <strong>{{ safe_products|length }}</strong></p>
-              <button class="outline-btn-v116">Zobrazit historii změn</button>
-            </section>
-
-            <section class="info-card-v116 contacts-preview-v116">
-              <div class="card-head-v116"><h3>Hlavní kontakty</h3><a href="/hub/partners?selected={{ selected }}&tab=contacts">Zobrazit všechny</a></div>
-              {% for c in safe_contacts[:3] %}
-                <div class="person-row-v116">
-                  <div class="avatar-v116">{{ (c.full_name or c.contact_name or c.name or '?')[:2] }}</div>
-                  <div>
-                    <strong>{{ c.full_name or c.contact_name or c.name or 'Kontakt' }}</strong>
-                    <span>{{ c.role or c.role_description or c.contact_type or 'Kontakt' }}</span>
-                    <small>{{ c.phone or '' }}{% if c.email %} · {{ c.email }}{% endif %}</small>
-                  </div>
-                  <button type="button">✉</button>
-                </div>
-              {% else %}
-                <div class="empty-v116">Kontakty nejsou evidované.</div>
-              {% endfor %}
-            </section>
-
-            <section class="info-card-v116 requests-preview-v116">
-              <div class="card-head-v116"><h3>Poslední požadavky na změnu / doplnění</h3><a href="/hub/partners?selected={{ selected }}&tab=requests">Zobrazit všechny</a></div>
+            </article>
+            <article class="overview-card-v117">
+              <h3>Poslední požadavky</h3>
               {% for r in safe_requests[:3] %}
-                <div class="request-row-v116">
-                  <span class="status-v116 pending">{{ r.status or 'Čeká' }}</span>
-                  <strong>{{ r.title or r.request_type or 'Požadavek' }}</strong>
-                  <small>{{ r.created_at or '' }}</small>
-                </div>
+                <div class="mini-request-v117"><strong>{{ r.title or r.request_type or 'Požadavek' }}</strong><span>{{ r.status or 'new' }}</span></div>
               {% else %}
-                <div class="empty-v116">Zatím žádné požadavky.</div>
+                <p>Bez požadavků.</p>
               {% endfor %}
-              <button class="full-width-btn-v116" type="button" onclick="togglePartnerForm('partner-suggest-main')">+ Nový požadavek na změnu / doplnění</button>
-            </section>
-          </div>
-
-        {% elif active_tab == 'contacts' %}
-          <div class="tab-head-v116"><h3>Kontakty ({{ safe_contacts|length }})</h3><button class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Nový kontakt</button></div>
-          <div class="contacts-grid-v116">
-            {% for c in safe_contacts %}
-              <article class="contact-card-v116">
-                <div class="contact-top-v116">
-                  <div>
-                    <h4>{{ c.full_name or c.contact_name or c.name or 'Kontakt' }}</h4>
-                    <p>{{ c.role or c.role_description or c.contact_type or 'Kontakt' }}</p>
-                  </div>
-                  {% if c.territory or c.region %}<span>{{ c.territory or c.region }}</span>{% endif %}
-                </div>
-                <p>☎ {{ c.phone or '—' }}</p>
-                <p>✉ {{ c.email or '—' }}</p>
-                <button type="button" onclick="openContactSuggest('{{ c.id }}','{{ (c.full_name or c.contact_name or c.name or 'Kontakt')|e }}')">✎ Nahlásit změnu</button>
-              </article>
-            {% else %}
-              <div class="empty-v116">U partnera nejsou zadané kontakty.</div>
-            {% endfor %}
-          </div>
-
-        {% elif active_tab == 'products' %}
-          <div class="tab-head-v116"><h3>Produkty ({{ safe_products|length }})</h3><button class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh produktu</button></div>
-          {% for pr in safe_products %}
-            <details class="accordion-v116">
-              <summary><strong>{{ pr.area or pr.product_name or pr.name or 'Produkt' }}</strong><span>{{ pr.subarea or 'detail' }}</span></summary>
-              <div>
-                <strong>{{ pr.product_name or pr.name or 'Produkt' }}</strong>
-                {% if pr.client_type %}<p>Typ klienta: {{ pr.client_type }}</p>{% endif %}
-                {% if pr.keywords %}<p>Klíčová slova: {{ pr.keywords }}</p>{% endif %}
-                {% if pr.note %}<p>{{ pr.note }}</p>{% endif %}
-              </div>
-            </details>
-          {% else %}
-            <div class="empty-v116">U partnera nejsou zadané produkty.</div>
-          {% endfor %}
-
-        {% elif active_tab == 'links' %}
-          <div class="tab-head-v116"><h3>Odkazy ({{ safe_links|length }})</h3><button class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh odkazu</button></div>
-          <div class="links-grid-v116">
-            {% for l in safe_links %}
-              <a class="link-card-v116" href="{{ l.url }}" target="_blank">
-                <strong>{{ l.title or l.link_name or l.name or 'Odkaz' }}</strong>
-                <span>{{ l.category or 'Odkaz' }}</span>
-                <small>{{ l.url }}</small>
-              </a>
-            {% else %}
-              <div class="empty-v116">U partnera nejsou zadané odkazy.</div>
-            {% endfor %}
-          </div>
-
-        {% elif active_tab == 'faq' %}
-          <div class="tab-head-v116"><h3>FAQ ({{ safe_faqs|length }})</h3><button class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Návrh FAQ</button></div>
-          {% for f in safe_faqs %}
-            <details class="accordion-v116" open>
-              <summary><strong>{{ f.question }}</strong><span>{{ f.category or 'FAQ' }}</span></summary>
-              <div>{{ f.answer or 'Odpověď zatím není doplněna.' }}</div>
-            </details>
-          {% else %}
-            <div class="empty-v116">FAQ zatím není evidované.</div>
-          {% endfor %}
-
-        {% elif active_tab == 'requests' %}
-          <div class="tab-head-v116"><h3>Požadavky</h3><button class="outline-btn-v116" onclick="togglePartnerForm('partner-suggest-main')">+ Nový požadavek</button></div>
-          {% for r in safe_requests %}
-            <div class="request-row-v116 large">
-              <span class="status-v116 pending">{{ r.status or 'new' }}</span>
-              <strong>{{ r.title or r.request_type or 'Požadavek' }}</strong>
-              <p>{{ r.description or '' }}</p>
-            </div>
-          {% else %}
-            <div class="empty-v116">Zatím žádné požadavky.</div>
-          {% endfor %}
-
-        {% else %}
-          <div class="tab-head-v116"><h3>Historie</h3></div>
-          {% for h in safe_history %}
-            <div class="request-row-v116 large">
-              <strong>{{ h.title or h.event_type or 'Změna' }}</strong>
-              <p>{{ h.description or '' }}</p>
-              <small>{{ h.created_at or '' }}</small>
-            </div>
-          {% else %}
-            <div class="empty-v116">Historie zatím není dostupná.</div>
-          {% endfor %}
+            </article>
+          </section>
         {% endif %}
 
-        <form id="contact-suggest" method="post" action="/hub/partner-workflow/request" class="request-form-v116" style="display:none;" onsubmit="showPartnerLoading()">
+        <form id="contact-suggest" method="post" action="/hub/partner-workflow/request" class="request-form-v117" style="display:none;" onsubmit="showPartnerLoading()">
           <input type="hidden" name="request_area" value="partners">
           <input type="hidden" name="partner_code" value="{{ partner.partner_code }}">
           <input type="hidden" name="tab" value="contacts">
@@ -301,21 +327,23 @@
           </div>
           <div class="span-2">
             <label>Popis změny</label>
-            <textarea name="description"></textarea>
+            <textarea name="description" placeholder="Popište, co je špatně nebo co má BackOffice opravit."></textarea>
           </div>
-          <div class="form-actions-v116">
-            <button type="button" class="btn-muted-v116" onclick="togglePartnerForm('contact-suggest')">Zavřít</button>
-            <button class="btn-primary-v116">Odeslat BO</button>
+          <div class="form-actions-v117">
+            <button type="button" class="muted-v117" onclick="togglePartnerForm('contact-suggest')">Zavřít</button>
+            <button class="submit-v117">Odeslat BO</button>
           </div>
         </form>
       {% else %}
-        <section class="empty-v116">Vyberte partnera ze seznamu.</section>
+        <section class="empty-v117">Vyberte partnera ze seznamu.</section>
       {% endif %}
     </main>
   </div>
 </div>
 
 <script>
+document.body.classList.add("partners-page-v117");
+
 function showPartnerLoading(){
   const el = document.getElementById("partnerLoading");
   if(el) el.classList.add("show");
@@ -326,6 +354,7 @@ function hidePartnerLoading(){
 }
 window.addEventListener("pageshow", hidePartnerLoading);
 window.addEventListener("load", hidePartnerLoading);
+
 function togglePartnerForm(id){
   const el = document.getElementById(id);
   if(!el) return;
@@ -342,5 +371,133 @@ function openContactSuggest(id, title){
     form.scrollIntoView({behavior:"smooth", block:"center"});
   }
 }
+function normalizeText(value){
+  return (value || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+function sortElementsByName(elements){
+  return elements.sort((a,b) => normalizeText(a.dataset.name || a.dataset.title || a.textContent).localeCompare(normalizeText(b.dataset.name || b.dataset.title || b.textContent), "cs"));
+}
+function initPartnerListFilter(){
+  const input = document.getElementById("partnerListSearch");
+  const list = document.getElementById("partnerListV117");
+  if(!input || !list) return;
+  input.addEventListener("input", () => {
+    const q = normalizeText(input.value);
+    list.querySelectorAll(".partner-list-item-v117").forEach(item => {
+      item.style.display = normalizeText(item.dataset.search).includes(q) ? "" : "none";
+    });
+  });
+}
+function categorizeContact(card){
+  const meta = normalizeText(card.dataset.meta + " " + card.dataset.search);
+  if(meta.includes("vip") || meta.includes("top") || meta.includes("key account") || meta.includes("kam")) return "vip";
+  if(meta.includes("infolinka") || meta.includes("hotline") || meta.includes("help") || meta.includes("podpora") || meta.includes("podatelna") || meta.includes("servis") || meta.includes("metodik") || meta.includes("likvid") || meta.includes("smlouv")) return "service";
+  return "person";
+}
+function initContactsWorkspace(){
+  const raw = document.getElementById("contactsRawV117");
+  if(!raw) return;
+  const targets = {
+    vip: document.getElementById("contactsVipV117"),
+    person: document.getElementById("contactsPersonV117"),
+    service: document.getElementById("contactsServiceV117")
+  };
+  const counts = {
+    vip: document.querySelector('[data-count="vip"]'),
+    person: document.querySelector('[data-count="person"]'),
+    service: document.querySelector('[data-count="service"]')
+  };
+  const cards = sortElementsByName(Array.from(raw.querySelectorAll(".contact-card-v117")));
+  cards.forEach(card => {
+    const group = categorizeContact(card);
+    targets[group]?.appendChild(card);
+  });
+  Object.keys(targets).forEach(key => {
+    const count = targets[key]?.querySelectorAll(".contact-card-v117").length || 0;
+    if(counts[key]) counts[key].textContent = count;
+    if(count === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty-v117";
+      empty.textContent = "Bez záznamů.";
+      targets[key]?.appendChild(empty);
+    }
+  });
+  const input = document.getElementById("contactFulltextV117");
+  if(input){
+    input.addEventListener("input", () => {
+      const q = normalizeText(input.value);
+      document.querySelectorAll(".contact-card-v117").forEach(card => {
+        card.style.display = normalizeText(card.dataset.search).includes(q) ? "" : "none";
+      });
+    });
+  }
+}
+function normalizeProductArea(value){
+  const v = normalizeText(value);
+  if(v.includes("auto") || v.includes("pov") || v.includes("hav") || v.includes("voz")) return "Auto";
+  if(v.includes("flot")) return "Flotily";
+  if(v.includes("majet") || v.includes("nemovit") || v.includes("domac")) return "Majetek";
+  if(v.includes("odpoved")) return "Odpovědnost";
+  if(v.includes("podnik")) return "Podnikatel";
+  if(v.includes("zivot") || v.includes("uraz")) return "Život";
+  if(v.includes("cest")) return "Cestování";
+  return value || "Ostatní";
+}
+function initProductsWorkspace(){
+  const raw = document.getElementById("productsRawV117");
+  const root = document.getElementById("productGroupsV117");
+  if(!raw || !root) return;
+  const items = sortElementsByName(Array.from(raw.querySelectorAll(".product-item-v117")));
+  const groups = {};
+  items.forEach(item => {
+    const group = normalizeProductArea(item.dataset.area);
+    if(!groups[group]) groups[group] = [];
+    groups[group].push(item);
+  });
+  const order = ["Auto","Flotily","Majetek","Odpovědnost","Podnikatel","Život","Cestování","Ostatní"];
+  order.concat(Object.keys(groups).filter(g => !order.includes(g)).sort()).forEach((group, idx) => {
+    if(!groups[group]) return;
+    const details = document.createElement("details");
+    details.className = "product-group-v117";
+    if(idx < 2) details.open = true;
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<strong>${group}</strong><span>${groups[group].length}×</span>`;
+    const body = document.createElement("div");
+    body.className = "product-group-body-v117";
+    groups[group].forEach(item => body.appendChild(item));
+    details.appendChild(summary);
+    details.appendChild(body);
+    root.appendChild(details);
+  });
+  const input = document.getElementById("productFulltextV117");
+  if(input){
+    input.addEventListener("input", () => {
+      const q = normalizeText(input.value);
+      document.querySelectorAll(".product-item-v117").forEach(item => {
+        item.style.display = normalizeText(item.dataset.search).includes(q) ? "" : "none";
+      });
+    });
+  }
+}
+function initLinksWorkspace(){
+  const input = document.getElementById("linkFulltextV117");
+  const grid = document.getElementById("linksGridV117");
+  if(!grid) return;
+  sortElementsByName(Array.from(grid.querySelectorAll(".link-card-v117"))).forEach(el => grid.appendChild(el));
+  if(input){
+    input.addEventListener("input", () => {
+      const q = normalizeText(input.value);
+      grid.querySelectorAll(".link-card-v117").forEach(card => {
+        card.style.display = normalizeText(card.dataset.search).includes(q) ? "" : "none";
+      });
+    });
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  initPartnerListFilter();
+  initContactsWorkspace();
+  initProductsWorkspace();
+  initLinksWorkspace();
+});
 </script>
 {% endblock %}

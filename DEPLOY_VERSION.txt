@@ -1,11 +1,9 @@
-HUB ASTORIE APP v1.1.6-partners-figma-like-safe
+HUB ASTORIE APP v1.1.7-partners-workspace-pro-safe
 
-UI sekce Partneři přepracované směrem k odsouhlasenému vizuálu č. 2:
-- přehled partnera
-- akční panel vpravo
-- taby v horní liště
-- přehledové karty
-- hlavní kontakty
-- poslední požadavky
-- loading indikátor
-- bez zásahu do importu a databáze
+Profesionální bezpečné doladění sekce Partneři:
+- bez dvojité HUB hlavičky
+- fulltext ve workspace
+- inteligentně rozdělené kontakty
+- seskupené produkty
+- abecední řazení
+- bez zásahu do importu, DB a workflow
