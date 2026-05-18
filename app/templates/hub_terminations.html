@@ -1,0 +1,6 @@
+{% extends "hub_base.html" %}
+{% block content %}
+{% set preview_action = '/hub/terminations/preview' %}
+{% set partner_code = selected %}
+{% include "_termination_builder_inner.html" %}
+{% endblock %}

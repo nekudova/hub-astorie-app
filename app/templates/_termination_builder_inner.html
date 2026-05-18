@@ -1,0 +1,114 @@
+<style>
+.term-v146{display:grid;gap:18px}.term-hero-v146{display:flex;justify-content:space-between;gap:16px;align-items:center;background:linear-gradient(135deg,#fff,#f4fbfc);border:1px solid #dce9ed;border-radius:24px;padding:22px 26px;box-shadow:0 14px 34px rgba(0,61,76,.06)}.term-hero-v146 h1{margin:0;color:#003D4C;font-size:34px}.term-hero-v146 p{margin:6px 0 0;color:#5f7680}.term-layout-v146{display:grid;grid-template-columns:minmax(420px,.85fr) minmax(460px,1.15fr);gap:18px;align-items:start}.term-panel-v146{background:#fff;border:1px solid #dce9ed;border-radius:24px;box-shadow:0 16px 40px rgba(0,61,76,.07);overflow:hidden}.term-panel-head-v146{padding:18px 22px;border-bottom:1px solid #eaf2f4;background:#fbfefe}.term-panel-head-v146 h2{margin:0;color:#003D4C}.term-panel-head-v146 p{margin:5px 0 0;color:#5f7680}.term-form-v146{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:18px 22px}.term-form-v146 .span-2{grid-column:span 2}.term-form-v146 label{display:block;font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#607680;margin-bottom:5px}.term-form-v146 input,.term-form-v146 select,.term-form-v146 textarea{width:100%;box-sizing:border-box;border:1px solid #d7e7ea;border-radius:14px;padding:12px 13px;font:inherit;background:white}.term-form-v146 textarea{min-height:88px;resize:vertical}.partner-card-v146{border:1px solid #dce9ed;border-radius:18px;background:#f8fcfd;padding:14px;display:grid;gap:5px}.partner-card-v146 strong{color:#003D4C;font-size:17px}.partner-card-v146 span{color:#4f6570;font-size:13px}.term-actions-v146{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:0 22px 22px}.btn-v146{border:0;border-radius:14px;padding:13px 18px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn-orange-v146{background:#FC4C02;color:#fff;box-shadow:0 12px 22px rgba(252,76,2,.18)}.btn-soft-v146{background:#eef6f7;color:#003D4C;border:1px solid #d7e7ea}.term-preview-v146{position:sticky;top:16px}.paper-v146{background:#fff;border:1px solid #dce9ed;border-radius:18px;padding:28px;box-shadow:0 20px 50px rgba(0,61,76,.10);min-height:640px}.paper-v146 .doc-title{font-size:26px;text-align:center;color:#003D4C;margin:4px 0 24px;font-weight:900;letter-spacing:.03em}.paper-v146 .doc-meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}.paper-v146 .doc-box{border:1px solid #e6eff2;border-radius:12px;padding:12px;background:#fbfefe}.paper-v146 .doc-box span{display:block;font-size:11px;text-transform:uppercase;font-weight:900;color:#6b7f88;margin-bottom:5px}.paper-v146 .doc-box strong{color:#102A33}.paper-v146 p{line-height:1.58;color:#203943}.paper-v146 .signature{margin-top:48px;display:flex;justify-content:space-between;gap:28px}.paper-v146 .sign-line{border-top:1px solid #8799a1;padding-top:8px;min-width:190px;text-align:center;color:#607680}.preview-muted-v146{color:#8799a1}.hint-v146{background:#fff8f3;border:1px solid #ffd6c2;color:#8a3308;border-radius:15px;padding:12px 14px;font-weight:800}.print-tools-v146{display:flex;justify-content:flex-end;gap:10px;margin-bottom:12px}@media(max-width:1150px){.term-layout-v146{grid-template-columns:1fr}.term-preview-v146{position:relative;top:auto}}@media(max-width:720px){.term-form-v146{grid-template-columns:1fr}.term-form-v146 .span-2{grid-column:span 1}.paper-v146 .doc-meta{grid-template-columns:1fr}.term-hero-v146{display:block}.term-actions-v146{display:grid}.btn-v146{width:100%}}
+@media print{body *{visibility:hidden!important}.paper-v146,.paper-v146 *{visibility:visible!important}.paper-v146{position:absolute;left:0;top:0;width:100%;box-shadow:none;border:0}.no-print{display:none!important}}
+</style>
+
+<div class="term-v146">
+  <div class="term-hero-v146">
+    <div>
+      <h1>Výpověď pojistné smlouvy</h1>
+      <p>Vyberte pojišťovnu ze seznamu, doplňte údaje klienta a vpravo průběžně kontrolujte finální podobu dokumentu.</p>
+    </div>
+    <button type="button" class="btn-v146 btn-soft-v146 no-print" onclick="window.print()">🖨️ Tisk / PDF</button>
+  </div>
+
+  <div class="term-layout-v146">
+    <section class="term-panel-v146">
+      <div class="term-panel-head-v146">
+        <h2>1. Vyplnění údajů</h2>
+        <p>Partner se vybírá přímo z databáze. Po výběru se načte IČO, datová schránka, e-mail a adresa.</p>
+      </div>
+      <form method="post" action="{{ preview_action }}" id="terminationForm" class="term-form-v146">
+        <div class="span-2">
+          <label>Partner / pojišťovna</label>
+          <select name="partner_code" id="partnerSelect" required>
+            <option value="">— Vyberte partnera / pojišťovnu —</option>
+            {% for p in partners %}
+              <option value="{{ p.partner_code }}" {% if selected == p.partner_code or partner_code == p.partner_code %}selected{% endif %}>{{ p.name }}{% if p.partner_code %} · {{ p.partner_code }}{% endif %}{% if p.ico %} · IČO {{ p.ico }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="span-2 partner-card-v146" id="partnerInfo">
+          <strong>Partner není vybrán</strong>
+          <span>Po výběru ze seznamu se údaje doplní automaticky.</span>
+        </div>
+        <div class="span-2">
+          <label>Typ výpovědi</label>
+          <select name="termination_type" id="terminationType">
+            <option value="A">Ke konci pojistného období</option>
+            <option value="B">Do 2 měsíců od uzavření smlouvy</option>
+            <option value="C">Po oznámení pojistné události</option>
+            <option value="D">Nesouhlas se změnou pojistného</option>
+            <option value="E">Zánik pojistného zájmu / prodej</option>
+            <option value="F">Vyřazení vozidla / odcizení</option>
+          </select>
+        </div>
+        <div><label>Jméno klienta / pojistníka</label><input name="client_name" id="clientName" required></div>
+        <div><label>RČ / IČO / datum narození</label><input name="client_identifier" id="clientIdentifier"></div>
+        <div class="span-2"><label>Adresa klienta</label><input name="client_address" id="clientAddress"></div>
+        <div><label>Číslo pojistné smlouvy</label><input name="policy_no" id="policyNo" required></div>
+        <div><label>Druh pojištění</label><input name="insurance_type" id="insuranceType" placeholder="např. POV, HAV, majetek, odpovědnost"></div>
+        <div class="span-2"><label>Identifikace předmětu pojištění</label><input name="insured_subject" id="insuredSubject" placeholder="např. RZ vozidla, adresa nemovitosti, číslo úvěru"></div>
+        <div><label>Bankovní účet pro přeplatek</label><input name="bank_account" id="bankAccount"></div>
+        <div><label>Rozhodné datum</label><input type="date" name="extra_date" id="extraDate"></div>
+        <div class="span-2"><label>Poznámka / doplnění</label><textarea name="note" id="note"></textarea></div>
+      </form>
+      <div class="term-actions-v146">
+        <div class="hint-v146">Náhled vpravo se aktualizuje okamžitě při psaní.</div>
+        <button class="btn-v146 btn-orange-v146" form="terminationForm" type="submit">Vytvořit náhled →</button>
+      </div>
+    </section>
+
+    <aside class="term-preview-v146">
+      <div class="print-tools-v146 no-print"><button type="button" class="btn-v146 btn-soft-v146" onclick="window.print()">Tisk / uložit jako PDF</button></div>
+      <section class="paper-v146" id="livePreview">
+        <div class="doc-title">VÝPOVĚĎ POJISTNÉ SMLOUVY</div>
+        <div class="doc-meta">
+          <div class="doc-box"><span>Adresát</span><strong id="pvPartner">Vyberte pojišťovnu</strong><div id="pvPartnerDetail" class="preview-muted-v146"></div></div>
+          <div class="doc-box"><span>Pojistník</span><strong id="pvClient">Doplňte klienta</strong><div id="pvClientDetail" class="preview-muted-v146"></div></div>
+        </div>
+        <p>Tímto vypovídám pojistnou smlouvu č. <strong id="pvPolicy">—</strong>.</p>
+        <p>Výpověď podávám <strong id="pvReason">ke konci pojistného období</strong>.</p>
+        <p id="pvInsuranceWrap">Druh pojištění: <strong id="pvInsurance">—</strong></p>
+        <p id="pvSubjectWrap">Identifikace předmětu pojištění: <strong id="pvSubject">—</strong></p>
+        <p id="pvDateWrap">Rozhodné datum: <strong id="pvDate">—</strong></p>
+        <p>Žádám o potvrzení přijetí této výpovědi.</p>
+        <p id="pvBankWrap">Případný přeplatek pojistného žádám zaslat <strong id="pvBank">na adresu pojistníka</strong>.</p>
+        <p id="pvNoteWrap" style="display:none;">Poznámka: <strong id="pvNote"></strong></p>
+        <div class="signature"><div>V ........................ dne ................</div><div class="sign-line">podpis pojistníka</div></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+const partnersV146 = {{ partners|tojson }};
+const reasonMapV146 = {
+  A:'ke konci pojistného období', B:'ve lhůtě do 2 měsíců od uzavření smlouvy', C:'po oznámení pojistné události', D:'z důvodu nesouhlasu se změnou výše pojistného', E:'z důvodu zániku pojistného zájmu – prodej předmětu pojištění', F:'z důvodu vyřazení vozidla z evidence / odcizení'
+};
+function byId(id){return document.getElementById(id)}
+function val(id){return (byId(id)?.value||'').trim()}
+function esc(s){return (s||'').replace(/[&<>'"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]))}
+function selectedPartner(){const code=val('partnerSelect').toUpperCase();return partnersV146.find(p=>(p.partner_code||'').toUpperCase()===code)||null}
+function setWrap(id, value){const el=byId(id+'Wrap'); const out=byId(id); if(out) out.textContent=value||'—'; if(el) el.style.display=value?'':'none';}
+function updatePreviewV146(){
+  const p=selectedPartner();
+  if(p){
+    byId('partnerInfo').innerHTML=`<strong>${esc(p.name)}</strong><span>IČO: ${esc(p.ico)||'—'} · DS: ${esc(p.data_box)||'—'} · E-mail: ${esc(p.registry_email)||'—'}</span><span>${esc(p.address_full)||''}</span>`;
+    byId('pvPartner').textContent=p.name||'Vyberte pojišťovnu';
+    byId('pvPartnerDetail').innerHTML=`${p.address_full?esc(p.address_full)+'<br>':''}${p.data_box?'Datová schránka: '+esc(p.data_box)+'<br>':''}${p.registry_email?'E-mail: '+esc(p.registry_email):''}`;
+  } else {
+    byId('partnerInfo').innerHTML='<strong>Partner není vybrán</strong><span>Po výběru ze seznamu se údaje doplní automaticky.</span>';
+    byId('pvPartner').textContent='Vyberte pojišťovnu'; byId('pvPartnerDetail').textContent='';
+  }
+  byId('pvClient').textContent=val('clientName')||'Doplňte klienta';
+  byId('pvClientDetail').innerHTML=[val('clientIdentifier')?`Identifikace: ${esc(val('clientIdentifier'))}`:'',val('clientAddress')?`Adresa: ${esc(val('clientAddress'))}`:''].filter(Boolean).join('<br>');
+  byId('pvPolicy').textContent=val('policyNo')||'—';
+  byId('pvReason').textContent=reasonMapV146[val('terminationType')]||reasonMapV146.A;
+  setWrap('pvInsurance',val('insuranceType')); setWrap('pvSubject',val('insuredSubject')); setWrap('pvDate',val('extraDate'));
+  const bank=val('bankAccount'); byId('pvBank').textContent=bank?`na bankovní účet: ${bank}`:'na adresu pojistníka';
+  setWrap('pvNote',val('note'));
+}
+document.querySelectorAll('#terminationForm input,#terminationForm textarea,#terminationForm select').forEach(el=>{el.addEventListener('input',updatePreviewV146);el.addEventListener('change',updatePreviewV146);});
+updatePreviewV146();
+</script>
