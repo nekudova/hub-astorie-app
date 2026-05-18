@@ -1,77 +1,86 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-.admin-workspace-v145{display:grid;gap:18px}.admin-hero-v145{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;background:linear-gradient(135deg,#fff,#f5fafb);border:1px solid #dce9ed;border-radius:24px;padding:22px 24px;box-shadow:0 14px 34px rgba(0,61,76,.06)}.admin-hero-v145 h1{margin:0;color:#003D4C;font-size:34px}.admin-hero-v145 p{margin:6px 0 0;color:#5f7680}.admin-kpis-v145{display:flex;gap:10px;flex-wrap:wrap}.admin-kpi-v145{background:#fff;border:1px solid #dce9ed;border-radius:16px;padding:10px 14px;min-width:120px}.admin-kpi-v145 span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6a7d86;font-weight:900}.admin-kpi-v145 strong{font-size:24px;color:#003D4C}.admin-panel-v145{background:#fff;border:1px solid #dce9ed;border-radius:24px;box-shadow:0 14px 34px rgba(0,61,76,.06);overflow:hidden}.admin-toolbar-v145{display:grid;grid-template-columns:minmax(260px,1fr) auto auto;gap:12px;align-items:center;padding:16px;background:#f7fbfc;border-bottom:1px solid #dce9ed}.admin-toolbar-v145 input,.admin-toolbar-v145 select{border:1px solid #cfe1e6;border-radius:14px;padding:12px 14px;font:inherit;background:#fff}.admin-toolbar-v145 details{position:relative}.admin-toolbar-v145 summary{list-style:none;cursor:pointer}.admin-toolbar-v145 summary::-webkit-details-marker{display:none}.admin-form-drawer-v145{position:absolute;right:0;top:52px;width:min(560px,90vw);background:#fff;border:1px solid #dce9ed;border-radius:22px;box-shadow:0 24px 60px rgba(0,61,76,.22);padding:18px;z-index:20}.admin-form-drawer-v145 h2{margin:0 0 12px;color:#003D4C}.admin-form-grid-v145{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-form-grid-v145 .span-2{grid-column:1/-1}.admin-form-grid-v145 label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#607580;font-weight:900;margin:0 0 5px}.admin-form-grid-v145 input,.admin-form-grid-v145 textarea,.admin-form-grid-v145 select{width:100%;border:1px solid #cfe1e6;border-radius:13px;padding:11px 12px;font:inherit}.admin-form-grid-v145 textarea{min-height:84px}.admin-form-actions-v145{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.admin-table-wrap-v145{max-height:68vh;overflow:auto}.admin-table-v145{width:100%;border-collapse:separate;border-spacing:0}.admin-table-v145 thead th{position:sticky;top:0;z-index:3;background:#eaf4f6;color:#4a5f6a;font-size:12px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:12px 14px}.admin-table-v145 td{padding:12px 14px;border-bottom:1px solid #eef4f6;vertical-align:top}.admin-table-v145 tbody tr:hover{background:#f8fbfc}.admin-table-v145 strong{color:#003D4C}.cell-main-v145{display:grid;gap:2px}.cell-main-v145 small{color:#6a7d86}.pill-v145{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:900;background:#eef7f8;color:#003D4C}.pill-v145.ok{background:#e6f9ee;color:#107a38}.pill-v145.vip{background:#fff1df;color:#a94b00}.muted-v145{color:#758891}.row-actions-v145{display:flex;gap:8px;white-space:nowrap}.mini-btn-v145{border:1px solid #d3e3e7;background:#fff;color:#003D4C;border-radius:10px;padding:7px 9px;font-weight:900;text-decoration:none}.empty-v145{text-align:center;color:#637783;padding:28px!important}.checkline-v145{display:flex;align-items:center;gap:8px;margin-top:8px}.checkline-v145 input{width:auto}.checkline-v145 label{margin:0!important;text-transform:none!important;letter-spacing:0!important;font-size:14px!important;color:#223842!important}.smart-field{position:relative}@media(max-width:900px){.admin-hero-v145,.admin-toolbar-v145{display:block}.admin-kpis-v145{margin-top:12px}.admin-toolbar-v145>*{margin-bottom:10px}.admin-form-grid-v145{grid-template-columns:1fr}.admin-table-wrap-v145{max-height:none}}
+.contacts-admin-v149{display:grid;gap:16px;color:#0e2a35}.hero-v149{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;background:linear-gradient(135deg,#fff,#f6fbfc);border:1px solid #dce9ed;border-radius:24px;padding:20px 22px;box-shadow:0 14px 34px rgba(0,61,76,.06)}.hero-v149 h1{margin:0;color:#003D4C;font-size:32px}.hero-v149 p{margin:6px 0 0;color:#5f7680}.hero-actions-v149{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.btn-v149{border:1px solid #d4e4e8;background:#fff;color:#003D4C;border-radius:14px;padding:11px 14px;font-weight:900;text-decoration:none;cursor:pointer}.btn-v149.orange{border:0;background:#FC4C02;color:#fff;box-shadow:0 10px 26px rgba(252,76,2,.18)}.toolbar-v149{position:sticky;top:0;z-index:10;background:rgba(245,250,251,.96);backdrop-filter:blur(10px);border:1px solid #dce9ed;border-radius:20px;padding:12px;display:grid;grid-template-columns:minmax(260px,1.4fr) 210px 210px auto;gap:10px;align-items:center}.toolbar-v149 input,.toolbar-v149 select{width:100%;border:1px solid #cfe1e6;border-radius:14px;padding:12px 13px;background:#fff;font:inherit}.layout-v149{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}.panel-v149{background:#fff;border:1px solid #dce9ed;border-radius:24px;box-shadow:0 14px 34px rgba(0,61,76,.06);overflow:hidden}.panel-head-v149{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#eaf5f7;padding:14px 18px;border-bottom:1px solid #dce9ed}.panel-head-v149 h2{margin:0;color:#003D4C;font-size:20px}.count-v149{background:#fff;border-radius:999px;padding:5px 10px;color:#003D4C;font-weight:900}.list-v149{max-height:calc(100vh - 270px);overflow:auto}.contact-row-v149{display:grid;grid-template-columns:170px minmax(230px,1.05fr) minmax(180px,.8fr) minmax(220px,1fr) 88px;gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid #edf4f6}.contact-row-v149:hover{background:#f8fbfc}.contact-row-v149 strong{color:#003D4C}.muted-v149{color:#647985;font-size:13px}.partner-pill-v149{display:inline-flex;border-radius:999px;padding:5px 9px;background:#eef7f8;color:#003D4C;font-size:12px;font-weight:900}.role-pill-v149{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900;background:#eef7f8;color:#003D4C}.role-pill-v149.vip{background:#fff1df;color:#a64b00}.role-pill-v149.infolinka{background:#e8f6ff;color:#075985}.role-pill-v149.smlouvy{background:#f1f5f9;color:#334155}.status-v149{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}.status-v149.ok{background:#e6f9ee;color:#107a38}.status-v149.off{background:#f1f5f9;color:#64748b}.row-actions-v149{display:flex;gap:7px;justify-content:flex-end}.mini-v149{border:1px solid #d8e7ea;background:#fff;color:#003D4C;border-radius:10px;padding:7px 9px;text-decoration:none;font-weight:900;cursor:pointer}.form-card-v149{position:sticky;top:84px;padding:18px}.form-card-v149 h2{margin:0 0 12px;color:#003D4C}.form-grid-v149{display:grid;grid-template-columns:1fr 1fr;gap:11px}.form-grid-v149 .span-2{grid-column:1/-1}.form-grid-v149 label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#607580;font-weight:900;margin:0 0 5px}.form-grid-v149 input,.form-grid-v149 textarea,.form-grid-v149 select{width:100%;border:1px solid #cfe1e6;border-radius:13px;padding:11px 12px;font:inherit;background:#fff}.form-grid-v149 textarea{min-height:72px}.hint-v149{font-size:12px;color:#647985;margin-top:5px}.checkline-v149{display:flex;align-items:center;gap:8px}.checkline-v149 input{width:auto}.checkline-v149 label{margin:0!important;text-transform:none!important;letter-spacing:0!important;font-size:14px!important;color:#223842!important}.empty-v149{padding:28px;text-align:center;color:#637783}.mobile-label-v149{display:none}.nowrap-v149{white-space:nowrap}@media(max-width:1250px){.layout-v149{grid-template-columns:1fr}.form-card-v149{position:relative;top:auto}.toolbar-v149{grid-template-columns:1fr 1fr}.list-v149{max-height:none}}@media(max-width:820px){.hero-v149,.toolbar-v149{display:block}.toolbar-v149>*{margin-bottom:10px}.contact-row-v149{grid-template-columns:1fr;gap:6px}.mobile-label-v149{display:inline;color:#607580;font-size:12px;font-weight:900;text-transform:uppercase}.form-grid-v149{grid-template-columns:1fr}}
 </style>
 
-<div class="admin-workspace-v145">
-  <section class="admin-hero-v145">
+<div class="contacts-admin-v149">
+  <section class="hero-v149">
     <div>
       <h1>Kontakty partnerů</h1>
-      <p>Rychlá správa kontaktních osob, rolí, regionů a specializací. Formulář je schovaný, aby nepřekážel při každodenní práci.</p>
+      <p>Pracovní přehled kontaktů s rychlým filtrováním, výběrem partnera ze seznamu a číselníkem rolí pro správné zobrazování poradcům.</p>
     </div>
-    <div class="admin-kpis-v145">
-      <div class="admin-kpi-v145"><span>Celkem</span><strong>{{ contacts|length }}</strong></div>
-      <div class="admin-kpi-v145"><span>TOP / VIP</span><strong>{{ contacts|selectattr('is_vip')|list|length + contacts|selectattr('is_top')|list|length }}</strong></div>
+    <div class="hero-actions-v149">
+      <a class="btn-v149" href="/admin/contact-roles">🏷️ Správa rolí</a>
+      <a class="btn-v149 orange" href="#new-contact-form">+ Nový kontakt</a>
     </div>
   </section>
 
-  <section class="admin-panel-v145">
-    <div class="admin-toolbar-v145">
-      <input type="text" id="contact-filter" placeholder="Hledat kontakt, partnera, e-mail, telefon, roli…">
-      <select id="contact-type-filter" onchange="filterAdminContactsV145()">
-        <option value="">Všechny kontakty</option>
-        <option value="top">Pouze TOP / VIP</option>
-      </select>
-      <details>
-        <summary class="btn orange">+ Nový kontakt</summary>
-        <div class="admin-form-drawer-v145">
-          <h2>Nový kontakt</h2>
-          <form method="post" action="/admin/contacts/create">
-            <div class="admin-form-grid-v145">
-              <div class="smart-field span-2"><label>Partner</label><input type="text" id="partner_search" placeholder="Začněte psát název / kód / IČO partnera" autocomplete="off"><input type="hidden" name="partner_code" id="partner_code"></div>
-              <div><label>Jméno</label><input type="text" name="full_name" required></div>
-              <div><label>Role</label><input type="text" name="role"></div>
-              <div><label>Druh kontaktu</label><input type="text" name="contact_type"></div>
-              <div><label>Územní platnost / region</label><input type="text" name="territory"></div>
-              <div><label>E-mail</label><input type="email" name="email"></div>
-              <div><label>Telefon</label><input type="text" name="phone"></div>
-              <div class="span-2"><label>Specializace</label><input type="text" name="specialization"></div>
-              <div class="span-2 checkline-v145"><input type="checkbox" name="is_vip" value="1" id="is_vip"><label for="is_vip">VIP / TOP kontakt</label></div>
-              <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
-            </div>
-            <div class="admin-form-actions-v145"><button class="btn orange" type="submit">Uložit kontakt</button></div>
-          </form>
+  <form class="toolbar-v149" method="get" action="/admin/contacts">
+    <input type="text" name="q" value="{{ q or '' }}" placeholder="Hledat: partner, jméno, e-mail, telefon, role…">
+    <select name="partner">
+      <option value="">Všichni partneři</option>
+      {% for p in partners %}<option value="{{ p.code }}" {{ 'selected' if partner and partner|upper == p.code|upper else '' }}>{{ p.name }}{% if p.code %} ({{ p.code }}){% endif %}</option>{% endfor %}
+    </select>
+    <select name="role_group">
+      <option value="">Všechny skupiny rolí</option>
+      {% for g in role_groups %}<option value="{{ g }}" {{ 'selected' if role_group == g else '' }}>{{ g }}</option>{% endfor %}
+    </select>
+    <button class="btn-v149 orange" type="submit">Filtrovat</button>
+  </form>
+
+  <section class="layout-v149">
+    <div class="panel-v149">
+      <div class="panel-head-v149"><h2>Existující kontakty</h2><span class="count-v149">{{ contacts|length }} záznamů</span></div>
+      <div class="list-v149" id="contact-list-v149">
+        {% for c in contacts %}
+        {% set group = c.contact_type or c.role or 'Ostatní' %}
+        <div class="contact-row-v149" data-search="{{ (c.partner_code ~ ' ' ~ c.full_name ~ ' ' ~ c.role ~ ' ' ~ c.contact_type ~ ' ' ~ c.email ~ ' ' ~ c.phone ~ ' ' ~ c.specialization ~ ' ' ~ c.territory)|lower }}">
+          <div><span class="mobile-label-v149">Partner: </span><span class="partner-pill-v149">{{ c.partner_code or '—' }}</span><div class="muted-v149">{{ c.territory or 'Bez regionu' }}</div></div>
+          <div><span class="mobile-label-v149">Kontakt: </span><strong>{{ c.full_name or 'Bez jména' }}</strong><div class="muted-v149">{{ c.email or '—' }}{% if c.phone %} · {{ c.phone }}{% endif %}</div></div>
+          <div><span class="role-pill-v149 {{ 'vip' if group == 'VIP' else 'infolinka' if group == 'Infolinka' else 'smlouvy' if group == 'Smlouvy' else '' }}">{{ group }}</span><div class="muted-v149">{{ c.role or 'Role neuvedena' }}</div></div>
+          <div><span class="mobile-label-v149">Specializace: </span>{{ c.specialization or '—' }}{% if c.note %}<div class="muted-v149">{{ c.note }}</div>{% endif %}</div>
+          <div class="row-actions-v149"><span class="status-v149 {{ 'ok' if c.is_active else 'off' }}">{{ 'Aktivní' if c.is_active else 'Neaktivní' }}</span></div>
         </div>
-      </details>
+        {% else %}<div class="empty-v149">Zatím nejsou vložené žádné kontakty.</div>{% endfor %}
+      </div>
     </div>
 
-    <div class="admin-table-wrap-v145">
-      <table id="contacts-table" class="admin-table-v145">
-        <thead><tr><th>Partner</th><th>Kontakt</th><th>Role / druh</th><th>Území</th><th>Spojení</th><th>Specializace</th><th>Stav</th></tr></thead>
-        <tbody>
-          {% for c in contacts %}
-          <tr data-top="{{ 1 if c.is_vip or c.is_top else 0 }}">
-            <td><span class="pill-v145">{{ c.partner_code or '—' }}</span></td>
-            <td><div class="cell-main-v145"><strong>{{ c.full_name or 'Bez jména' }}</strong>{% if c.note %}<small>{{ c.note }}</small>{% endif %}</div></td>
-            <td><div class="cell-main-v145"><span>{{ c.contact_type or c.role or '—' }}</span>{% if c.role and c.contact_type %}<small>{{ c.role }}</small>{% endif %}</div></td>
-            <td>{{ c.territory or '—' }}</td>
-            <td><div class="cell-main-v145"><span>{{ c.email or '—' }}</span><small>{{ c.phone or '' }}</small></div></td>
-            <td>{{ c.specialization or '—' }}</td>
-            <td>{% if c.is_vip or c.is_top %}<span class="pill-v145 vip">TOP</span>{% else %}<span class="pill-v145 ok">Aktivní</span>{% endif %}</td>
-          </tr>
-          {% else %}<tr><td class="empty-v145" colspan="7">Zatím nejsou vložené žádné kontakty.</td></tr>{% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <aside class="panel-v149 form-card-v149" id="new-contact-form">
+      <h2>Nový kontakt</h2>
+      <form method="post" action="/admin/contacts/create">
+        <div class="form-grid-v149">
+          <div class="span-2"><label>Partner / pojišťovna</label><select name="partner_code" required><option value="">Vyberte partnera ze seznamu</option>{% for p in partners %}<option value="{{ p.code }}">{{ p.name }}{% if p.code %} ({{ p.code }}){% endif %}</option>{% endfor %}</select></div>
+          <div class="span-2"><label>Jméno / název kontaktu</label><input type="text" name="full_name" required></div>
+          <div><label>Skupina role</label><select name="role_group" id="role_group_v149" required>{% for g in role_groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}</select></div>
+          <div><label>Role</label><select name="role" id="role_select_v149" required><option value="">Vyberte roli</option>{% for r in roles %}<option value="{{ r.role_name }}" data-group="{{ r.group_name }}">{{ r.role_name }}</option>{% endfor %}<option value="__custom__">Jiná role…</option></select></div>
+          <div class="span-2" id="custom_role_wrap_v149" style="display:none"><label>Jiná role</label><input type="text" name="role_custom" placeholder="Zapište jinou roli, uloží se do číselníku"></div>
+          <div><label>Územní platnost / region</label><input type="text" name="territory" placeholder="např. Celá ČR, Praha, Morava"></div>
+          <div><label>Specializace</label><input type="text" name="specialization" placeholder="např. flotily, smlouvy, škody"></div>
+          <div><label>E-mail</label><input type="email" name="email"></div>
+          <div><label>Telefon</label><input type="text" name="phone"></div>
+          <div class="span-2 checkline-v149"><input type="checkbox" name="is_vip" value="1" id="is_vip"><label for="is_vip">VIP / TOP kontakt</label></div>
+          <div class="span-2"><label>Poznámka</label><textarea name="note"></textarea></div>
+        </div>
+        <p class="hint-v149">Role se ukládá společně se skupinou. Podle skupiny se budou kontakty lépe řadit a zobrazovat poradcům.</p>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn-v149 orange" type="submit">Uložit kontakt</button></div>
+      </form>
+    </aside>
   </section>
 </div>
+
 <script>
-function filterAdminContactsV145(){
-  const sel=document.getElementById('contact-type-filter');
-  const onlyTop=sel && sel.value==='top';
-  document.querySelectorAll('#contacts-table tbody tr').forEach(tr=>{ if(!tr.dataset.top){return;} tr.style.display=onlyTop && tr.dataset.top!=='1' ? 'none' : ''; });
-}
-document.addEventListener('DOMContentLoaded',()=>{HubSmart.initPartnerAutocomplete('#partner_search',{hiddenSelector:'#partner_code'});HubSmart.initTableFilter('#contact-filter','#contacts-table');});
+(function(){
+  const roleGroup=document.getElementById('role_group_v149');
+  const roleSelect=document.getElementById('role_select_v149');
+  const customWrap=document.getElementById('custom_role_wrap_v149');
+  function syncRoles(){
+    const g=roleGroup.value;
+    Array.from(roleSelect.options).forEach(o=>{ if(!o.dataset.group){return;} o.hidden=o.dataset.group!==g; });
+    if(roleSelect.selectedOptions[0] && roleSelect.selectedOptions[0].hidden){roleSelect.value='';}
+  }
+  function toggleCustom(){ customWrap.style.display = roleSelect.value==='__custom__' ? '' : 'none'; }
+  if(roleGroup&&roleSelect){roleGroup.addEventListener('change',syncRoles);roleSelect.addEventListener('change',toggleCustom);syncRoles();toggleCustom();}
+})();
 </script>
 {% endblock %}

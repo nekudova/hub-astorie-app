@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>E-maily / SMTP</h1>
+    <p>Centrální nastavení odesílání e-mailů pro TIPy, založení uživatele, reset hesla a další systémové notifikace.</p>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Stav SMTP</h2>
+    <div class="detail-grid">
+      <div><b>Stav</b><br>{% if cfg.configured %}<span class="badge green">Nastaveno</span>{% else %}<span class="badge red">Nenastaveno</span>{% endif %}</div>
+      <div><b>Server</b><br>{{ cfg.host or '—' }}</div>
+      <div><b>Port</b><br>{{ cfg.port }}</div>
+      <div><b>Zabezpečení</b><br>{{ cfg.security }}</div>
+      <div><b>Uživatel</b><br>{{ cfg.user or '—' }}</div>
+      <div><b>Odesílatel</b><br>{{ cfg.from_email or '—' }}</div>
+    </div>
+    {% if cfg.missing %}
+      <div class="alert danger">Chybí v Render Environment Variables: {{ cfg.missing|join(', ') }}</div>
+    {% endif %}
+    <p class="muted">Heslo SMTP se z bezpečnostních důvodů nezobrazuje ani neukládá přes web. Nastavuje se v Renderu.</p>
+  </section>
+
+  <section class="card">
+    <h2>Test odeslání</h2>
+    <form method="post" action="/admin/email/test" class="form-stack">
+      <label>E-mail příjemce</label>
+      <input name="to_email" type="email" placeholder="např. nekudova@astorieas.cz" required>
+      <button class="btn primary" type="submit">Odeslat testovací e-mail</button>
+    </form>
+  </section>
+</div>
+
+<section class="card mt">
+  <h2>Poslední e-mailové události</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th><th>Událost</th><th>Entita</th><th>Příjemce</th><th>Předmět</th><th>Stav</th><th>Chyba</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in logs %}
+        <tr>
+          <td>{{ r.created_at }}</td>
+          <td>{{ r.event_type }}</td>
+          <td>{{ r.entity_type }} {{ r.entity_id }}</td>
+          <td>{{ r.recipient_email }}</td>
+          <td>{{ r.subject }}</td>
+          <td>{% if r.status == 'sent' %}<span class="badge green">odesláno</span>{% elif r.status == 'not_configured' %}<span class="badge orange">nenastaveno</span>{% else %}<span class="badge red">chyba</span>{% endif %}</td>
+          <td class="muted">{{ r.error }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="muted">Zatím nejsou evidované žádné e-mailové události.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card mt">
+  <h2>Proměnné pro Render</h2>
+  <pre>SMTP_HOST=smtp.vasedomena.cz
+SMTP_PORT=587
+SMTP_SECURITY=starttls
+SMTP_USER=odesilatel@astorieas.cz
+SMTP_PASSWORD=********
+SMTP_FROM=HUB ASTORIE &lt;odesilatel@astorieas.cz&gt;</pre>
+</section>
+{% endblock %}

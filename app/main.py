@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.4.5-admin-contacts-products-links-ux-safe"
+APP_VERSION = "1.4.8-email-core-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.4.5 upravuje pouze pracovní UX Admin modulů Kontakty, Produkty a Odkazy; databáze, routy a ostatní sekce zůstávají beze změny.",
+        "status": "v1.4.8 přidává centrální e-mailovou službu, SMTP logy a notifikace pro TIPy, založení uživatele a reset hesla. Ostatní sekce zůstávají beze změny.",
     }
 
 

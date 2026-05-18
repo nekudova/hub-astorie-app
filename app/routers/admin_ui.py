@@ -352,11 +352,75 @@ async def import_csv(
     return render(request, "import.html", {"active": "import", "result": result})
 
 
+
+
+# --- v1.4.9 SAFE: Contact role dictionary ---------------------------------
+def ensure_contact_role_tables_v149(db: Session):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS contact_roles (
+            id SERIAL PRIMARY KEY,
+            group_name VARCHAR(120) NOT NULL DEFAULT 'Ostatní',
+            role_name VARCHAR(180) NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 100,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT now(),
+            updated_at TIMESTAMPTZ DEFAULT now()
+        )
+    """))
+    db.execute(text("ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS role_group VARCHAR(120) NOT NULL DEFAULT ''"))
+    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_contact_roles_group_role ON contact_roles (lower(group_name), lower(role_name))"))
+    defaults = [
+        ('VIP', 'KAM', 'Klíčový obchodní kontakt / Key Account Manager', 10),
+        ('VIP', 'Ředitel', 'Manažerský nebo ředitelský kontakt', 20),
+        ('VIP', 'Obchodní ředitel', 'Obchodní vedení partnera', 30),
+        ('Infolinka', 'Infolinka', 'Obecná klientská nebo poradenská linka', 10),
+        ('Infolinka', 'Helpdesk', 'Helpdesk / provozní podpora', 20),
+        ('Infolinka', 'IT', 'Technická podpora / portál', 30),
+        ('Infolinka', 'Podpora klient', 'Klientská podpora', 40),
+        ('Smlouvy', 'Dotazy ke smlouvám', 'Změny, smlouvy, dokumenty', 10),
+        ('Likvidace', 'Likvidace', 'Likvidace pojistných událostí', 10),
+        ('Provize', 'Provize', 'Provizní a produkční dotazy', 10),
+        ('Ostatní', 'Ostatní', 'Jiný typ kontaktu', 999),
+    ]
+    for group_name, role_name, description, sort_order in defaults:
+        db.execute(text("""
+            INSERT INTO contact_roles (group_name, role_name, description, sort_order, is_active)
+            VALUES (:group_name, :role_name, :description, :sort_order, TRUE)
+            ON CONFLICT DO NOTHING
+        """), {"group_name": group_name, "role_name": role_name, "description": description, "sort_order": sort_order})
+    db.commit()
+
+def get_contact_roles_v149(db: Session, only_active: bool = True):
+    ensure_contact_role_tables_v149(db)
+    where = "WHERE is_active IS TRUE" if only_active else ""
+    rows = db.execute(text(f"""
+        SELECT id, group_name, role_name, description, sort_order, is_active
+        FROM contact_roles
+        {where}
+        ORDER BY group_name, sort_order, role_name
+    """)).mappings().all()
+    return [dict(r) for r in rows]
+
+def contact_role_groups_v149(roles):
+    groups = []
+    seen = set()
+    for r in roles:
+        g = r.get('group_name') or 'Ostatní'
+        if g not in seen:
+            groups.append(g); seen.add(g)
+    return groups or ['VIP','Infolinka','Smlouvy','Likvidace','Provize','Ostatní']
+
 @router.get("/admin/contacts", response_class=HTMLResponse)
-def contacts_page(request: Request, q: str = "", partner: str = "", db: Session = Depends(get_db)):
+def contacts_page(request: Request, q: str = "", partner: str = "", role_group: str = "", db: Session = Depends(get_db)):
+    roles = get_contact_roles_v149(db)
+    groups = contact_role_groups_v149(roles)
     query = db.query(PartnerContact)
     if partner:
         query = query.filter(PartnerContact.partner_code == partner.upper())
+    if role_group:
+        like_group = f"%{role_group}%"
+        query = query.filter((PartnerContact.contact_type.ilike(like_group)) | (PartnerContact.role.ilike(like_group)))
     if q:
         like = f"%{q}%"
         query = query.filter(
@@ -369,14 +433,23 @@ def contacts_page(request: Request, q: str = "", partner: str = "", db: Session 
             (PartnerContact.contact_type.ilike(like)) |
             (PartnerContact.partner_code.ilike(like))
         )
-    contacts = query.order_by(PartnerContact.partner_code, PartnerContact.full_name).limit(500).all()
+    contacts = query.order_by(PartnerContact.partner_code, PartnerContact.contact_type, PartnerContact.role, PartnerContact.full_name).limit(700).all()
     partners = db.query(Partner).order_by(Partner.name).all()
-    return render(request, "contacts.html", {"active": "contacts", "contacts": contacts, "partners": partners, "q": q, "partner": partner})
+    return render(request, "contacts.html", {"active": "contacts", "contacts": contacts, "partners": partners, "roles": roles, "role_groups": groups, "q": q, "partner": partner, "role_group": role_group})
 
 
 @router.post("/admin/contacts/create")
-def create_contact(request: Request, partner_code: str = Form(...), full_name: str = Form(...), role: str = Form(""), email: str = Form(""), phone: str = Form(""), specialization: str = Form(""), contact_type: str = Form(""), territory: str = Form(""), is_vip: str = Form(""), note: str = Form(""), db: Session = Depends(get_db)):
-    db.add(PartnerContact(partner_code=partner_code.upper().strip(), full_name=full_name, role=role, email=email, phone=phone, specialization=specialization, contact_type=contact_type, territory=territory, is_vip=bool(is_vip), is_top=bool(is_vip), note=note, is_active=True))
+def create_contact(request: Request, partner_code: str = Form(...), full_name: str = Form(...), role: str = Form(""), role_custom: str = Form(""), role_group: str = Form(""), email: str = Form(""), phone: str = Form(""), specialization: str = Form(""), contact_type: str = Form(""), territory: str = Form(""), is_vip: str = Form(""), note: str = Form(""), db: Session = Depends(get_db)):
+    ensure_contact_role_tables_v149(db)
+    final_role = (role_custom or role or "Ostatní").strip()
+    final_group = (role_group or contact_type or "Ostatní").strip()
+    if final_role:
+        db.execute(text("""
+            INSERT INTO contact_roles (group_name, role_name, description, sort_order, is_active)
+            VALUES (:group_name, :role_name, '', 100, TRUE)
+            ON CONFLICT DO NOTHING
+        """), {"group_name": final_group, "role_name": final_role})
+    db.add(PartnerContact(partner_code=partner_code.upper().strip(), full_name=full_name.strip(), role=final_role, email=email.strip(), phone=phone.strip(), specialization=specialization.strip(), contact_type=final_group, territory=territory.strip(), is_vip=bool(is_vip), is_top=bool(is_vip), note=note, is_active=True))
     db.commit()
     return RedirectResponse("/admin/contacts", status_code=303)
 
@@ -389,6 +462,45 @@ def duplicate_contact(item_id: int, db: Session = Depends(get_db)):
         db.commit()
     return RedirectResponse("/admin/contacts", status_code=303)
 
+
+
+
+@router.get("/admin/contact-roles", response_class=HTMLResponse)
+def contact_roles_page(request: Request, db: Session = Depends(get_db)):
+    roles = get_contact_roles_v149(db, only_active=False)
+    return render(request, "contact_roles.html", {"active": "contact_roles", "roles": roles, "role_groups": contact_role_groups_v149(roles)})
+
+
+@router.post("/admin/contact-roles/create")
+def create_contact_role(group_name: str = Form(...), role_name: str = Form(...), description: str = Form(""), sort_order: int = Form(100), db: Session = Depends(get_db)):
+    ensure_contact_role_tables_v149(db)
+    db.execute(text("""
+        INSERT INTO contact_roles (group_name, role_name, description, sort_order, is_active)
+        VALUES (:group_name, :role_name, :description, :sort_order, TRUE)
+        ON CONFLICT DO NOTHING
+    """), {"group_name": group_name.strip() or "Ostatní", "role_name": role_name.strip(), "description": description.strip(), "sort_order": sort_order})
+    db.commit()
+    return RedirectResponse("/admin/contact-roles", status_code=303)
+
+
+@router.post("/admin/contact-roles/{role_id}/toggle")
+def toggle_contact_role(role_id: int, db: Session = Depends(get_db)):
+    ensure_contact_role_tables_v149(db)
+    db.execute(text("UPDATE contact_roles SET is_active = NOT is_active, updated_at = now() WHERE id = :id"), {"id": role_id})
+    db.commit()
+    return RedirectResponse("/admin/contact-roles", status_code=303)
+
+
+@router.post("/admin/contact-roles/{role_id}/update")
+def update_contact_role(role_id: int, group_name: str = Form(...), role_name: str = Form(...), description: str = Form(""), sort_order: int = Form(100), db: Session = Depends(get_db)):
+    ensure_contact_role_tables_v149(db)
+    db.execute(text("""
+        UPDATE contact_roles
+        SET group_name = :group_name, role_name = :role_name, description = :description, sort_order = :sort_order, updated_at = now()
+        WHERE id = :id
+    """), {"id": role_id, "group_name": group_name.strip() or "Ostatní", "role_name": role_name.strip(), "description": description.strip(), "sort_order": sort_order})
+    db.commit()
+    return RedirectResponse("/admin/contact-roles", status_code=303)
 
 @router.get("/admin/links", response_class=HTMLResponse)
 def links_page(request: Request, q: str = "", partner: str = "", db: Session = Depends(get_db)):
@@ -8248,4 +8360,17 @@ def release_1_4_8_status(db: Session = Depends(get_db)):
         "smtp_security": cfg.get("security"),
         "missing": cfg.get("missing"),
         "email_log_count": int(cnt or 0),
+    }
+
+
+@router.get("/api/release-1-4-9/status")
+def release_1_4_9_status(db: Session = Depends(get_db)):
+    ensure_contact_role_tables_v149(db)
+    return {
+        "ok": True,
+        "version": "1.4.9-admin-contact-roles-ux-safe",
+        "message": "Admin Kontakty: nový pracovní UX, číselník rolí a skupin kontaktů. Ostatní moduly beze změny.",
+        "safe": True,
+        "changed": ["/admin/contacts", "/admin/contact-roles"],
+        "db_changed": "contact_roles table + safe partner_contacts.role_group column"
     }

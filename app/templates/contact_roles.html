@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.roles-v149{display:grid;gap:16px}.hero-v149{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;background:#fff;border:1px solid #dce9ed;border-radius:24px;padding:20px 22px;box-shadow:0 14px 34px rgba(0,61,76,.06)}.hero-v149 h1{margin:0;color:#003D4C;font-size:32px}.hero-v149 p{margin:6px 0 0;color:#5f7680}.btn-v149{border:1px solid #d4e4e8;background:#fff;color:#003D4C;border-radius:14px;padding:11px 14px;font-weight:900;text-decoration:none;cursor:pointer}.btn-v149.orange{border:0;background:#FC4C02;color:#fff}.grid-v149{display:grid;grid-template-columns:420px minmax(0,1fr);gap:16px;align-items:start}.panel-v149{background:#fff;border:1px solid #dce9ed;border-radius:24px;box-shadow:0 14px 34px rgba(0,61,76,.06);overflow:hidden}.panel-v149 h2{margin:0;color:#003D4C}.panel-head-v149{padding:15px 18px;background:#eaf5f7;border-bottom:1px solid #dce9ed}.form-v149{padding:18px;display:grid;gap:11px}.form-v149 label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#607580;font-weight:900}.form-v149 input,.form-v149 textarea,.form-v149 select{width:100%;border:1px solid #cfe1e6;border-radius:13px;padding:11px 12px;font:inherit}.form-v149 textarea{min-height:80px}.table-wrap-v149{max-height:70vh;overflow:auto}.table-v149{width:100%;border-collapse:collapse}.table-v149 th{position:sticky;top:0;background:#eaf5f7;color:#4a5f6a;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.06em;padding:12px 14px}.table-v149 td{padding:12px 14px;border-bottom:1px solid #eef4f6}.pill-v149{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900;background:#eef7f8;color:#003D4C}.status-v149{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}.status-v149.ok{background:#e6f9ee;color:#107a38}.status-v149.off{background:#f1f5f9;color:#64748b}.actions-v149{display:flex;gap:8px}.inline-form-v149{display:inline}.muted{color:#647985;font-size:13px}@media(max-width:1000px){.grid-v149{grid-template-columns:1fr}.hero-v149{display:block}}
+</style>
+<div class="roles-v149">
+  <section class="hero-v149"><div><h1>Role kontaktů</h1><p>Číselník rolí a skupin pro kontakty partnerů. Podle skupin se budou kontakty řadit poradcům.</p></div><a class="btn-v149" href="/admin/contacts">← Zpět na kontakty</a></section>
+  <section class="grid-v149">
+    <div class="panel-v149"><div class="panel-head-v149"><h2>Nová role</h2></div>
+      <form class="form-v149" method="post" action="/admin/contact-roles/create">
+        <div><label>Skupina</label><select name="group_name" required>{% for g in role_groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}<option value="Ostatní">Ostatní</option></select></div>
+        <div><label>Název role</label><input type="text" name="role_name" required placeholder="např. KAM, Helpdesk, IT"></div>
+        <div><label>Pořadí</label><input type="number" name="sort_order" value="100"></div>
+        <div><label>Popis</label><textarea name="description"></textarea></div>
+        <button class="btn-v149 orange" type="submit">Uložit roli</button>
+      </form>
+    </div>
+    <div class="panel-v149"><div class="panel-head-v149"><h2>Existující role</h2></div>
+      <div class="table-wrap-v149"><table class="table-v149"><thead><tr><th>Skupina</th><th>Role</th><th>Popis</th><th>Pořadí</th><th>Stav</th><th>Akce</th></tr></thead><tbody>
+      {% for r in roles %}
+        <tr><td><span class="pill-v149">{{ r.group_name }}</span></td><td><strong>{{ r.role_name }}</strong></td><td class="muted">{{ r.description or '—' }}</td><td>{{ r.sort_order }}</td><td><span class="status-v149 {{ 'ok' if r.is_active else 'off' }}">{{ 'Aktivní' if r.is_active else 'Neaktivní' }}</span></td><td><form class="inline-form-v149" method="post" action="/admin/contact-roles/{{ r.id }}/toggle"><button class="btn-v149" type="submit">{{ 'Vypnout' if r.is_active else 'Zapnout' }}</button></form></td></tr>
+      {% else %}<tr><td colspan="6">Zatím nejsou role.</td></tr>{% endfor %}
+      </tbody></table></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
