@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.archive-head-v147{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-bottom:18px}.archive-toolbar-v147{display:flex;gap:10px}.archive-toolbar-v147 input{border:1px solid #d7e7ea;border-radius:14px;padding:12px 14px;min-width:320px}.archive-table-v147{background:#fff;border:1px solid #dce9ed;border-radius:22px;overflow:hidden;box-shadow:0 16px 42px rgba(0,61,76,.06)}.archive-table-v147 table{width:100%;border-collapse:collapse}.archive-table-v147 th{background:#eaf6f7;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#506673;padding:13px}.archive-table-v147 td{padding:13px;border-top:1px solid #eef4f5;vertical-align:top}.badge-doc-v147{background:#eefbf1;color:#15723a;border-radius:999px;padding:5px 10px;font-weight:900;font-size:12px}.td-main-v147 strong{color:#003D4C}.td-main-v147 small{display:block;color:#5f7680;margin-top:2px}@media(max-width:900px){.archive-head-v147{display:block}.archive-toolbar-v147{display:grid}.archive-toolbar-v147 input{min-width:0;width:100%}.archive-table-v147{overflow:auto}}
+</style>
+<div class="archive-head-v147">
+  <div>
+    <h1 class="page-title">Centrální evidence výpovědí</h1>
+    <p class="page-subtitle">Přehled všech vygenerovaných výpovědí uložených do DB.</p>
+  </div>
+  <div class="archive-toolbar-v147">
+    <form method="get" action="/admin/terminations/archive" style="display:flex;gap:10px;">
+      <input name="q" value="{{ q or '' }}" placeholder="Hledat klienta, smlouvu, partnera…">
+      <button class="btn orange" type="submit">Hledat</button>
+    </form>
+    <a class="btn soft" href="/admin/terminations">Nová výpověď</a>
+  </div>
+</div>
+<section class="archive-table-v147">
+  <table>
+    <thead><tr><th>Datum</th><th>Klient</th><th>Partner</th><th>Smlouva / typ</th><th>Vytvořil</th><th>Stav</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.created_at }}</td>
+        <td class="td-main-v147"><strong>{{ r.client_name or '—' }}</strong><small>{{ r.client_identifier or '' }}</small></td>
+        <td class="td-main-v147"><strong>{{ r.partner_name or '—' }}</strong><small>{{ r.partner_code or '' }}</small></td>
+        <td class="td-main-v147"><strong>{{ r.policy_no or '—' }}</strong><small>{{ r.reason_text or '' }}</small></td>
+        <td>{{ r.created_by_name or '—' }}<br><small>{{ r.created_by_email or '' }}</small></td>
+        <td><span class="badge-doc-v147">{{ r.status }}</span></td>
+        <td><a class="btn soft" href="/admin/terminations/archive/{{ r.id }}">Detail</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7">Zatím není uložena žádná výpověď.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

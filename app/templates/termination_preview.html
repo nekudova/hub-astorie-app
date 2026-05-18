@@ -1,27 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="detail-topbar">
-  <a class="btn soft" href="/admin/terminations">← Zpět na výpověď</a>
-  <div class="detail-actions"><button class="btn orange" onclick="window.print()">Tisk / uložit jako PDF</button></div>
+<style>
+.term-detail-v147{display:grid;gap:18px}.term-preview-top-v147{display:flex;justify-content:space-between;align-items:center;gap:12px}.term-paper-v147{background:#fff;border:1px solid #dce9ed;border-radius:24px;padding:34px 42px;box-shadow:0 18px 46px rgba(0,61,76,.08);max-width:920px}.term-paper-v147 h1{text-align:center;color:#003D4C;font-size:25px;letter-spacing:.04em;margin:0 0 28px}.term-paper-v147 p{font-family:Georgia,serif;font-size:17px;line-height:1.62;color:#172f38;margin:0 0 12px;white-space:pre-wrap}.term-ok-v147{background:#ecfdf3;border:1px solid #bbf7d0;color:#166534;border-radius:14px;padding:12px 14px;font-weight:900}.source-grid-v147{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.source-grid-v147 div{background:#f8fcfd;border:1px solid #dce9ed;border-radius:16px;padding:12px}.source-grid-v147 span{display:block;font-size:11px;text-transform:uppercase;font-weight:900;color:#647985}.source-grid-v147 strong{display:block;color:#003D4C;margin-top:4px}@media(max-width:900px){.source-grid-v147{grid-template-columns:1fr 1fr}.term-preview-top-v147{display:block}.term-paper-v147{padding:24px}}@media print{body *{visibility:hidden!important}.term-paper-v147,.term-paper-v147 *{visibility:visible!important}.term-paper-v147{position:absolute;left:0;top:0;width:100%;max-width:none;box-shadow:none;border:0}.no-print{display:none!important}}
+</style>
+<div class="term-detail-v147">
+  <div class="term-preview-top-v147 no-print">
+    <a class="btn soft" href="/admin/terminations">← Zpět na výpověď</a>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      {% if saved %}<span class="term-ok-v147">✅ Uloženo do archivu výpovědí</span>{% endif %}
+      <a class="btn soft" href="/admin/terminations/archive">Centrální evidence</a>
+      <button class="btn orange" onclick="window.print()">Tisk / uložit jako PDF</button>
+    </div>
+  </div>
+  <h1 class="page-title no-print">Náhled výpovědi</h1>
+  <p class="page-subtitle no-print">Dokument je uložen v centrální evidenci. Tlačítkem Tisk / PDF jej lze uložit jako PDF.</p>
+  <section class="term-paper-v147">
+    {% for line in preview_lines %}
+      {% if loop.first %}<h1>{{ line }}</h1>{% elif line %}<p>{{ line }}</p>{% else %}<p>&nbsp;</p>{% endif %}
+    {% endfor %}
+  </section>
+  <section class="card no-print">
+    <h2 style="margin-top:0;color:var(--petrol);">Zdrojová data partnera</h2>
+    {% if partner %}
+    <div class="source-grid-v147">
+      <div><span>Partner</span><strong>{{ partner.name }}</strong></div>
+      <div><span>IČO</span><strong>{{ partner.ico or "—" }}</strong></div>
+      <div><span>Datová schránka</span><strong>{{ partner.data_box or "—" }}</strong></div>
+      <div><span>E-mail</span><strong>{{ partner.registry_email or "—" }}</strong></div>
+      <div style="grid-column:1/-1;"><span>Adresa</span><strong>{{ partner.address_full or "—" }}</strong></div>
+    </div>
+    {% else %}<p>Partner nebyl nalezen.</p>{% endif %}
+  </section>
 </div>
-
-<h1 class="page-title">Náhled výpovědi</h1>
-<p class="page-subtitle">První generovaný text. V další verzi bude doplněn export do PDF šablony.</p>
-
-<section class="card print-card">
-  <pre class="document-preview">{{ preview_text }}</pre>
-</section>
-
-<section class="card section-space">
-  <h2 style="margin-top:0;color:var(--petrol);">Zdrojová data partnera</h2>
-  {% if partner %}
-    <p><strong>{{ partner.name }}</strong></p>
-    <p>IČO: {{ partner.ico or "" }}</p>
-    <p>Datová schránka: {{ partner.data_box or "" }}</p>
-    <p>E-mail: {{ partner.registry_email or "" }}</p>
-    <p>Adresa: {{ partner.address_full or "" }}</p>
-  {% else %}
-    <p>Partner nebyl nalezen.</p>
-  {% endif %}
-</section>
 {% endblock %}

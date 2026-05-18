@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<style>.term-paper-v147{background:#fff;border:1px solid #dce9ed;border-radius:24px;padding:34px 42px;box-shadow:0 18px 46px rgba(0,61,76,.08);max-width:920px}.term-paper-v147 h1{text-align:center;color:#003D4C;font-size:25px;letter-spacing:.04em;margin:0 0 28px}.term-paper-v147 p{font-family:Georgia,serif;font-size:17px;line-height:1.62;color:#172f38;margin:0 0 12px;white-space:pre-wrap}@media print{body *{visibility:hidden!important}.term-paper-v147,.term-paper-v147 *{visibility:visible!important}.term-paper-v147{position:absolute;left:0;top:0;width:100%;max-width:none;box-shadow:none;border:0}.no-print{display:none!important}}</style>
+<div class="detail-topbar no-print"><a class="btn soft" href="/admin/terminations/archive">← Zpět na evidenci</a><button class="btn orange" onclick="window.print()">Tisk / uložit jako PDF</button></div>
+<h1 class="page-title no-print">Detail výpovědi</h1>
+<p class="page-subtitle no-print">{{ doc.client_name }} · {{ doc.partner_name }} · smlouva {{ doc.policy_no or '—' }}</p>
+<section class="term-paper-v147">
+{% for line in preview_lines %}{% if loop.first %}<h1>{{ line }}</h1>{% elif line %}<p>{{ line }}</p>{% else %}<p>&nbsp;</p>{% endif %}{% endfor %}
+</section>
+{% endblock %}

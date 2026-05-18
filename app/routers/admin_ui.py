@@ -43,6 +43,116 @@ def audit(db: Session, action: str, entity_type: str, payload: dict):
         db.rollback()
 
 
+
+def ensure_termination_archive_table_v147_(db: Session):
+    """Archiv vygenerovaných výpovědí. Bez zásahu do existujících tabulek."""
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS termination_documents (
+            id UUID PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+            created_by_name VARCHAR(255),
+            created_by_email VARCHAR(255),
+            partner_code VARCHAR(100),
+            partner_name VARCHAR(255),
+            client_name VARCHAR(255),
+            client_identifier VARCHAR(120),
+            client_address TEXT,
+            policy_no VARCHAR(180),
+            insurance_type VARCHAR(255),
+            insured_subject TEXT,
+            termination_type VARCHAR(20),
+            reason_text TEXT,
+            bank_account VARCHAR(180),
+            extra_date VARCHAR(60),
+            note TEXT,
+            document_text TEXT,
+            status VARCHAR(80) DEFAULT 'Vygenerováno' NOT NULL
+        )
+    """))
+    db.execute(text("CREATE INDEX IF NOT EXISTS ix_termination_documents_created_at ON termination_documents(created_at DESC)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS ix_termination_documents_partner_code ON termination_documents(partner_code)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS ix_termination_documents_policy_no ON termination_documents(policy_no)"))
+    db.commit()
+
+
+def build_termination_document_v147_(partner, termination_type: str, client_name: str, client_identifier: str,
+                                     client_address: str, policy_no: str, insurance_type: str,
+                                     insured_subject: str, bank_account: str, extra_date: str, note: str):
+    reason_map = {
+        "A": "ke konci pojistného období",
+        "B": "ve lhůtě do 2 měsíců od uzavření smlouvy",
+        "C": "po oznámení pojistné události",
+        "D": "z důvodu nesouhlasu se změnou výše pojistného",
+        "E": "z důvodu zániku pojistného zájmu – prodej předmětu pojištění",
+        "F": "z důvodu vyřazení vozidla z evidence / odcizení",
+    }
+    reason = reason_map.get(termination_type, reason_map["A"])
+    insurer_name = getattr(partner, 'name', '') if partner else ''
+    insurer_address = getattr(partner, 'address_full', '') if partner else ''
+    insurer_data_box = getattr(partner, 'data_box', '') if partner else ''
+    insurer_email = getattr(partner, 'registry_email', '') if partner else ''
+    lines = [
+        "VÝPOVĚĎ POJISTNÉ SMLOUVY", "",
+        f"Adresát: {insurer_name}",
+    ]
+    if insurer_address: lines.append(f"Adresa: {insurer_address}")
+    if insurer_data_box: lines.append(f"Datová schránka: {insurer_data_box}")
+    if insurer_email: lines.append(f"E-mail: {insurer_email}")
+    lines += ["", f"Pojistník: {client_name}"]
+    if client_identifier: lines.append(f"Identifikace: {client_identifier}")
+    if client_address: lines.append(f"Adresa pojistníka: {client_address}")
+    lines += ["", f"Tímto vypovídám pojistnou smlouvu č. {policy_no}.", f"Výpověď podávám {reason}."]
+    if extra_date: lines.append(f"Rozhodné datum: {extra_date}")
+    if insurance_type: lines.append(f"Druh pojištění: {insurance_type}")
+    if insured_subject: lines.append(f"Identifikace předmětu pojištění: {insured_subject}")
+    lines += ["", "Žádám o potvrzení přijetí této výpovědi."]
+    if bank_account:
+        lines.append(f"Případný přeplatek pojistného žádám zaslat na bankovní účet: {bank_account}.")
+    else:
+        lines.append("Případný přeplatek pojistného žádám zaslat na adresu pojistníka.")
+    if note:
+        lines += ["", f"Poznámka: {note}"]
+    lines += ["", "V ........................ dne ................", "", "........................................", "podpis pojistníka"]
+    return reason, lines, "\n".join(lines)
+
+
+def save_termination_document_v147_(db: Session, partner, partner_code: str, termination_type: str,
+                                    client_name: str, client_identifier: str, client_address: str,
+                                    policy_no: str, insurance_type: str, insured_subject: str,
+                                    bank_account: str, extra_date: str, note: str, document_text: str, reason_text: str):
+    ensure_termination_archive_table_v147_(db)
+    doc_id = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO termination_documents
+        (id, created_by_name, created_by_email, partner_code, partner_name, client_name, client_identifier,
+         client_address, policy_no, insurance_type, insured_subject, termination_type, reason_text,
+         bank_account, extra_date, note, document_text, status)
+        VALUES
+        (:id, :created_by_name, :created_by_email, :partner_code, :partner_name, :client_name, :client_identifier,
+         :client_address, :policy_no, :insurance_type, :insured_subject, :termination_type, :reason_text,
+         :bank_account, :extra_date, :note, :document_text, 'Vygenerováno')
+    """), {
+        "id": doc_id,
+        "created_by_name": "Admin ASTORIE",
+        "created_by_email": "nekudova@astorieas.cz",
+        "partner_code": (partner_code or '').upper(),
+        "partner_name": getattr(partner, 'name', '') if partner else '',
+        "client_name": client_name,
+        "client_identifier": client_identifier,
+        "client_address": client_address,
+        "policy_no": policy_no,
+        "insurance_type": insurance_type,
+        "insured_subject": insured_subject,
+        "termination_type": termination_type,
+        "reason_text": reason_text,
+        "bank_account": bank_account,
+        "extra_date": extra_date,
+        "note": note,
+        "document_text": document_text,
+    })
+    db.commit()
+    return doc_id
+
 @router.get("/", response_class=HTMLResponse)
 def home():
     return RedirectResponse(url="/admin", status_code=302)
@@ -861,72 +971,49 @@ def termination_preview(
     db: Session = Depends(get_db),
 ):
     partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first() if partner_code else None
-
-    reason_map = {
-        "A": "ke konci pojistného období",
-        "B": "ve lhůtě do 2 měsíců od uzavření smlouvy",
-        "C": "po oznámení pojistné události",
-        "D": "z důvodu nesouhlasu se změnou výše pojistného",
-        "E": "z důvodu zániku pojistného zájmu – prodej předmětu pojištění",
-        "F": "z důvodu vyřazení vozidla z evidence / odcizení",
-    }
-
-    insurer_name = partner.name if partner else ""
-    insurer_address = partner.address_full if partner else ""
-    insurer_data_box = partner.data_box if partner else ""
-    insurer_email = partner.registry_email if partner else ""
-
-    lines = [
-        "VÝPOVĚĎ POJISTNÉ SMLOUVY",
-        "",
-        f"Adresát: {insurer_name}",
-    ]
-    if insurer_address:
-        lines.append(f"Adresa: {insurer_address}")
-    if insurer_data_box:
-        lines.append(f"Datová schránka: {insurer_data_box}")
-    if insurer_email:
-        lines.append(f"E-mail: {insurer_email}")
-
-    lines += [
-        "",
-        f"Pojistník: {client_name}",
-    ]
-    if client_identifier:
-        lines.append(f"Identifikace: {client_identifier}")
-    if client_address:
-        lines.append(f"Adresa pojistníka: {client_address}")
-
-    lines += [
-        "",
-        f"Tímto vypovídám pojistnou smlouvu č. {policy_no}.",
-        f"Výpověď podávám {reason_map.get(termination_type, reason_map['A'])}.",
-    ]
-
-    if extra_date:
-        lines.append(f"Rozhodné datum: {extra_date}")
-    if insurance_type:
-        lines.append(f"Druh pojištění: {insurance_type}")
-    if insured_subject:
-        lines.append(f"Identifikace předmětu pojištění: {insured_subject}")
-
-    lines += [
-        "",
-        "Žádám o potvrzení přijetí této výpovědi.",
-    ]
-    if bank_account:
-        lines.append(f"Případný přeplatek pojistného žádám zaslat na bankovní účet: {bank_account}.")
-    else:
-        lines.append("Případný přeplatek pojistného žádám zaslat na adresu pojistníka.")
-    if note:
-        lines += ["", f"Poznámka: {note}"]
-
+    reason_text, preview_lines, preview_text = build_termination_document_v147_(
+        partner, termination_type, client_name, client_identifier, client_address, policy_no,
+        insurance_type, insured_subject, bank_account, extra_date, note
+    )
+    doc_id = save_termination_document_v147_(
+        db, partner, partner_code, termination_type, client_name, client_identifier, client_address,
+        policy_no, insurance_type, insured_subject, bank_account, extra_date, note, preview_text, reason_text
+    )
     return render(request, "termination_preview.html", {
         "active": "terminations",
         "partner": partner,
         "partner_code": partner_code.upper() if partner_code else "",
-        "preview_text": "\\n".join(lines),
+        "preview_text": preview_text,
+        "preview_lines": preview_lines,
+        "doc_id": doc_id,
+        "saved": True,
     })
+
+
+@router.get("/admin/terminations/archive", response_class=HTMLResponse)
+def admin_terminations_archive_v147(request: Request, q: str = "", db: Session = Depends(get_db)):
+    ensure_termination_archive_table_v147_(db)
+    where = ""
+    params = {}
+    if q:
+        where = "WHERE lower(coalesce(client_name,'') || ' ' || coalesce(policy_no,'') || ' ' || coalesce(partner_name,'') || ' ' || coalesce(created_by_name,'')) LIKE :q"
+        params["q"] = f"%{q.lower()}%"
+    rows = fetch_all_safe_v084_(db, f"""
+        SELECT * FROM termination_documents
+        {where}
+        ORDER BY created_at DESC
+        LIMIT 500
+    """, params)
+    return render(request, "terminations_archive.html", {"active": "termination_archive", "rows": [dict(r) for r in rows], "q": q})
+
+
+@router.get("/admin/terminations/archive/{doc_id}", response_class=HTMLResponse)
+def admin_termination_archive_detail_v147(request: Request, doc_id: str, db: Session = Depends(get_db)):
+    ensure_termination_archive_table_v147_(db)
+    row = fetch_one_safe_v084_(db, "SELECT * FROM termination_documents WHERE id = :id LIMIT 1", {"id": doc_id})
+    if not row:
+        return HTMLResponse("Nenalezeno", status_code=404)
+    return render(request, "termination_archive_detail.html", {"active": "termination_archive", "doc": dict(row), "preview_lines": (row["document_text"] or "").split("\n")})
 
 
 @router.get("/admin/modules", response_class=HTMLResponse)
@@ -3395,7 +3482,35 @@ def hub_termination_preview_v146(
     note: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    return termination_preview(request, partner_code, termination_type, client_name, client_identifier, client_address, policy_no, insurance_type, insured_subject, bank_account, extra_date, note, db)
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first() if partner_code else None
+    reason_text, preview_lines, preview_text = build_termination_document_v147_(
+        partner, termination_type, client_name, client_identifier, client_address, policy_no,
+        insurance_type, insured_subject, bank_account, extra_date, note
+    )
+    doc_id = save_termination_document_v147_(
+        db, partner, partner_code, termination_type, client_name, client_identifier, client_address,
+        policy_no, insurance_type, insured_subject, bank_account, extra_date, note, preview_text, reason_text
+    )
+    return hub_render_v083_(request, "hub_termination_preview.html", {
+        "active": "terminations",
+        "partner": partner,
+        "partner_code": partner_code.upper() if partner_code else "",
+        "preview_text": preview_text,
+        "preview_lines": preview_lines,
+        "doc_id": doc_id,
+        "saved": True,
+    })
+
+
+@router.get("/hub/terminations/archive", response_class=HTMLResponse)
+def hub_terminations_archive_v147(request: Request, q: str = "", db: Session = Depends(get_db)):
+    ensure_termination_archive_table_v147_(db)
+    rows = fetch_all_safe_v084_(db, """
+        SELECT * FROM termination_documents
+        ORDER BY created_at DESC
+        LIMIT 200
+    """)
+    return hub_render_v083_(request, "hub_terminations_archive.html", {"active": "terminations", "rows": [dict(r) for r in rows]})
 
 
 @router.get("/hub/forms", response_class=HTMLResponse)
@@ -8072,14 +8187,15 @@ def release_145_status():
     }
 
 
-@router.get("/api/release-1-4-6/status")
-def release_146_status():
+@router.get("/api/release-1-4-7/status")
+def release_147_status():
     return {
         "ok": True,
-        "version": "1.4.6-terminations-advisor-builder-safe",
-        "message": "Výpovědi jsou dostupné i v poradenském HUBu, s výběrem partnera ze seznamu a živým náhledem dokumentu.",
+        "version": "1.4.7-terminations-pdf-archive-central-evidence-safe",
+        "message": "Opravené generování výpovědi: profesionální náhled bez chybných znaků, automatické uložení do archivu a centrální evidence v Adminu.",
         "safe": True,
-        "changed_sections": ["hub_terminations", "admin_terminations_ux", "hub_forms_link"],
-        "db_changed": False,
+        "changed_sections": ["hub_terminations_preview", "termination_documents_archive", "admin_terminations_central_evidence"],
+        "db_changed": True,
+        "db_change_type": "additive_only_create_table_if_missing_termination_documents",
         "untouched": ["Nový TIP", "Moje TIPy", "Partneři", "Sazebník", "Kontakty", "Produkty", "Odkazy"]
     }

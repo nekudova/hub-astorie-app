@@ -1,0 +1,12 @@
+{% extends "hub_base.html" %}
+{% block content %}
+<h1 class="page-title">Archiv výpovědí</h1>
+<p class="page-subtitle">Uložené vygenerované výpovědi.</p>
+<section class="card" style="overflow:auto;">
+<table style="width:100%;border-collapse:collapse;">
+<thead><tr><th>Datum</th><th>Klient</th><th>Partner</th><th>Smlouva</th><th>Stav</th></tr></thead>
+<tbody>
+{% for r in rows %}<tr><td>{{ r.created_at }}</td><td><strong>{{ r.client_name }}</strong></td><td>{{ r.partner_name }}</td><td>{{ r.policy_no or '—' }}</td><td>{{ r.status }}</td></tr>{% else %}<tr><td colspan="5">Zatím není uložena žádná výpověď.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+{% endblock %}
