@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.edit-v144{display:grid;gap:18px}.panel-v144{background:#fff;border:1px solid #dce9ed;border-radius:22px;padding:20px;box-shadow:0 12px 28px rgba(0,61,76,.07)}.grid-v144{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid-v144 label{display:block;font-size:12px;font-weight:900;color:#60737c;text-transform:uppercase;letter-spacing:.05em}.grid-v144 input,.grid-v144 select,.grid-v144 textarea{width:100%;border:1px solid #dce9ed;border-radius:13px;padding:11px 12px;font:inherit;background:#fff;margin-top:5px}.span-3{grid-column:span 3}.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:900;text-decoration:none;cursor:pointer}.btn-primary{background:#FC4C02;color:#fff}.btn-soft{background:#edf6f8;color:#003D4C}.actions{display:flex;gap:10px;flex-wrap:wrap}.audit{border-left:4px solid #FC4C02;background:#f8fbfc;border-radius:14px;padding:12px;margin:8px 0}@media(max-width:900px){.grid-v144{grid-template-columns:1fr}.span-3{grid-column:span 1}}
+</style>
+<div class="edit-v144">
+  <p><a href="/admin/rates">← Zpět na Sazebník provizí</a></p>
+  <section class="panel-v144">
+    <h1>Upravit sazbu</h1>
+    <form method="post" action="/admin/rates/{{ row.id }}/update">
+      <div class="grid-v144">
+        <label>Sekce<input name="section_code" value="{{ row.section_code or '' }}" required></label>
+        <label>Oblast<input name="area" value="{{ row.area or '' }}"></label>
+        <label>Partner<input name="partner_name" value="{{ row.partner_name or '' }}" required></label>
+        <label class="span-3">Produkt / druh obchodu<input name="business_type" value="{{ row.business_type or '' }}" required></label>
+        <label>Základ / typ obchodu<input name="product_type" value="{{ row.product_type or '' }}" required></label>
+        <label>Provize %<input name="rate_percent" value="{{ row.rate_percent or '' }}" required></label>
+        <label>Stav<select name="is_active"><option value="1" {{ 'selected' if row.is_active else '' }}>Aktivní</option><option value="0" {{ 'selected' if not row.is_active else '' }}>Neaktivní</option></select></label>
+        <label class="span-3">Poznámka ke změně<textarea name="note" placeholder="Důvod změny"></textarea></label>
+      </div>
+      <p class="actions"><button class="btn btn-primary">Uložit změnu</button><a class="btn btn-soft" href="/admin/rates">Zrušit</a></p>
+    </form>
+  </section>
+  <section class="panel-v144">
+    <h2>Historie změn této sazby</h2>
+    {% for a in audit_rows %}<div class="audit"><strong>{{ a.action }}</strong> – {{ a.created_at }}<br><small>{{ a.new_value }}</small></div>{% else %}<p>Historie zatím není k dispozici.</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

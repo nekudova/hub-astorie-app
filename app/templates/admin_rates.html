@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.rates-admin-v144{display:grid;gap:18px}.rates-hero-v144{background:linear-gradient(135deg,#003D4C,#005C66);color:#fff;border-radius:26px;padding:24px;display:flex;justify-content:space-between;gap:18px;align-items:flex-end;box-shadow:0 18px 40px rgba(0,61,76,.16)}.rates-hero-v144 h1{margin:0 0 6px;font-size:30px}.rates-hero-v144 p{margin:0;color:rgba(255,255,255,.86)}.rates-actions-v144{display:flex;gap:10px;flex-wrap:wrap}.btn-v144{border:0;border-radius:14px;padding:11px 15px;font-weight:900;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px}.btn-primary-v144{background:#FC4C02;color:#fff}.btn-soft-v144{background:#edf6f8;color:#003D4C}.btn-dark-v144{background:#003D4C;color:#fff}.rates-kpis-v144{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.rates-kpis-v144 div{background:#fff;border:1px solid #dce9ed;border-radius:18px;padding:16px}.rates-kpis-v144 span{display:block;color:#637984;text-transform:uppercase;font-size:12px;font-weight:900;letter-spacing:.06em}.rates-kpis-v144 strong{display:block;color:#003D4C;font-size:28px;margin-top:5px}.rates-panel-v144{background:#fff;border:1px solid #dce9ed;border-radius:22px;padding:18px;box-shadow:0 12px 28px rgba(0,61,76,.07)}.rates-filter-v144{display:grid;grid-template-columns:1.5fr repeat(4,1fr) auto;gap:10px;margin-bottom:14px}.rates-filter-v144 input,.rates-filter-v144 select,.rate-edit-grid-v144 input,.rate-edit-grid-v144 select,.rate-edit-grid-v144 textarea{width:100%;border:1px solid #dce9ed;border-radius:13px;padding:11px 12px;font:inherit;background:#fff}.rates-table-wrap-v144{overflow:auto;border:1px solid #e3edf0;border-radius:18px;max-height:66vh}.rates-table-v144{width:100%;border-collapse:separate;border-spacing:0;min-width:1120px}.rates-table-v144 th{position:sticky;top:0;background:#edf6f8;color:#48606b;text-align:left;text-transform:uppercase;font-size:12px;letter-spacing:.08em;padding:13px;z-index:2}.rates-table-v144 td{padding:13px;border-bottom:1px solid #edf3f5;vertical-align:middle}.rates-table-v144 tr:hover td{background:#fbfdfe}.badge-rate-v144{background:#FC4C02;color:#fff;border-radius:999px;padding:6px 10px;font-weight:900;white-space:nowrap}.badge-ok-v144{background:#e8fff0;color:#15743a;border-radius:999px;padding:5px 9px;font-weight:900;font-size:12px}.badge-off-v144{background:#f1f5f7;color:#7b8b92;border-radius:999px;padding:5px 9px;font-weight:900;font-size:12px}.muted-v144{color:#6b7d86}.rate-edit-grid-v144{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.rate-edit-grid-v144 label{display:block;font-size:12px;font-weight:900;color:#60737c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}.span-3-v144{grid-column:span 3}.rate-card-form-v144{background:#f8fbfc;border:1px dashed #cfe1e6;border-radius:18px;padding:14px;margin-top:12px}.audit-list-v144{display:grid;gap:10px}.audit-item-v144{border-left:4px solid #FC4C02;background:#f8fbfc;border-radius:14px;padding:12px}.audit-item-v144 small{color:#6b7d86}.notice-v144{padding:12px 14px;border-radius:14px;font-weight:900}.notice-v144.ok{background:#e8fff0;color:#126b32}.notice-v144.warn{background:#fff7e6;color:#8b5c00}@media(max-width:1100px){.rates-filter-v144,.rate-edit-grid-v144{grid-template-columns:1fr}.span-3-v144{grid-column:span 1}.rates-kpis-v144{grid-template-columns:1fr 1fr}.rates-hero-v144{display:block}.rates-actions-v144{margin-top:14px}}@media(max-width:680px){.rates-kpis-v144{grid-template-columns:1fr}}
+</style>
+<div class="rates-admin-v144">
+  <section class="rates-hero-v144">
+    <div>
+      <h1>📊 Sazebník provizí</h1>
+      <p>Ostrý zdroj dat je nyní databáze. Google Sheets slouží jen jako importní podklad přes import XLSX.</p>
+    </div>
+    <div class="rates-actions-v144">
+      <a class="btn-v144 btn-soft-v144" href="/hub/calculators" target="_blank">Otevřít poradenský sazebník</a>
+      <form method="post" action="/admin/rates/ensure" style="margin:0"><button class="btn-v144 btn-primary-v144">Zkontrolovat DB strukturu</button></form>
+    </div>
+  </section>
+
+  {% if message %}<div class="notice-v144 ok">{{ message }}</div>{% endif %}
+  {% if warning %}<div class="notice-v144 warn">{{ warning }}</div>{% endif %}
+
+  <section class="rates-kpis-v144">
+    <div><span>Celkem sazeb v DB</span><strong>{{ stats.total }}</strong></div>
+    <div><span>Aktivní sazby</span><strong>{{ stats.active }}</strong></div>
+    <div><span>Partneři</span><strong>{{ stats.partners }}</strong></div>
+    <div><span>Sekce</span><strong>{{ stats.sections }}</strong></div>
+  </section>
+
+  <section class="rates-panel-v144">
+    <h2>Přehled sazeb</h2>
+    <form class="rates-filter-v144" method="get" action="/admin/rates">
+      <input name="q" value="{{ q }}" placeholder="Fulltext: sekce, oblast, partner, produkt, základ, provize…">
+      <select name="section"><option value="">Všechny sekce</option>{% for item in sections %}<option value="{{ item }}" {{ 'selected' if item == section else '' }}>{{ item }}</option>{% endfor %}</select>
+      <select name="partner"><option value="">Všichni partneři</option>{% for item in partners %}<option value="{{ item }}" {{ 'selected' if item == partner else '' }}>{{ item }}</option>{% endfor %}</select>
+      <select name="status"><option value="">Všechny stavy</option><option value="active" {{ 'selected' if status == 'active' else '' }}>Aktivní</option><option value="inactive" {{ 'selected' if status == 'inactive' else '' }}>Neaktivní</option></select>
+      <select name="limit"><option value="100" {{ 'selected' if limit == 100 else '' }}>100 řádků</option><option value="250" {{ 'selected' if limit == 250 else '' }}>250 řádků</option><option value="500" {{ 'selected' if limit == 500 else '' }}>500 řádků</option></select>
+      <button class="btn-v144 btn-dark-v144">Filtrovat</button>
+    </form>
+    <div class="rates-table-wrap-v144">
+      <table class="rates-table-v144">
+        <thead><tr><th>Sekce</th><th>Oblast</th><th>Partner</th><th>Produkt</th><th>Základ</th><th>Provize</th><th>Stav</th><th>Akce</th></tr></thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td><strong>{{ r.section_display or '—' }}</strong></td>
+            <td>{{ r.area_display or '—' }}</td>
+            <td>{{ r.partner_display or '—' }}</td>
+            <td>{{ r.product_display or '—' }}</td>
+            <td>{{ r.base_display or '—' }}</td>
+            <td>{% if r.rate_display %}<span class="badge-rate-v144">{{ r.rate_display }}</span>{% else %}—{% endif %}</td>
+            <td>{% if r.is_active %}<span class="badge-ok-v144">Aktivní</span>{% else %}<span class="badge-off-v144">Neaktivní</span>{% endif %}</td>
+            <td><a class="btn-v144 btn-soft-v144" href="/admin/rates/{{ r.id }}">Upravit</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="muted-v144">Žádné sazby nenalezeny. Nejdříve proveď import XLSX / nebo zkontroluj DB strukturu.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rates-panel-v144">
+    <h2>Přidat novou sazbu</h2>
+    <form class="rate-card-form-v144" method="post" action="/admin/rates/create">
+      <div class="rate-edit-grid-v144">
+        <label>Sekce<input name="section_code" placeholder="např. MAJ" required></label>
+        <label>Oblast<input name="area" placeholder="např. Občan - majetek"></label>
+        <label>Partner<input name="partner_name" placeholder="např. koop" required></label>
+        <label class="span-3-v144">Produkt / druh obchodu<input name="business_type" placeholder="např. Pojištění domácnosti" required></label>
+        <label>Základ / typ obchodu<input name="product_type" placeholder="např. Nová smlouva" required></label>
+        <label>Provize %<input name="rate_percent" placeholder="48" required></label>
+        <label>Stav<select name="is_active"><option value="1">Aktivní</option><option value="0">Neaktivní</option></select></label>
+        <label class="span-3-v144">Poznámka / audit<textarea name="note" placeholder="Důvod založení nebo interní poznámka"></textarea></label>
+      </div>
+      <p><button class="btn-v144 btn-primary-v144">Přidat sazbu</button></p>
+    </form>
+  </section>
+
+  <section class="rates-panel-v144">
+    <h2>Poslední změny</h2>
+    <div class="audit-list-v144">
+      {% for a in audit_rows %}<div class="audit-item-v144"><strong>{{ a.action }}</strong> <span class="muted-v144">{{ a.created_at }}</span><br><small>{{ a.new_value }}</small></div>{% else %}<p class="muted-v144">Zatím žádné změny sazebníku.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

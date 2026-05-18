@@ -7715,3 +7715,285 @@ def release_143_status():
             "Partneři, Nový TIP, Moje TIPy ani administrace TIPů nejsou měněny"
         ]
     }
+
+# ============================================================
+# v1.4.4 SAFE – Admin Sazebník provizí jako DB source of truth
+# ============================================================
+
+def ensure_rates_admin_v144_(db: Session):
+    """Bezpečné rozšíření tabulky commission_rates. Nemění TIPy, partnery ani ostatní moduly."""
+    if not table_exists_v084_(db, "commission_rates"):
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS commission_rates (
+                id UUID PRIMARY KEY,
+                section_code TEXT,
+                subsection_code TEXT,
+                partner_name TEXT NOT NULL,
+                base_type TEXT,
+                product_type TEXT,
+                rate_percent NUMERIC(8,4),
+                priority INTEGER NOT NULL DEFAULT 100,
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                business_type TEXT NOT NULL DEFAULT '',
+                area TEXT NOT NULL DEFAULT '',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+            )
+        """))
+    for sql in [
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS business_type TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS area TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'db_admin'",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now()",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()",
+        "ALTER TABLE commission_rates ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE",
+    ]:
+        db.execute(text(sql))
+    db.commit()
+
+
+def rate_percent_text_v144_(value):
+    if value in (None, ""):
+        return ""
+    s = str(value).strip().replace("%", "").replace(",", ".")
+    try:
+        d = Decimal(s)
+        if d == d.to_integral_value():
+            return str(int(d))
+        return str(d).replace('.', ',')
+    except Exception:
+        return str(value)
+
+
+@router.get("/api/release-1-4-4/status")
+def release_144_status(db: Session = Depends(get_db)):
+    ensure_rates_admin_v144_(db)
+    total = db.execute(text("SELECT COUNT(*) FROM commission_rates WHERE deleted_at IS NULL")).scalar() or 0
+    return {
+        "ok": True,
+        "version": "1.4.4-admin-rates-db-core-safe",
+        "message": "Admin Sazebník provizí je aktivní. Aplikace čte ostrý sazebník z DB; Google Sheets slouží pouze jako importní podklad.",
+        "safe": True,
+        "db_source_of_truth": True,
+        "google_sheets_runtime_read": False,
+        "changed_modules": ["admin_rates", "hub_calculators_db_mapping"],
+        "unchanged_modules": ["new_tip", "my_tips", "partners", "contacts", "specialists", "login"],
+        "commission_rates_count": int(total),
+    }
+
+
+@router.post("/admin/rates/ensure")
+def admin_rates_ensure(db: Session = Depends(get_db)):
+    ensure_rates_admin_v144_(db)
+    audit(db, "ENSURE_STRUCTURE", "commission_rates", {"version": "1.4.4", "source_of_truth": "DB"})
+    return RedirectResponse(url="/admin/rates?msg=DB struktura sazebníku byla zkontrolována", status_code=303)
+
+
+@router.get("/admin/rates", response_class=HTMLResponse)
+def admin_rates_page(
+    request: Request,
+    q: str = "",
+    section: str = "",
+    partner: str = "",
+    status: str = "",
+    limit: int = 250,
+    msg: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_rates_admin_v144_(db)
+    limit = limit if limit in (100, 250, 500) else 250
+    params = {"limit": limit}
+    where = ["cr.deleted_at IS NULL"]
+    if q:
+        where.append("""
+            (
+              lower(COALESCE(s.name, cr.section_code, '')) LIKE :q OR
+              lower(COALESCE(cr.area, '')) LIKE :q OR
+              lower(COALESCE(cr.partner_name, '')) LIKE :q OR
+              lower(COALESCE(cr.business_type, '')) LIKE :q OR
+              lower(COALESCE(cr.product_type, '')) LIKE :q OR
+              lower(COALESCE(cr.base_type, '')) LIKE :q OR
+              CAST(COALESCE(cr.rate_percent, 0) AS TEXT) LIKE :q
+            )
+        """)
+        params["q"] = f"%{q.lower()}%"
+    if section:
+        where.append("COALESCE(s.name, cr.section_code, '') = :section")
+        params["section"] = section
+    if partner:
+        where.append("cr.partner_name = :partner")
+        params["partner"] = partner
+    if status == "active":
+        where.append("COALESCE(cr.is_active, TRUE) = TRUE")
+    elif status == "inactive":
+        where.append("COALESCE(cr.is_active, TRUE) = FALSE")
+    where_sql = " AND ".join(where)
+
+    rows = fetch_all_safe_v084_(db, f"""
+        SELECT
+            cr.id::text AS id,
+            cr.section_code,
+            cr.subsection_code,
+            cr.partner_name,
+            cr.business_type,
+            cr.product_type,
+            cr.rate_percent,
+            cr.is_active,
+            COALESCE(NULLIF(s.name, ''), cr.section_code, '') AS section_display,
+            COALESCE(NULLIF(cr.area, ''), '') AS area_display,
+            COALESCE(NULLIF(cr.partner_name, ''), '') AS partner_display,
+            COALESCE(NULLIF(cr.business_type, ''), '') AS product_display,
+            COALESCE(NULLIF(cr.product_type, ''), NULLIF(cr.base_type, ''), '') AS base_display,
+            CASE
+              WHEN cr.rate_percent IS NULL THEN ''
+              WHEN cr.rate_percent = ROUND(cr.rate_percent) THEN TRIM(TO_CHAR(cr.rate_percent, 'FM999999990')) || ' %'
+              ELSE REPLACE(TRIM(TO_CHAR(cr.rate_percent, 'FM999999990D99')), '.', ',') || ' %'
+            END AS rate_display
+        FROM commission_rates cr
+        LEFT JOIN sections s ON s.section_code = cr.section_code
+        WHERE {where_sql}
+        ORDER BY COALESCE(cr.is_active, TRUE) DESC, section_display, area_display, cr.partner_name, product_display, base_display
+        LIMIT :limit
+    """, params)
+
+    sections = [r[0] for r in db.execute(text("""
+        SELECT DISTINCT COALESCE(NULLIF(s.name,''), cr.section_code, '') AS x
+        FROM commission_rates cr LEFT JOIN sections s ON s.section_code=cr.section_code
+        WHERE cr.deleted_at IS NULL AND COALESCE(NULLIF(s.name,''), cr.section_code, '') <> ''
+        ORDER BY x
+    """)).all()]
+    partners = [r[0] for r in db.execute(text("""
+        SELECT DISTINCT partner_name FROM commission_rates
+        WHERE deleted_at IS NULL AND COALESCE(partner_name,'') <> '' ORDER BY partner_name
+    """)).all()]
+    stats_row = fetch_one_safe_v084_(db, """
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE COALESCE(is_active, TRUE)=TRUE) AS active,
+          COUNT(DISTINCT partner_name) AS partners,
+          COUNT(DISTINCT section_code) AS sections
+        FROM commission_rates
+        WHERE deleted_at IS NULL
+    """) or {"total":0,"active":0,"partners":0,"sections":0}
+    audit_rows = fetch_all_safe_v084_(db, """
+        SELECT created_at, action, entity_type, new_value::text AS new_value
+        FROM audit_log
+        WHERE entity_type = 'commission_rates'
+        ORDER BY created_at DESC LIMIT 8
+    """) if table_exists_v084_(db, "audit_log") else []
+    return render(request, "admin_rates.html", {
+        "active": "rates",
+        "rows": rows,
+        "sections": sections,
+        "partners": partners,
+        "stats": stats_row,
+        "audit_rows": audit_rows,
+        "q": q,
+        "section": section,
+        "partner": partner,
+        "status": status,
+        "limit": limit,
+        "message": msg,
+        "warning": "Runtime čtení ze Sheets je vypnuté. Nové sazby se do aplikace dostanou přes import XLSX nebo ruční editaci v DB administraci.",
+    })
+
+
+@router.post("/admin/rates/create")
+def admin_rates_create(
+    section_code: str = Form(...),
+    area: str = Form(""),
+    partner_name: str = Form(...),
+    business_type: str = Form(...),
+    product_type: str = Form(...),
+    rate_percent: str = Form(...),
+    is_active: str = Form("1"),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_rates_admin_v144_(db)
+    new_id = str(uuid.uuid4())
+    rate_txt = rate_percent_text_v144_(rate_percent)
+    db.execute(text("""
+        INSERT INTO commission_rates
+        (id, section_code, subsection_code, partner_name, base_type, product_type, rate_percent, priority, is_active, business_type, area, note, source, created_at, updated_at)
+        VALUES
+        (:id, :section_code, '', :partner_name, '', :product_type, :rate_percent, 100, :is_active, :business_type, :area, :note, 'db_admin', now(), now())
+    """), {
+        "id": new_id,
+        "section_code": section_code.strip().upper(),
+        "partner_name": partner_name.strip(),
+        "product_type": product_type.strip(),
+        "rate_percent": rate_txt.replace(',', '.') if rate_txt else None,
+        "is_active": is_active == "1",
+        "business_type": business_type.strip(),
+        "area": area.strip(),
+        "note": note.strip(),
+    })
+    db.commit()
+    audit(db, "CREATE_RATE", "commission_rates", {"id": new_id, "section_code": section_code, "partner": partner_name, "product": business_type, "rate": rate_txt, "note": note})
+    return RedirectResponse(url="/admin/rates?msg=Sazba byla přidána", status_code=303)
+
+
+@router.get("/admin/rates/{rate_id}", response_class=HTMLResponse)
+def admin_rate_edit_page(rate_id: str, request: Request, db: Session = Depends(get_db)):
+    ensure_rates_admin_v144_(db)
+    row = fetch_one_safe_v084_(db, """
+        SELECT id::text AS id, section_code, area, partner_name, business_type, product_type, base_type,
+               rate_percent, is_active, note
+        FROM commission_rates WHERE id::text = :id AND deleted_at IS NULL
+    """, {"id": rate_id})
+    if not row:
+        return RedirectResponse(url="/admin/rates?msg=Sazba nebyla nalezena", status_code=303)
+    audit_rows = fetch_all_safe_v084_(db, """
+        SELECT created_at, action, new_value::text AS new_value
+        FROM audit_log
+        WHERE entity_type='commission_rates' AND new_value::text LIKE :needle
+        ORDER BY created_at DESC LIMIT 20
+    """, {"needle": f"%{rate_id}%"}) if table_exists_v084_(db, "audit_log") else []
+    return render(request, "admin_rate_edit.html", {"active": "rates", "row": row, "audit_rows": audit_rows})
+
+
+@router.post("/admin/rates/{rate_id}/update")
+def admin_rate_update(
+    rate_id: str,
+    section_code: str = Form(...),
+    area: str = Form(""),
+    partner_name: str = Form(...),
+    business_type: str = Form(...),
+    product_type: str = Form(...),
+    rate_percent: str = Form(...),
+    is_active: str = Form("1"),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_rates_admin_v144_(db)
+    old = fetch_one_safe_v084_(db, "SELECT * FROM commission_rates WHERE id::text=:id", {"id": rate_id})
+    rate_txt = rate_percent_text_v144_(rate_percent)
+    db.execute(text("""
+        UPDATE commission_rates SET
+          section_code=:section_code,
+          area=:area,
+          partner_name=:partner_name,
+          business_type=:business_type,
+          product_type=:product_type,
+          rate_percent=:rate_percent,
+          is_active=:is_active,
+          note=:note,
+          source='db_admin',
+          updated_at=now()
+        WHERE id::text=:id
+    """), {
+        "id": rate_id,
+        "section_code": section_code.strip().upper(),
+        "area": area.strip(),
+        "partner_name": partner_name.strip(),
+        "business_type": business_type.strip(),
+        "product_type": product_type.strip(),
+        "rate_percent": rate_txt.replace(',', '.') if rate_txt else None,
+        "is_active": is_active == "1",
+        "note": note.strip(),
+    })
+    db.commit()
+    audit(db, "UPDATE_RATE", "commission_rates", {"id": rate_id, "old": dict(old) if old else {}, "new": {"section_code": section_code, "area": area, "partner": partner_name, "product": business_type, "base": product_type, "rate": rate_txt, "active": is_active, "note": note}})
+    return RedirectResponse(url=f"/admin/rates/{rate_id}", status_code=303)

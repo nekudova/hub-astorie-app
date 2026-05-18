@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.3.9-new-tip-business-fix-safe"
+APP_VERSION = "1.4.4-admin-rates-db-core-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.3.8 upravuje pouze šablonu sekce Nový TIP: finální vizuál karet, ikony podsekcí, bez zobrazení interních kódů; TIP nelze založit bez specialisty",
+        "status": "v1.4.4 přidává pouze Admin → Sazebník provizí a přepíná práci se sazebníkem na DB jako jediný ostrý zdroj.",
     }
 
 
