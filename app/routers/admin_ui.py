@@ -8541,3 +8541,7 @@ def release_1_4_9_status(db: Session = Depends(get_db)):
         "changed": ["/admin/contacts", "/admin/contact-roles"],
         "db_changed": "contact_roles table + safe partner_contacts.role_group column"
     }
+
+@router.get("/api/release-1-5-2/status")
+def release_1_5_2_status(db: Session = Depends(get_db)):
+    return {"ok": True, "version": "1.5.2-admin-contacts-top-form-table-ux-safe", "safe": True, "db_changed": False, "changed_modules": ["admin_contacts_ui"], "unchanged_modules": ["users", "permissions", "partners", "tips", "rates", "terminations", "email", "products", "links"]}
