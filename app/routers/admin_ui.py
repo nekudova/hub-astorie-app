@@ -16,6 +16,7 @@ from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
 from app.services.passwords import hash_password
+from app.services.mailer import send_email, smtp_config_status, ensure_email_tables, email_template
 from app.services.importer import IMPORT_HANDLERS
 from app.services.ares import fetch_ares_subject
 
@@ -1280,6 +1281,15 @@ def advisor_create(
     })
     db.commit()
 
+    try:
+        subj, body = email_template("new_user", name=name, email=email.lower().strip(), password=password)
+        send_email(db, email.lower().strip(), subj, body, event_type="user_created", entity_type="user", entity_id=advisor_id or email, created_by_email="admin@astorie.local")
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
     safe_audit(db, "admin@astorie.local", "CREATE", "advisor", advisor_id or email, {}, {
         "advisor_id": advisor_id, "name": name, "email": email, "role": role, "is_active": bool(is_active)
     }, "Založení poradce / uživatele")
@@ -1360,6 +1370,17 @@ def advisor_reset_password(
       WHERE id = :id
     """), {"id": user_id, "password_hash": password_hash})
     db.commit()
+
+    try:
+        row = db.execute(text("SELECT email, name FROM users WHERE id = :id"), {"id": user_id}).mappings().first()
+        if row and row.get("email"):
+            subj, body = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
+            send_email(db, row.get("email"), subj, body, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
 
     safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), {}, {"password_reset": True}, "Reset hesla poradce")
     return RedirectResponse("/admin/advisors", status_code=303)
@@ -7000,29 +7021,8 @@ def get_bo_email_v110(db: Session) -> str:
 
 
 def send_partner_workflow_email_v110(db: Session, to_email: str, subject: str, body: str):
-    if not to_email:
-        return False, 'Chybí e-mail příjemce.'
-    try:
-        import os, smtplib
-        from email.mime.text import MIMEText
-        smtp_host=os.getenv('SMTP_HOST','')
-        smtp_port=int(os.getenv('SMTP_PORT','587'))
-        smtp_user=os.getenv('SMTP_USER','')
-        smtp_password=os.getenv('SMTP_PASSWORD','')
-        smtp_from=os.getenv('SMTP_FROM', smtp_user or 'no-reply@astorieas.cz')
-        if not smtp_host or not smtp_user or not smtp_password:
-            return False, 'SMTP není nakonfigurováno; požadavek byl uložen bez odeslání e-mailu.'
-        msg=MIMEText(body,'plain','utf-8')
-        msg['Subject']=subject
-        msg['From']=smtp_from
-        msg['To']=to_email
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_from,[to_email],msg.as_string())
-        return True,''
-    except Exception as exc:
-        return False,str(exc)
+    # v1.4.8: centrální e-mailová služba s logováním.
+    return send_email(db, to_email, subject, body, event_type="partner_workflow", entity_type="partner_request")
 
 
 def create_partner_request_v110(db: Session, partner_code: str, request_type: str, title: str, description: str, request_area: str='partners', item_type: str='', item_id: str='', tab: str='', contact_name: str='', contact_phone: str='', contact_email: str='', current_value: str='', proposed_value: str=''):
@@ -8198,4 +8198,54 @@ def release_147_status():
         "db_changed": True,
         "db_change_type": "additive_only_create_table_if_missing_termination_documents",
         "untouched": ["Nový TIP", "Moje TIPy", "Partneři", "Sazebník", "Kontakty", "Produkty", "Odkazy"]
+    }
+
+
+# -------------------------------------------------------------------
+# v1.4.8 – E-mail Core SAFE
+# Centrální SMTP nastavení, test odeslání a logy.
+# -------------------------------------------------------------------
+@router.get("/admin/email", response_class=HTMLResponse)
+def admin_email_page(request: Request, db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = smtp_config_status()
+    logs = db.execute(text("""
+        SELECT created_at, event_type, entity_type, entity_id, recipient_email, subject, status, error
+        FROM email_logs
+        ORDER BY created_at DESC
+        LIMIT 100
+    """)).mappings().all()
+    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs})
+
+
+@router.post("/admin/email/test")
+def admin_email_test(to_email: str = Form(...), db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    send_email(
+        db,
+        to_email,
+        "Test e-mailu – HUB ASTORIE",
+        "Dobrý den,\n\ntoto je testovací e-mail z aplikace HUB ASTORIE. Pokud Vám přišel, SMTP napojení funguje.\n\nASTORIE a.s.",
+        event_type="email_test",
+        entity_type="system",
+        created_by_email="admin@astorie.local",
+    )
+    return RedirectResponse("/admin/email", status_code=303)
+
+
+@router.get("/api/release-1-4-8/status")
+def release_1_4_8_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = smtp_config_status()
+    cnt = db.execute(text("SELECT COUNT(*) FROM email_logs")).scalar()
+    return {
+        "ok": True,
+        "version": "1.4.8-email-core-safe",
+        "message": "Centrální e-mailová služba je připravena. SMTP konfigurace se bere z Render Environment Variables.",
+        "smtp_configured": cfg.get("configured"),
+        "smtp_host": cfg.get("host"),
+        "smtp_port": cfg.get("port"),
+        "smtp_security": cfg.get("security"),
+        "missing": cfg.get("missing"),
+        "email_log_count": int(cnt or 0),
     }
