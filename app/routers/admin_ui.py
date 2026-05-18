@@ -2747,15 +2747,16 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
         """, params)
 
     if table_exists_v084_(db, "commission_rates"):
-        # v1.4.2: sazebník vrací explicitní aliasy pro frontend, aby se neztrácely
+        # v1.4.3: sazebník vrací přesné aliasy podle sloupců Google Sheets pro frontend, aby se neztrácely
         # sazby, typy a produkty jen kvůli rozdílným názvům sloupců v databázi.
         rates = fetch_all_safe_v084_(db, """
             SELECT
                 cr.*,
                 COALESCE(NULLIF(s.name, ''), cr.section_code, '') AS section_display,
-                COALESCE(NULLIF(ss.name, ''), cr.subsection_code, '') AS subsection_display,
-                COALESCE(NULLIF(cr.base_type, ''), '') AS type_display,
-                COALESCE(NULLIF(cr.product_type, ''), '') AS product_display,
+                COALESCE(NULLIF(cr.area, ''), '') AS area_display,
+                COALESCE(NULLIF(cr.partner_name, ''), '') AS partner_display,
+                COALESCE(NULLIF(cr.business_type, ''), '') AS product_display,
+                COALESCE(NULLIF(cr.product_type, ''), '') AS base_display,
                 CASE
                     WHEN cr.rate_percent IS NULL THEN ''
                     WHEN cr.rate_percent = ROUND(cr.rate_percent) THEN TRIM(TO_CHAR(cr.rate_percent, 'FM999999990')) || ' %'
@@ -2765,7 +2766,7 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
             LEFT JOIN sections s ON s.section_code = cr.section_code
             LEFT JOIN subsections ss ON ss.subsection_code = cr.subsection_code
             WHERE COALESCE(cr.is_active, TRUE) = TRUE
-            ORDER BY COALESCE(cr.priority, 0) DESC, cr.partner_name, section_display, subsection_display, product_display
+            ORDER BY COALESCE(cr.priority, 0) DESC, section_display, area_display, cr.partner_name, product_display, base_display
             LIMIT 2000
         """)
 
@@ -7694,5 +7695,23 @@ def release_142_status():
             "DOPORUČENO se zobrazí až po skutečném výběru specialisty",
             "Sazebník vrací sekci, podsekci, partnera, typ, produkt i sazbu přes explicitní aliasy",
             "Sazebník má doplněný filtr produktů a zobrazuje sazby jako badge"
+        ]
+    }
+
+
+@router.get("/api/release-1-4-3/status")
+def release_143_status():
+    return {
+        "ok": True,
+        "version": "1.4.3-rates-column-mapping-safe",
+        "safe": True,
+        "db_changed": False,
+        "scope": "Pouze Sazebník provizí – oprava mapování sloupců a názvů",
+        "changes": [
+            "Sazebník zobrazuje přesné sloupce: Sekce, Oblast, Partner, Produkt, Základ, Provize",
+            "Produkt je mapován z importního sloupce Druh obchodu",
+            "Základ je mapován z importního sloupce Typ_obchodu",
+            "Provize je mapována ze Sazba_provize_%",
+            "Partneři, Nový TIP, Moje TIPy ani administrace TIPů nejsou měněny"
         ]
     }

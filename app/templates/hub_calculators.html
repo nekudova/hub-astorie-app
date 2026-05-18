@@ -28,24 +28,24 @@
   <h2 style="margin:0;color:var(--petrol);font-size:26px;">Sazebník provizí</h2>
   <p class="page-subtitle">Fulltext a filtry fungují přímo nad načtenou tabulkou.</p>
   <div class="rate-filters-v123">
-    <input id="rateSearchV123" placeholder="Fulltext: sekce, podsekce, partner, produkt, typ, sazba…">
+    <input id="rateSearchV123" placeholder="Fulltext: sekce, oblast, partner, produkt, základ, provize…">
     <select id="rateSectionV123"><option value="">Všechny sekce</option></select>
     <select id="ratePartnerV123"><option value="">Všichni partneři</option></select>
-    <select id="rateTypeV123"><option value="">Všechny typy</option></select>
+    <select id="rateTypeV123"><option value="">Všechny základy</option></select>
     <select id="rateProductV123"><option value="">Všechny produkty</option></select>
     <button class="btn soft" type="button" onclick="clearRateFiltersV123()">Vymazat filtry</button>
   </div>
   <div class="table-scroll">
     <table id="rateTableV123">
-      <thead><tr><th>Sekce</th><th>Podsekce</th><th>Partner</th><th>Typ</th><th>Produkt</th><th>Sazba</th></tr></thead>
+      <thead><tr><th>Sekce</th><th>Oblast</th><th>Partner</th><th>Produkt</th><th>Základ</th><th>Provize</th></tr></thead>
       <tbody>
         {% for r in commission_rates or rates or rate_rows %}
           <tr>
             <td>{{ r.section_display or r.section or r.section_name or r.section_code or r.sekce }}</td>
-            <td>{{ r.subsection_display or r.subsection or r.subsection_name or r.subsection_code or r.podsekce }}</td>
-            <td>{{ r.partner or r.partner_code or r.partner_name }}</td>
-            <td>{{ r.type_display or r.type or r.rate_type or r.typ or r.base_type or r.business_type }}</td>
-            <td>{{ r.product_display or r.product or r.product_name or r.produkt or r.product_type or r.area }}</td>
+            <td>{{ r.area_display or r.area or r.oblast or '—' }}</td>
+            <td>{{ r.partner_display or r.partner or r.partner_code or r.partner_name }}</td>
+            <td>{{ r.product_display or r.business_type or r.product or r.product_name or r.produkt or '—' }}</td>
+            <td>{{ r.base_display or r.product_type or r.zaklad or r.type_display or '—' }}</td>
             <td>{% set rv = r.rate_display or r.rate or r.sazba or r.rate_percent or r.commission_rate or r.provize %}{% if rv %}<span class="rate-badge-v142">{{ rv }}</span>{% else %}—{% endif %}</td>
           </tr>
         {% else %}
