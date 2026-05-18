@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-toolbar">
+  <div>
+    <h1 class="page-title">Oprávnění menu</h1>
+    <p class="page-subtitle">Nastavení viditelnosti modulů podle rolí. Uživatel s více rolemi uvidí součet povolených položek.</p>
+  </div>
+  <a class="btn soft" href="/admin/advisors">← Zpět na uživatele</a>
+</div>
+
+<section class="card table-card section-space">
+  <div class="table-head"><span>Moduly a role</span><span>Hub + Admin</span></div>
+  <div class="table-scroll permissions-scroll-v150">
+    <table class="permissions-table-v150">
+      <thead>
+        <tr>
+          <th>Část</th><th>Modul</th><th>URL</th>
+          {% for r in system_roles %}<th>{{ r }}</th>{% endfor %}
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <form method="post" action="/admin/permissions/{{ row.area }}/{{ row.module_id }}/update">
+            <td><span class="pill-v150 {{ row.area }}">{{ 'Poradce' if row.area == 'hub' else 'Admin' }}</span></td>
+            <td><strong>{{ row.module_name }}</strong></td>
+            <td><small>{{ row.module_url }}</small></td>
+            <td><input type="checkbox" name="IF" value="1" {% if row.if_allowed %}checked{% endif %}></td>
+            <td><input type="checkbox" name="PS" value="1" {% if row.ps_allowed %}checked{% endif %}></td>
+            <td><input type="checkbox" name="ADMIN" value="1" {% if row.admin_allowed %}checked{% endif %}></td>
+            <td><input type="checkbox" name="BO" value="1" {% if row.bo_allowed %}checked{% endif %}></td>
+            <td><input type="checkbox" name="VEDENI" value="1" {% if row.vedeni_allowed %}checked{% endif %}></td>
+            <td><button class="btn soft micro" type="submit">Uložit řádek</button></td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<style>
+.permissions-scroll-v150{max-height:76vh;overflow:auto}.permissions-table-v150 th{position:sticky;top:0;z-index:2}.permissions-table-v150 td{text-align:center}.permissions-table-v150 td:nth-child(2),.permissions-table-v150 td:nth-child(3){text-align:left}.pill-v150{border-radius:999px;padding:4px 9px;font-weight:900;font-size:12px;background:#eef6f7;color:#003D4C}.pill-v150.admin{background:#fff1e8;color:#c33a00}.pill-v150.hub{background:#e8f9ee;color:#126b32}
+</style>
+{% endblock %}

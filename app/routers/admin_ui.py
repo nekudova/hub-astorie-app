@@ -45,6 +45,122 @@ def audit(db: Session, action: str, entity_type: str, payload: dict):
 
 
 
+# --- v1.5.0: user multi-role + module permissions -------------------------
+SYSTEM_ROLES_V150 = ["IF", "PS", "ADMIN", "BO", "VEDENI"]
+HUB_MODULES_V150 = [
+    ("tip", "📝 Nový TIP", "/hub/new-tip"),
+    ("mytips", "📌 Moje TIPy", "/hub/my-tips"),
+    ("calcs", "🧮 Kalkulačky", "/hub/calculators"),
+    ("partners", "🏢 Partneři", "/hub/partners"),
+    ("contacts", "☎️ Kontakty", "/hub/contacts"),
+    ("vypovedi", "📄 Výpovědi", "/hub/terminations"),
+    ("formulare", "📑 Formuláře", "/hub/forms"),
+    ("napoveda", "❓ Nápověda", "/hub/help"),
+]
+ADMIN_MODULES_V150 = [
+    ("dashboard", "📊 Dashboard", "/admin"),
+    ("modules", "🧭 Mapa modulů", "/admin/modules"),
+    ("advisors", "👥 Poradci / uživatelé", "/admin/advisors"),
+    ("permissions", "🔐 Oprávnění menu", "/admin/permissions"),
+    ("sections", "🧭 Sekce / podsekce", "/admin/sections"),
+    ("partners", "🏢 Partneři", "/admin/partners"),
+    ("contacts", "👥 Kontakty", "/admin/contacts"),
+    ("contact_roles", "🏷️ Role kontaktů", "/admin/contact-roles"),
+    ("links", "🔗 Odkazy", "/admin/links"),
+    ("products", "📦 Produkty", "/admin/products"),
+    ("rates", "📊 Sazebník provizí", "/admin/rates"),
+    ("terminations", "📄 Výpovědi", "/admin/terminations"),
+    ("termination_archive", "🗂️ Evidence výpovědí", "/admin/terminations/archive"),
+    ("admin_tips", "📋 Správa TIPů", "/admin/tips"),
+    ("specialists", "👤 Specialisté", "/admin/specialists"),
+    ("email", "✉️ E-maily / SMTP", "/admin/email"),
+    ("import", "⬆️ Import dat", "/admin/import"),
+]
+
+
+def parse_roles_v150(value):
+    if not value:
+        return []
+    raw = str(value).replace(';', ',').replace('|', ',').split(',')
+    roles = []
+    for r in raw:
+        code = r.strip().upper()
+        if code and code not in roles:
+            roles.append(code)
+    return roles
+
+
+def normalize_roles_v150(values):
+    if not values:
+        return "IF"
+    if isinstance(values, str):
+        values = [values]
+    roles = []
+    for r in values:
+        code = str(r).strip().upper()
+        if code in SYSTEM_ROLES_V150 and code not in roles:
+            roles.append(code)
+    return ",".join(roles or ["IF"])
+
+
+def ensure_user_permissions_v150(db: Session):
+    """Bezpečný upgrade bez destruktivních migrací: ponechá sloupec role a přidá čitelný multi-role text."""
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS advisor_id VARCHAR(80)"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255)"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(80)"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(120) DEFAULT 'IF' NOT NULL"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE NOT NULL"))
+    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE NOT NULL"))
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS module_permissions (
+            id SERIAL PRIMARY KEY,
+            module_id VARCHAR(80) NOT NULL,
+            module_name VARCHAR(180) NOT NULL,
+            module_url VARCHAR(255) NOT NULL DEFAULT '',
+            area VARCHAR(30) NOT NULL DEFAULT 'hub',
+            role_code VARCHAR(30) NOT NULL,
+            is_allowed BOOLEAN DEFAULT TRUE NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+        )
+    """))
+    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_module_permissions_area_module_role ON module_permissions(area, module_id, role_code)"))
+    defaults = []
+    for area, mods in [("hub", HUB_MODULES_V150), ("admin", ADMIN_MODULES_V150)]:
+        for module_id, module_name, module_url in mods:
+            for role in SYSTEM_ROLES_V150:
+                allowed = True
+                if area == "admin" and role not in ("ADMIN", "BO", "VEDENI"):
+                    allowed = False
+                if module_id in ("permissions",) and role != "ADMIN":
+                    allowed = False
+                defaults.append({"area": area, "module_id": module_id, "module_name": module_name, "module_url": module_url, "role": role, "allowed": allowed})
+    for d in defaults:
+        db.execute(text("""
+            INSERT INTO module_permissions (area, module_id, module_name, module_url, role_code, is_allowed)
+            VALUES (:area, :module_id, :module_name, :module_url, :role, :allowed)
+            ON CONFLICT (area, module_id, role_code) DO NOTHING
+        """), d)
+    db.commit()
+
+
+def get_menu_preview_v150(db: Session, roles):
+    ensure_user_permissions_v150(db)
+    role_list = parse_roles_v150(','.join(roles) if isinstance(roles, list) else roles)
+    if not role_list:
+        role_list = ["IF"]
+    rows = db.execute(text("""
+        SELECT area, module_id, module_name, module_url, bool_or(is_allowed) AS allowed
+        FROM module_permissions
+        WHERE role_code = ANY(:roles)
+        GROUP BY area, module_id, module_name, module_url
+        ORDER BY area, module_name
+    """), {"roles": role_list}).mappings().all()
+    return rows
+
+
+
 def ensure_termination_archive_table_v147_(db: Session):
     """Archiv vygenerovaných výpovědí. Bez zásahu do existujících tabulek."""
     db.execute(text("""
@@ -189,7 +305,8 @@ def create_user(
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(""),
-    role: str = Form("IF"),
+    roles: list[str] = Form([]),
+    role: str = Form(""),
     password: str = Form("1234"),
     db: Session = Depends(get_db),
 ):
@@ -1302,15 +1419,7 @@ def advisors_page(
     active: str = "",
     db: Session = Depends(get_db),
 ):
-    # Bezpečný upgrade tabulky users – sekce Poradci nesmí spadnout kvůli chybějícím sloupcům.
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS advisor_id VARCHAR(80)"))
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255)"))
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)"))
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(80)"))
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(120) DEFAULT 'IF' NOT NULL"))
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE NOT NULL"))
-    db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE NOT NULL"))
-    db.commit()
+    ensure_user_permissions_v150(db)
 
     sql = """
       SELECT
@@ -1339,8 +1448,8 @@ def advisors_page(
         params["q"] = f"%{q.lower()}%"
 
     if role:
-        sql += " AND COALESCE(role, '') = :role"
-        params["role"] = role
+        sql += " AND (',' || replace(upper(COALESCE(role, '')), ' ', '') || ',') LIKE :role_like"
+        params["role_like"] = f"%,{role.upper()},%"
 
     if active == "1":
         sql += " AND COALESCE(is_active, TRUE) = TRUE"
@@ -1357,6 +1466,8 @@ def advisors_page(
         "q": q,
         "role": role,
         "active_filter": active,
+        "system_roles": SYSTEM_ROLES_V150,
+        "menu_preview": get_menu_preview_v150(db, role or "IF"),
     })
 
 
@@ -1366,11 +1477,14 @@ def advisor_create(
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(""),
-    role: str = Form("IF"),
+    roles: list[str] = Form([]),
+    role: str = Form(""),
     password: str = Form("1234"),
     is_active: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    ensure_user_permissions_v150(db)
+    role_value = normalize_roles_v150(roles or [role])
     # Heslo ukládáme přes existující hash helper, pokud je dostupný.
     try:
         password_hash = hash_password(password)
@@ -1387,7 +1501,7 @@ def advisor_create(
         "name": name,
         "email": email.lower().strip(),
         "phone": phone,
-        "role": role,
+        "role": role_value,
         "password_hash": password_hash,
         "is_active": bool(is_active),
     })
@@ -1403,7 +1517,7 @@ def advisor_create(
             pass
 
     safe_audit(db, "admin@astorie.local", "CREATE", "advisor", advisor_id or email, {}, {
-        "advisor_id": advisor_id, "name": name, "email": email, "role": role, "is_active": bool(is_active)
+        "advisor_id": advisor_id, "name": name, "email": email, "role": role_value, "is_active": bool(is_active)
     }, "Založení poradce / uživatele")
 
     return RedirectResponse("/admin/advisors", status_code=303)
@@ -1411,17 +1525,20 @@ def advisor_create(
 
 @router.post("/admin/advisors/{user_id}/update")
 def advisor_update(
-    user_id: int,
+    user_id: str,
     advisor_id: str = Form(""),
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(""),
-    role: str = Form("IF"),
+    roles: list[str] = Form([]),
+    role: str = Form(""),
     is_active: str = Form(""),
     must_change_password: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    old = db.execute(text("SELECT * FROM users WHERE id = :id"), {"id": user_id}).mappings().first()
+    ensure_user_permissions_v150(db)
+    role_value = normalize_roles_v150(roles or [role])
+    old = db.execute(text("SELECT * FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
 
     db.execute(text("""
       UPDATE users
@@ -1432,21 +1549,21 @@ def advisor_update(
           role = :role,
           is_active = :is_active,
           must_change_password = :must_change_password
-      WHERE id = :id
+      WHERE id::text = :id
     """), {
-        "id": user_id,
+        "id": str(user_id),
         "advisor_id": advisor_id,
         "name": name,
         "email": email.lower().strip(),
         "phone": phone,
-        "role": role,
+        "role": role_value,
         "is_active": bool(is_active),
         "must_change_password": bool(must_change_password),
     })
     db.commit()
 
     safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), dict(old or {}), {
-        "advisor_id": advisor_id, "name": name, "email": email, "role": role,
+        "advisor_id": advisor_id, "name": name, "email": email, "role": role_value,
         "is_active": bool(is_active), "must_change_password": bool(must_change_password)
     }, "Úprava poradce / uživatele")
 
@@ -1454,11 +1571,11 @@ def advisor_update(
 
 
 @router.post("/admin/advisors/{user_id}/toggle")
-def advisor_toggle(user_id: int, db: Session = Depends(get_db)):
-    old = db.execute(text("SELECT id, is_active, email, advisor_id FROM users WHERE id = :id"), {"id": user_id}).mappings().first()
+def advisor_toggle(user_id: str, db: Session = Depends(get_db)):
+    old = db.execute(text("SELECT id, is_active, email, advisor_id FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
     if old:
         new_active = not bool(old["is_active"])
-        db.execute(text("UPDATE users SET is_active = :is_active WHERE id = :id"), {"id": user_id, "is_active": new_active})
+        db.execute(text("UPDATE users SET is_active = :is_active WHERE id::text = :id"), {"id": str(user_id), "is_active": new_active})
         db.commit()
         safe_audit(db, "admin@astorie.local", "TOGGLE", "advisor", str(user_id), dict(old), {"is_active": new_active}, "Zapnutí/vypnutí poradce")
     return RedirectResponse("/admin/advisors", status_code=303)
@@ -1466,7 +1583,7 @@ def advisor_toggle(user_id: int, db: Session = Depends(get_db)):
 
 @router.post("/admin/advisors/{user_id}/reset-password")
 def advisor_reset_password(
-    user_id: int,
+    user_id: str,
     password: str = Form("1234"),
     db: Session = Depends(get_db),
 ):
@@ -1479,12 +1596,12 @@ def advisor_reset_password(
       UPDATE users
       SET password_hash = :password_hash,
           must_change_password = TRUE
-      WHERE id = :id
-    """), {"id": user_id, "password_hash": password_hash})
+      WHERE id::text = :id
+    """), {"id": str(user_id), "password_hash": password_hash})
     db.commit()
 
     try:
-        row = db.execute(text("SELECT email, name FROM users WHERE id = :id"), {"id": user_id}).mappings().first()
+        row = db.execute(text("SELECT email, name FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
         if row and row.get("email"):
             subj, body = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
             send_email(db, row.get("email"), subj, body, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
@@ -1497,6 +1614,47 @@ def advisor_reset_password(
     safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), {}, {"password_reset": True}, "Reset hesla poradce")
     return RedirectResponse("/admin/advisors", status_code=303)
 
+
+
+
+@router.get("/admin/permissions", response_class=HTMLResponse)
+def permissions_page(request: Request, db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    rows = db.execute(text("""
+        SELECT area, module_id, module_name, module_url,
+               max(CASE WHEN role_code='IF' THEN is_allowed::int ELSE 0 END) AS if_allowed,
+               max(CASE WHEN role_code='PS' THEN is_allowed::int ELSE 0 END) AS ps_allowed,
+               max(CASE WHEN role_code='ADMIN' THEN is_allowed::int ELSE 0 END) AS admin_allowed,
+               max(CASE WHEN role_code='BO' THEN is_allowed::int ELSE 0 END) AS bo_allowed,
+               max(CASE WHEN role_code='VEDENI' THEN is_allowed::int ELSE 0 END) AS vedeni_allowed
+        FROM module_permissions
+        GROUP BY area, module_id, module_name, module_url
+        ORDER BY CASE WHEN area='hub' THEN 1 ELSE 2 END, module_name
+    """)).mappings().all()
+    return render(request, "permissions.html", {"active": "permissions", "rows": rows, "system_roles": SYSTEM_ROLES_V150})
+
+
+@router.post("/admin/permissions/{area}/{module_id}/update")
+def permission_row_update(area: str, module_id: str,
+                          IF: str = Form(""), PS: str = Form(""), ADMIN: str = Form(""), BO: str = Form(""), VEDENI: str = Form(""),
+                          db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    role_values = {"IF": bool(IF), "PS": bool(PS), "ADMIN": bool(ADMIN), "BO": bool(BO), "VEDENI": bool(VEDENI)}
+    for role_code, allowed in role_values.items():
+        db.execute(text("""
+            UPDATE module_permissions
+            SET is_allowed = :allowed, updated_at = now()
+            WHERE area = :area AND module_id = :module_id AND role_code = :role_code
+        """), {"allowed": allowed, "area": area, "module_id": module_id, "role_code": role_code})
+    db.commit()
+    return RedirectResponse("/admin/permissions", status_code=303)
+
+
+@router.get("/api/release-1-5-0/status")
+def release_150_status(db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    cnt = db.execute(text("SELECT count(*) FROM module_permissions")).scalar() or 0
+    return {"ok": True, "version": "1.5.0-user-multirole-permissions-safe", "safe": True, "db_changed": "additive_only", "module_permissions": cnt, "changed_modules": ["admin_advisors", "admin_permissions"], "unchanged_modules": ["partners", "contacts", "rates", "terminations", "tips"]}
 
 
 

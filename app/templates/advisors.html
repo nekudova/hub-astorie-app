@@ -3,27 +3,37 @@
 <div class="page-toolbar">
   <div>
     <h1 class="page-title">Poradci / uživatelé</h1>
-    <p class="page-subtitle">Bezpečná správa uživatelů. Tato verze je odolná proti rozdílům ve struktuře DB a nahrazuje původní správu v Google Sheets.</p>
+    <p class="page-subtitle">Správa uživatelů s více rolemi. Jeden uživatel může být současně například IF i PS. Oprávnění menu se nastavují v samostatném číselníku.</p>
   </div>
-  <button class="btn orange" type="button" onclick="toggleAdvisorForm()">+ Nový uživatel</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn soft" href="/admin/permissions">🔐 Oprávnění menu</a>
+    <button class="btn orange" type="button" onclick="toggleAdvisorForm()">+ Nový uživatel</button>
+  </div>
 </div>
 
 <section id="advisor-form-panel" class="card collapsible-panel" style="display:none;">
   <div class="panel-head">
     <div>
       <h2 style="margin:0;color:var(--petrol);">Nový poradce / uživatel</h2>
-      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Po založení doporučuji vynutit změnu hesla při prvním přihlášení.</p>
+      <p style="margin:6px 0 0;color:#637386;font-weight:700;">Vyberte jednu nebo více rolí. Menu a přístupy se skládají podle oprávnění všech zvolených rolí.</p>
     </div>
     <button class="btn soft" type="button" onclick="toggleAdvisorForm()">Zavřít</button>
   </div>
 
-  <form method="post" action="/admin/advisors/create" class="admin-form-grid">
+  <form method="post" action="/admin/advisors/create" class="admin-form-grid advisor-form-v150">
     <div><label>ID poradce</label><input type="text" name="advisor_id" placeholder="např. 501"></div>
-    <div><label>Role</label><select name="role"><option value="IF">IF</option><option value="PS">PS</option><option value="ADMIN">ADMIN</option><option value="BO">BO</option><option value="VEDENI">VEDENÍ</option></select></div>
     <div><label>Jméno</label><input type="text" name="name" required></div>
     <div><label>E-mail</label><input type="email" name="email" required></div>
     <div><label>Telefon</label><input type="text" name="phone"></div>
     <div><label>Dočasné heslo / PIN</label><input type="text" name="password" value="1234"></div>
+    <div>
+      <label>Role uživatele</label>
+      <div class="role-checks-v150">
+        {% for r in system_roles %}
+          <label><input type="checkbox" name="roles" value="{{ r }}" {% if r == 'IF' %}checked{% endif %}> {{ r }}</label>
+        {% endfor %}
+      </div>
+    </div>
     <div class="span-2 checkline"><input type="checkbox" name="is_active" value="1" id="new_active" checked><label for="new_active" style="margin:0;">Uživatel je aktivní</label></div>
     <div class="span-2 form-actions"><button class="btn orange" type="submit">Uložit uživatele</button></div>
   </form>
@@ -39,7 +49,7 @@
       <label>Role</label>
       <select name="role">
         <option value="">Všechny role</option>
-        {% for r in ['IF','PS','ADMIN','BO','VEDENI'] %}
+        {% for r in system_roles %}
           <option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ r }}</option>
         {% endfor %}
       </select>
@@ -61,14 +71,12 @@
     <span>Seznam poradců / uživatelů</span>
     <span style="font-size:13px;color:#637386;">Zobrazeno: {{ advisors|length }}</span>
   </div>
-  <div class="table-scroll">
-    <table>
+  <div class="table-scroll admin-users-scroll-v150">
+    <table class="admin-users-table-v150">
       <thead>
         <tr>
           <th>ID</th>
-          <th>Jméno</th>
-          <th>E-mail</th>
-          <th>Telefon</th>
+          <th>Jméno / kontakt</th>
           <th>Role</th>
           <th>Stav</th>
           <th>Změna hesla</th>
@@ -80,15 +88,19 @@
         <tr>
           <form method="post" action="/admin/advisors/{{ u.id }}/update">
             <td><input class="table-input" name="advisor_id" value="{{ u.advisor_id or '' }}"></td>
-            <td><input class="table-input" name="name" value="{{ u.name or '' }}" required></td>
-            <td><input class="table-input" name="email" value="{{ u.email or '' }}" required></td>
-            <td><input class="table-input" name="phone" value="{{ u.phone or '' }}"></td>
             <td>
-              <select name="role" class="table-input">
-                {% for r in ['IF','PS','ADMIN','BO','VEDENI'] %}
-                  <option value="{{ r }}" {% if u.role == r %}selected{% endif %}>{{ r }}</option>
+              <input class="table-input" name="name" value="{{ u.name or '' }}" required placeholder="Jméno">
+              <input class="table-input" name="email" value="{{ u.email or '' }}" required placeholder="E-mail" style="margin-top:6px;">
+              <input class="table-input" name="phone" value="{{ u.phone or '' }}" placeholder="Telefon" style="margin-top:6px;">
+            </td>
+            <td>
+              <div class="role-checks-v150 compact">
+                {% set user_roles = (u.role or '').replace(';', ',').replace('|', ',').split(',') %}
+                {% for r in system_roles %}
+                  <label><input type="checkbox" name="roles" value="{{ r }}" {% if r in user_roles %}checked{% endif %}> {{ r }}</label>
                 {% endfor %}
-              </select>
+              </div>
+              <div class="role-summary-v150">Aktuálně: {{ u.role or '—' }}</div>
             </td>
             <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if u.is_active %}checked{% endif %}> aktivní</label></td>
             <td><label class="mini-check"><input type="checkbox" name="must_change_password" value="1" {% if u.must_change_password %}checked{% endif %}> vynutit</label></td>
@@ -107,11 +119,16 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="8">Zatím nejsou vložení žádní uživatelé.</td></tr>
+        <tr><td colspan="6">Zatím nejsou vložení žádní uživatelé.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</section>
+
+<section class="card section-space">
+  <h2 style="margin:0 0 10px;color:var(--petrol);">Náhled oprávnění menu</h2>
+  <p class="page-subtitle">Pro nastavení viditelnosti modulů použijte sekci <a href="/admin/permissions">Oprávnění menu</a>. Uživatel s více rolemi uvidí součet povolených modulů.</p>
 </section>
 
 <script>
@@ -122,4 +139,11 @@ function toggleAdvisorForm(){
   if(panel.style.display === "block") panel.scrollIntoView({behavior:"smooth", block:"start"});
 }
 </script>
+
+<style>
+.role-checks-v150{display:flex;gap:8px;flex-wrap:wrap;background:#f6fafb;border:1px solid #dbe8ec;border-radius:14px;padding:10px}
+.role-checks-v150 label{display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #dbe8ec;border-radius:999px;padding:7px 10px;font-weight:900;color:#003D4C;margin:0}
+.role-checks-v150.compact{padding:6px;max-width:360px}.role-checks-v150.compact label{font-size:12px;padding:5px 8px}.role-summary-v150{font-size:12px;color:#637386;margin-top:6px;font-weight:800}
+.admin-users-scroll-v150{max-height:72vh;overflow:auto}.admin-users-table-v150 th{position:sticky;top:0;z-index:2}.admin-users-table-v150 td{vertical-align:top}.advisor-form-v150{align-items:start}
+</style>
 {% endblock %}
