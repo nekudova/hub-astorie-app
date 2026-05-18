@@ -1248,73 +1248,1568 @@ def admin_termination_archive_detail_v147(request: Request, doc_id: str, db: Ses
 
 @router.get("/admin/modules", response_class=HTMLResponse)
 def modules_page(request: Request, focus: str = '', db: Session = Depends(get_db)):
-    """
-    v1.5.3 SAFE: obnovena stabilní Mapa modulů.
-    Tato stránka je pouze navigační a nesmí sahat do partner detail proměnných
-    (selected/q/tab), které v předchozí verzi způsobovaly interní chybu.
-    """
     modules = [
         {
             "group": "TIP HUB",
             "items": [
-                {"name": "Nový TIP", "status": "funkční", "desc": "Zadání TIPu poradcem včetně výběru sekce, podsekce a specialisty.", "url": "/hub/new-tip"},
-                {"name": "Moje TIPy", "status": "funkční", "desc": "Přehled odeslaných a přidělených TIPů.", "url": "/hub/my-tips"},
-                {"name": "Kalkulačky / Sazebník", "status": "funkční", "desc": "Poradenský sazebník provizí s filtry.", "url": "/hub/calculators"},
-                {"name": "Partneři", "status": "funkční", "desc": "Poradenský katalog partnerů.", "url": "/hub/partners"},
-                {"name": "Kontakty", "status": "funkční", "desc": "Kontakty pro poradce členěné podle partnerů a rolí.", "url": "/hub/contacts"},
-                {"name": "Výpovědi", "status": "funkční", "desc": "Poradenský generátor výpovědí s archivem.", "url": "/hub/terminations"},
-                {"name": "Statistiky", "status": "obnoveno", "desc": "Základní statistiky TIPů a aktivity poradce.", "url": "/hub/stats"},
-                {"name": "Nápověda", "status": "funkční", "desc": "Uživatelská nápověda HUBu.", "url": "/hub/help"},
+                {"name": "Nový TIP", "status": "připraveno", "desc": "Budoucí migrace zadání TIPu z uživatelského HUBu.", "url": "/admin/modules"},
+                {"name": "Moje TIPy", "status": "připraveno", "desc": "Budoucí přehled odeslaných a přidělených TIPů.", "url": "/admin/modules"},
+                {"name": "Specialisté", "status": "připraveno", "desc": "Správa specialistů, dostupnosti a routingu.", "url": "/admin/modules"},
+                {"name": "Statistiky & soutěž", "status": "připraveno", "desc": "Budoucí manažerský žebříček a vyhodnocení TIPů.", "url": "/admin/modules"},
             ],
         },
         {
-            "group": "ADMIN / ČÍSELNÍKY",
+            "group": "ČÍSELNÍKY",
             "items": [
-                {"name": "Poradci / uživatelé", "status": "funkční", "desc": "Správa uživatelů včetně více rolí.", "url": "/admin/advisors"},
-                {"name": "Oprávnění menu", "status": "funkční", "desc": "Viditelnost modulů podle rolí.", "url": "/admin/permissions"},
-                {"name": "Sekce / podsekce", "status": "funkční", "desc": "Taxonomie TIPů a sazebníku.", "url": "/admin/sections"},
-                {"name": "Specialisté", "status": "funkční", "desc": "Správa specialistů, dostupnosti a routingu TIPů.", "url": "/admin/specialists"},
-                {"name": "Partneři", "status": "funkční", "desc": "Centrální evidence partnerů.", "url": "/admin/partners"},
-                {"name": "Kontakty", "status": "funkční", "desc": "Kontakty partnerů a role kontaktů.", "url": "/admin/contacts"},
-                {"name": "Role kontaktů", "status": "funkční", "desc": "Číselník rolí a skupin kontaktů.", "url": "/admin/contact-roles"},
-                {"name": "Odkazy", "status": "funkční", "desc": "Správa odkazů partnerů a interních odkazů.", "url": "/admin/links"},
+                {"name": "Poradci / uživatelé", "status": "funkční", "desc": "Základní správa uživatelů.", "url": "/admin/advisors"},
+                {"name": "Sekce / podsekce", "status": "funkční", "desc": "Základní struktura oblastí.", "url": "/admin/sections"},
+                {"name": "Partneři", "status": "funkční", "desc": "Centrální partner registry s ARES.", "url": "/admin/partners"},
+                {"name": "Kontakty", "status": "funkční", "desc": "Kontakty partnerů.", "url": "/admin/contacts"},
+                {"name": "Odkazy", "status": "funkční", "desc": "Odkazy partnerů.", "url": "/admin/links"},
                 {"name": "Produkty", "status": "funkční", "desc": "Produkty partnerů.", "url": "/admin/products"},
-                {"name": "Sazebník provizí", "status": "funkční", "desc": "DB správa provizních sazeb.", "url": "/admin/rates"},
             ],
         },
         {
-            "group": "DOKUMENTY A WORKFLOW",
+            "group": "DOKUMENTY",
             "items": [
-                {"name": "Správa TIPů", "status": "funkční", "desc": "Centrální evidence TIPů pro administraci.", "url": "/admin/tips"},
-                {"name": "Výpovědi", "status": "funkční", "desc": "Admin tvorba a evidence výpovědí.", "url": "/admin/terminations"},
-                {"name": "Evidence výpovědí", "status": "funkční", "desc": "Archiv vygenerovaných výpovědí.", "url": "/admin/terminations/archive"},
-                {"name": "Formuláře", "status": "funkční základ", "desc": "Most pro dokumenty a formuláře.", "url": "/admin/form-bridge"},
+                {"name": "Výpovědi", "status": "funkční základ", "desc": "Modul výpovědí s napojením na partnera.", "url": "/admin/terminations"},
+                {"name": "Formuláře", "status": "připraveno", "desc": "Budoucí generování dalších dokumentů.", "url": "/admin/form-bridge"},
+                {"name": "Napojení formulářů", "status": "funkční", "desc": "API bridge pro přebírání dat partnera.", "url": "/admin/form-bridge"},
             ],
         },
         {
             "group": "SYSTÉM",
             "items": [
-                {"name": "E-maily / SMTP", "status": "funkční", "desc": "Nastavení a logování e-mailové služby.", "url": "/admin/email"},
-                {"name": "Import dat", "status": "funkční", "desc": "Import dat ze zdrojových podkladů.", "url": "/admin/import"},
+                {"name": "Import dat", "status": "funkční", "desc": "Import ze stávajících CSV/Sheets zdrojů.", "url": "/admin/import"},
                 {"name": "Audit", "status": "funkční", "desc": "Záznam změn a provozních událostí.", "url": "/admin/audit"},
-                {"name": "Produktivita", "status": "obnoveno", "desc": "Bezpečné provozní nástroje pro správu systému.", "url": "/admin/productivity"},
                 {"name": "Health", "status": "funkční", "desc": "Kontrola běhu služby.", "url": "/health"},
+                {"name": "API dokumentace", "status": "funkční", "desc": "OpenAPI dokumentace.", "url": "/docs"},
             ],
         },
     ]
-    return render(request, "modules.html", {"active": "modules", "modules": modules, "focus": focus})
+
+    return render(request, "modules.html", {
+        "active": "modules",
+        "modules": modules,
+        "focus": focus,
+    })
 
 
-@router.get("/admin/productivity", response_class=HTMLResponse)
-def productivity_page_v153(request: Request, db: Session = Depends(get_db)):
-    """v1.5.3 SAFE: obnovena stránka Produktivita, která byla v menu, ale neměla routu."""
-    return render(request, "productivity.html", {"active": "productivity"})
+@router.post("/admin/partners/registry-upgrade")
+def partner_registry_upgrade(db: Session = Depends(get_db)):
+    statements = [
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS partner_status VARCHAR(80) DEFAULT 'aktivní' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS cooperation_status VARCHAR(120) DEFAULT '' NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS is_vip BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_fleet BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_retail BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_life BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS segment_business BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_done BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS contract_valid BOOLEAN DEFAULT FALSE NOT NULL",
+        "ALTER TABLE partners ADD COLUMN IF NOT EXISTS last_audit_note TEXT DEFAULT '' NOT NULL",
+    ]
+    for sql in statements:
+        db.execute(text(sql))
+    db.commit()
+    return RedirectResponse("/admin/partners", status_code=303)
 
 
-@router.get("/hub/stats", response_class=HTMLResponse)
-def hub_stats_v153(request: Request, db: Session = Depends(get_db)):
-    """v1.5.3 SAFE: veřejná route pro statistiky, bez změny datového modelu."""
-    return hub_stats_v083(request, db)
+@router.post("/admin/audit-history/upgrade")
+def audit_history_upgrade(db: Session = Depends(get_db)):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS audit_history (
+            id SERIAL PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            user_email TEXT NOT NULL DEFAULT '',
+            action TEXT NOT NULL DEFAULT '',
+            entity TEXT NOT NULL DEFAULT '',
+            entity_id TEXT NOT NULL DEFAULT '',
+            old_data TEXT NOT NULL DEFAULT '',
+            new_data TEXT NOT NULL DEFAULT '',
+            note TEXT NOT NULL DEFAULT ''
+        )
+    """))
+    db.commit()
+    return RedirectResponse("/admin/audit-history", status_code=303)
+
+
+@router.get("/admin/audit-history", response_class=HTMLResponse)
+def audit_history_page(
+    request: Request,
+    q: str = "",
+    entity: str = "",
+    action: str = "",
+    limit: int = 150,
+    db: Session = Depends(get_db),
+):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS audit_history (
+            id SERIAL PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            user_email TEXT NOT NULL DEFAULT '',
+            action TEXT NOT NULL DEFAULT '',
+            entity TEXT NOT NULL DEFAULT '',
+            entity_id TEXT NOT NULL DEFAULT '',
+            old_data TEXT NOT NULL DEFAULT '',
+            new_data TEXT NOT NULL DEFAULT '',
+            note TEXT NOT NULL DEFAULT ''
+        )
+    """))
+    db.commit()
+
+    sql = "SELECT * FROM audit_history WHERE 1=1"
+    params = {}
+
+    if q:
+        sql += " AND (lower(user_email) LIKE :q OR lower(entity_id) LIKE :q OR lower(note) LIKE :q OR lower(new_data) LIKE :q OR lower(old_data) LIKE :q)"
+        params["q"] = f"%{q.lower()}%"
+
+    if entity:
+        sql += " AND entity = :entity"
+        params["entity"] = entity
+
+    if action:
+        sql += " AND action = :action"
+        params["action"] = action
+
+    sql += " ORDER BY created_at DESC LIMIT :limit"
+    params["limit"] = max(1, min(limit, 1000))
+
+    rows = db.execute(text(sql), params).mappings().all()
+
+    return render(request, "audit_history.html", {
+        "active": "audit_history",
+        "rows": rows,
+        "q": q,
+        "entity": entity,
+        "action": action,
+        "limit": limit,
+    })
+
+
+@router.get("/admin/partners/{partner_code}/history", response_class=HTMLResponse)
+def partner_history_page(request: Request, partner_code: str, db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("""
+            SELECT * FROM audit_history
+            WHERE entity_id = :partner_code OR lower(new_data) LIKE :like OR lower(old_data) LIKE :like
+            ORDER BY created_at DESC
+            LIMIT 300
+        """),
+        {"partner_code": partner_code.upper(), "like": f"%{partner_code.lower()}%"}
+    ).mappings().all()
+
+    partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+
+    return render(request, "partner_history.html", {
+        "active": "partners",
+        "partner": partner,
+        "partner_code": partner_code.upper(),
+        "rows": rows,
+    })
+
+
+
+@router.get("/admin/advisors", response_class=HTMLResponse)
+def advisors_page(
+    request: Request,
+    q: str = "",
+    role: str = "",
+    active: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_user_permissions_v150(db)
+
+    sql = """
+      SELECT
+        id,
+        COALESCE(advisor_id, '') AS advisor_id,
+        COALESCE(name, '') AS name,
+        COALESCE(email, '') AS email,
+        COALESCE(phone, '') AS phone,
+        COALESCE(role, '') AS role,
+        COALESCE(is_active, TRUE) AS is_active,
+        COALESCE(must_change_password, FALSE) AS must_change_password
+      FROM users
+      WHERE 1=1
+    """
+    params = {}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(advisor_id, '')) LIKE :q OR
+            lower(COALESCE(name, '')) LIKE :q OR
+            lower(COALESCE(email, '')) LIKE :q OR
+            lower(COALESCE(phone, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if role:
+        sql += " AND (',' || replace(upper(COALESCE(role, '')), ' ', '') || ',') LIKE :role_like"
+        params["role_like"] = f"%,{role.upper()},%"
+
+    if active == "1":
+        sql += " AND COALESCE(is_active, TRUE) = TRUE"
+    elif active == "0":
+        sql += " AND COALESCE(is_active, TRUE) = FALSE"
+
+    sql += " ORDER BY name, advisor_id LIMIT 1000"
+
+    advisors = db.execute(text(sql), params).mappings().all()
+
+    return render(request, "advisors.html", {
+        "active": "advisors",
+        "advisors": advisors,
+        "q": q,
+        "role": role,
+        "active_filter": active,
+        "system_roles": SYSTEM_ROLES_V150,
+        "menu_preview": get_menu_preview_v150(db, role or "IF"),
+    })
+
+
+@router.post("/admin/advisors/create")
+def advisor_create(
+    advisor_id: str = Form(""),
+    name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(""),
+    roles: list[str] = Form([]),
+    role: str = Form(""),
+    password: str = Form("1234"),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_user_permissions_v150(db)
+    role_value = normalize_roles_v150(roles or [role])
+    # Heslo ukládáme přes existující hash helper, pokud je dostupný.
+    try:
+        password_hash = hash_password(password)
+    except Exception:
+        password_hash = password
+
+    db.execute(text("""
+      INSERT INTO users
+        (advisor_id, name, email, phone, role, password_hash, is_active, must_change_password)
+      VALUES
+        (:advisor_id, :name, :email, :phone, :role, :password_hash, :is_active, TRUE)
+    """), {
+        "advisor_id": advisor_id,
+        "name": name,
+        "email": email.lower().strip(),
+        "phone": phone,
+        "role": role_value,
+        "password_hash": password_hash,
+        "is_active": bool(is_active),
+    })
+    db.commit()
+
+    try:
+        subj, body = email_template("new_user", name=name, email=email.lower().strip(), password=password)
+        send_email(db, email.lower().strip(), subj, body, event_type="user_created", entity_type="user", entity_id=advisor_id or email, created_by_email="admin@astorie.local")
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    safe_audit(db, "admin@astorie.local", "CREATE", "advisor", advisor_id or email, {}, {
+        "advisor_id": advisor_id, "name": name, "email": email, "role": role_value, "is_active": bool(is_active)
+    }, "Založení poradce / uživatele")
+
+    return RedirectResponse("/admin/advisors", status_code=303)
+
+
+@router.post("/admin/advisors/{user_id}/update")
+def advisor_update(
+    user_id: str,
+    advisor_id: str = Form(""),
+    name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(""),
+    roles: list[str] = Form([]),
+    role: str = Form(""),
+    is_active: str = Form(""),
+    must_change_password: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_user_permissions_v150(db)
+    role_value = normalize_roles_v150(roles or [role])
+    old = db.execute(text("SELECT * FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
+
+    db.execute(text("""
+      UPDATE users
+      SET advisor_id = :advisor_id,
+          name = :name,
+          email = :email,
+          phone = :phone,
+          role = :role,
+          is_active = :is_active,
+          must_change_password = :must_change_password
+      WHERE id::text = :id
+    """), {
+        "id": str(user_id),
+        "advisor_id": advisor_id,
+        "name": name,
+        "email": email.lower().strip(),
+        "phone": phone,
+        "role": role_value,
+        "is_active": bool(is_active),
+        "must_change_password": bool(must_change_password),
+    })
+    db.commit()
+
+    safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), dict(old or {}), {
+        "advisor_id": advisor_id, "name": name, "email": email, "role": role_value,
+        "is_active": bool(is_active), "must_change_password": bool(must_change_password)
+    }, "Úprava poradce / uživatele")
+
+    return RedirectResponse("/admin/advisors", status_code=303)
+
+
+@router.post("/admin/advisors/{user_id}/toggle")
+def advisor_toggle(user_id: str, db: Session = Depends(get_db)):
+    old = db.execute(text("SELECT id, is_active, email, advisor_id FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
+    if old:
+        new_active = not bool(old["is_active"])
+        db.execute(text("UPDATE users SET is_active = :is_active WHERE id::text = :id"), {"id": str(user_id), "is_active": new_active})
+        db.commit()
+        safe_audit(db, "admin@astorie.local", "TOGGLE", "advisor", str(user_id), dict(old), {"is_active": new_active}, "Zapnutí/vypnutí poradce")
+    return RedirectResponse("/admin/advisors", status_code=303)
+
+
+@router.post("/admin/advisors/{user_id}/reset-password")
+def advisor_reset_password(
+    user_id: str,
+    password: str = Form("1234"),
+    db: Session = Depends(get_db),
+):
+    try:
+        password_hash = hash_password(password)
+    except Exception:
+        password_hash = password
+
+    db.execute(text("""
+      UPDATE users
+      SET password_hash = :password_hash,
+          must_change_password = TRUE
+      WHERE id::text = :id
+    """), {"id": str(user_id), "password_hash": password_hash})
+    db.commit()
+
+    try:
+        row = db.execute(text("SELECT email, name FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
+        if row and row.get("email"):
+            subj, body = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
+            send_email(db, row.get("email"), subj, body, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), {}, {"password_reset": True}, "Reset hesla poradce")
+    return RedirectResponse("/admin/advisors", status_code=303)
+
+
+
+
+@router.get("/admin/permissions", response_class=HTMLResponse)
+def permissions_page(request: Request, db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    rows = db.execute(text("""
+        SELECT area, module_id, module_name, module_url,
+               max(CASE WHEN role_code='IF' THEN is_allowed::int ELSE 0 END) AS if_allowed,
+               max(CASE WHEN role_code='PS' THEN is_allowed::int ELSE 0 END) AS ps_allowed,
+               max(CASE WHEN role_code='ADMIN' THEN is_allowed::int ELSE 0 END) AS admin_allowed,
+               max(CASE WHEN role_code='BO' THEN is_allowed::int ELSE 0 END) AS bo_allowed,
+               max(CASE WHEN role_code='VEDENI' THEN is_allowed::int ELSE 0 END) AS vedeni_allowed
+        FROM module_permissions
+        GROUP BY area, module_id, module_name, module_url
+        ORDER BY CASE WHEN area='hub' THEN 1 ELSE 2 END, module_name
+    """)).mappings().all()
+    return render(request, "permissions.html", {"active": "permissions", "rows": rows, "system_roles": SYSTEM_ROLES_V150})
+
+
+@router.post("/admin/permissions/{area}/{module_id}/update")
+def permission_row_update(area: str, module_id: str,
+                          IF: str = Form(""), PS: str = Form(""), ADMIN: str = Form(""), BO: str = Form(""), VEDENI: str = Form(""),
+                          db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    role_values = {"IF": bool(IF), "PS": bool(PS), "ADMIN": bool(ADMIN), "BO": bool(BO), "VEDENI": bool(VEDENI)}
+    for role_code, allowed in role_values.items():
+        db.execute(text("""
+            UPDATE module_permissions
+            SET is_allowed = :allowed, updated_at = now()
+            WHERE area = :area AND module_id = :module_id AND role_code = :role_code
+        """), {"allowed": allowed, "area": area, "module_id": module_id, "role_code": role_code})
+    db.commit()
+    return RedirectResponse("/admin/permissions", status_code=303)
+
+
+@router.get("/api/release-1-5-0/status")
+def release_150_status(db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    cnt = db.execute(text("SELECT count(*) FROM module_permissions")).scalar() or 0
+    return {"ok": True, "version": "1.5.0-user-multirole-permissions-safe", "safe": True, "db_changed": "additive_only", "module_permissions": cnt, "changed_modules": ["admin_advisors", "admin_permissions"], "unchanged_modules": ["partners", "contacts", "rates", "terminations", "tips"]}
+
+
+
+@router.get("/api/release-1-5-1/status")
+def release_151_status(db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    ensure_contact_role_tables_v149(db)
+    cnt_perm = db.execute(text("SELECT count(*) FROM module_permissions")).scalar() or 0
+    cnt_roles = db.execute(text("SELECT count(*) FROM contact_roles")).scalar() or 0
+    return {"ok": True, "version": "1.5.1-admin-contacts-permissions-ux-safe", "safe": True, "db_changed": False, "module_permissions": cnt_perm, "contact_roles": cnt_roles, "changed_modules": ["admin_contacts_ui", "admin_permissions_ui"], "unchanged_modules": ["partners", "tips", "rates", "terminations", "email", "products", "links"]}
+
+
+def ensure_specialists_table_(db: Session):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS specialists (
+            id SERIAL PRIMARY KEY,
+            advisor_id TEXT NOT NULL DEFAULT '',
+            specialist_name TEXT NOT NULL DEFAULT '',
+            email TEXT NOT NULL DEFAULT '',
+            phone TEXT NOT NULL DEFAULT '',
+            section_code TEXT NOT NULL DEFAULT '',
+            subsection_code TEXT NOT NULL DEFAULT '',
+            role_description TEXT NOT NULL DEFAULT '',
+            region TEXT NOT NULL DEFAULT '',
+            if_share TEXT NOT NULL DEFAULT '',
+            ps_share TEXT NOT NULL DEFAULT '',
+            available BOOLEAN NOT NULL DEFAULT TRUE,
+            unavailable_reason TEXT NOT NULL DEFAULT '',
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """))
+    db.commit()
+
+
+@router.get("/admin/specialists", response_class=HTMLResponse)
+def specialists_page(
+    request: Request,
+    q: str = "",
+    section: str = "",
+    available: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    sql = "SELECT * FROM specialists WHERE 1=1"
+    params = {}
+
+    if q:
+        sql += """
+          AND (
+            lower(specialist_name) LIKE :q OR
+            lower(email) LIKE :q OR
+            lower(phone) LIKE :q OR
+            lower(advisor_id) LIKE :q OR
+            lower(region) LIKE :q OR
+            lower(role_description) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if section:
+        sql += " AND section_code = :section"
+        params["section"] = section
+
+    if available == "1":
+        sql += " AND available = TRUE AND is_active = TRUE"
+    elif available == "0":
+        sql += " AND (available = FALSE OR is_active = FALSE)"
+
+    sql += " ORDER BY specialist_name, section_code, subsection_code LIMIT 1000"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    ensure_taxonomy_tables_(db)
+    sections = db.execute(text("""
+        SELECT section_code AS code, section_name AS name
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+    subsections = db.execute(text("""
+        SELECT subsection_code AS code, subsection_name AS name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, subsection_name
+    """)).mappings().all()
+
+    users = get_admin_users_for_specialists_v122_(db)
+    return render(request, "specialists.html", {
+        "active": "specialists",
+        "specialists": rows,
+        "sections": sections,
+        "subsections": subsections,
+        "users": users,
+        "q": q,
+        "section": section,
+        "available_filter": available,
+    })
+
+
+@router.post("/admin/specialists/create")
+def specialist_create(
+    advisor_id: str = Form(""),
+    specialist_name: str = Form(...),
+    email: str = Form(""),
+    phone: str = Form(""),
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form(""),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    available: str = Form(""),
+    is_active: str = Form(""),
+    unavailable_reason: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    db.execute(text("""
+        INSERT INTO specialists
+        (advisor_id, specialist_name, email, phone, section_code, subsection_code, role_description, region,
+         if_share, ps_share, available, unavailable_reason, is_active, note)
+        VALUES
+        (:advisor_id, :specialist_name, :email, :phone, :section_code, :subsection_code, :role_description, :region,
+         :if_share, :ps_share, :available, :unavailable_reason, :is_active, :note)
+    """), {
+        "advisor_id": advisor_id,
+        "specialist_name": specialist_name,
+        "email": email.lower().strip(),
+        "phone": phone,
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "CREATE", "specialist", specialist_name, {}, {
+            "advisor_id": advisor_id, "name": specialist_name, "email": email,
+            "section": section_code, "subsection": subsection_code
+        }, "Založení specialisty")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/specialists", status_code=303)
+
+
+@router.post("/admin/specialists/{item_id}/update")
+def specialist_update(
+    item_id: int,
+    advisor_id: str = Form(""),
+    specialist_name: str = Form(...),
+    email: str = Form(""),
+    phone: str = Form(""),
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form(""),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    available: str = Form(""),
+    is_active: str = Form(""),
+    unavailable_reason: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    db.execute(text("""
+        UPDATE specialists SET
+          advisor_id = :advisor_id,
+          specialist_name = :specialist_name,
+          email = :email,
+          phone = :phone,
+          section_code = :section_code,
+          subsection_code = :subsection_code,
+          role_description = :role_description,
+          region = :region,
+          if_share = :if_share,
+          ps_share = :ps_share,
+          available = :available,
+          unavailable_reason = :unavailable_reason,
+          is_active = :is_active,
+          note = :note
+        WHERE id = :id
+    """), {
+        "id": item_id,
+        "advisor_id": advisor_id,
+        "specialist_name": specialist_name,
+        "email": email.lower().strip(),
+        "phone": phone,
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPDATE", "specialist", str(item_id), dict(old or {}), {
+            "advisor_id": advisor_id, "name": specialist_name, "email": email,
+            "section": section_code, "subsection": subsection_code,
+            "available": bool(available), "is_active": bool(is_active)
+        }, "Úprava specialisty")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/specialists", status_code=303)
+
+
+@router.post("/admin/specialists/{item_id}/toggle")
+def specialist_toggle(item_id: int, db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    if old:
+        new_active = not bool(old["is_active"])
+        db.execute(text("UPDATE specialists SET is_active = :is_active WHERE id = :id"), {"id": item_id, "is_active": new_active})
+        db.commit()
+        try:
+            safe_audit(db, "admin@astorie.local", "TOGGLE", "specialist", str(item_id), dict(old), {"is_active": new_active}, "Zapnutí/vypnutí specialisty")
+        except Exception:
+            pass
+    return RedirectResponse("/admin/specialists", status_code=303)
+
+
+@router.get("/api/specialists/search")
+def api_specialists_search(section: str = "", subsection: str = "", q: str = "", db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    sql = "SELECT * FROM specialists WHERE is_active = TRUE AND available = TRUE"
+    params = {}
+
+    if section:
+        sql += " AND section_code = :section"
+        params["section"] = section.upper()
+
+    if subsection:
+        sql += " AND (subsection_code = :subsection OR COALESCE(subsection_code, '') = '')"
+        params["subsection"] = subsection.upper()
+
+    if q:
+        sql += """
+          AND (
+            lower(specialist_name) LIKE :q OR
+            lower(email) LIKE :q OR
+            lower(region) LIKE :q OR
+            lower(role_description) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    sql += " ORDER BY specialist_name LIMIT 50"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    return {
+        "ok": True,
+        "items": [
+            {
+                "id": r["id"],
+                "advisor_id": r["advisor_id"],
+                "name": r["specialist_name"],
+                "email": r["email"],
+                "phone": r["phone"],
+                "section_code": r["section_code"],
+                "subsection_code": r["subsection_code"],
+                "role_description": r["role_description"],
+                "region": r["region"],
+                "if_share": r["if_share"],
+                "ps_share": r["ps_share"],
+            }
+            for r in rows
+        ],
+    }
+
+
+
+
+
+def ensure_taxonomy_tables_(db: Session):
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS hub_sections (
+            id SERIAL PRIMARY KEY,
+            section_code TEXT UNIQUE NOT NULL,
+            section_name TEXT NOT NULL DEFAULT '',
+            icon TEXT NOT NULL DEFAULT '',
+            image_url TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 100,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """))
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS hub_subsections (
+            id SERIAL PRIMARY KEY,
+            subsection_code TEXT UNIQUE NOT NULL,
+            section_code TEXT NOT NULL DEFAULT '',
+            subsection_name TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 100,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+        )
+    """))
+    db.commit()
+
+
+@router.get("/admin/subsections")
+def admin_subsections_compat():
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.get("/admin/sections", response_class=HTMLResponse)
+def sections_page(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_visible_hub_sections_(db)
+
+    sql = "SELECT * FROM hub_sections WHERE 1=1"
+    params = {}
+    if q:
+        sql += " AND (lower(section_code) LIKE :q OR lower(section_name) LIKE :q OR lower(note) LIKE :q)"
+        params["q"] = f"%{q.lower()}%"
+    sql += " ORDER BY sort_order, section_name"
+
+    sections = db.execute(text(sql), params).mappings().all()
+    subsections = db.execute(text("""
+        SELECT s.*, h.section_name
+        FROM hub_subsections s
+        LEFT JOIN hub_sections h ON h.section_code = s.section_code
+        ORDER BY h.sort_order, s.sort_order, s.subsection_name
+    """)).mappings().all()
+
+    return render(request, "sections.html", {
+        "active": "sections",
+        "sections": sections,
+        "subsections": subsections,
+        "q": q,
+    })
+
+
+@router.post("/admin/sections/create")
+def section_create(
+    section_code: str = Form(...),
+    section_name: str = Form(...),
+    icon: str = Form(""),
+    image_url: str = Form(""),
+    sort_order: int = Form(100),
+    is_active: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("""
+        INSERT INTO hub_sections
+          (section_code, section_name, icon, image_url, sort_order, is_active, note)
+        VALUES
+          (:section_code, :section_name, :icon, :image_url, :sort_order, :is_active, :note)
+        ON CONFLICT (section_code) DO UPDATE SET
+          section_name = EXCLUDED.section_name,
+          icon = EXCLUDED.icon,
+          image_url = EXCLUDED.image_url,
+          sort_order = EXCLUDED.sort_order,
+          is_active = EXCLUDED.is_active,
+          note = EXCLUDED.note
+    """), {
+        "section_code": section_code.upper().strip(),
+        "section_name": section_name,
+        "icon": icon,
+        "image_url": image_url,
+        "sort_order": sort_order,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPSERT", "section", section_code.upper().strip(), {}, {
+            "section_code": section_code.upper().strip(), "section_name": section_name
+        }, "Založení/úprava sekce")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.post("/admin/subsections/create")
+def subsection_create(
+    section_code: str = Form(...),
+    subsection_code: str = Form(...),
+    subsection_name: str = Form(...),
+    sort_order: int = Form(100),
+    is_active: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("""
+        INSERT INTO hub_subsections
+          (section_code, subsection_code, subsection_name, sort_order, is_active, note)
+        VALUES
+          (:section_code, :subsection_code, :subsection_name, :sort_order, :is_active, :note)
+        ON CONFLICT (subsection_code) DO UPDATE SET
+          section_code = EXCLUDED.section_code,
+          subsection_name = EXCLUDED.subsection_name,
+          sort_order = EXCLUDED.sort_order,
+          is_active = EXCLUDED.is_active,
+          note = EXCLUDED.note
+    """), {
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "subsection_name": subsection_name,
+        "sort_order": sort_order,
+        "is_active": bool(is_active),
+        "note": note,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPSERT", "subsection", subsection_code.upper().strip(), {}, {
+            "section_code": section_code.upper().strip(),
+            "subsection_code": subsection_code.upper().strip(),
+            "subsection_name": subsection_name
+        }, "Založení/úprava podsekce")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.get("/api/taxonomy/sections")
+def api_taxonomy_sections(db: Session = Depends(get_db)):
+    ensure_taxonomy_tables_(db)
+    rows = db.execute(text("""
+        SELECT section_code, section_name, icon, image_url
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+    return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+@router.get("/api/taxonomy/subsections")
+def api_taxonomy_subsections(section_code: str = "", db: Session = Depends(get_db)):
+    ensure_taxonomy_tables_(db)
+    sql = """
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+    """
+    params = {}
+    if section_code:
+        sql += " AND section_code = :section_code"
+        params["section_code"] = section_code.upper()
+    sql += " ORDER BY sort_order, subsection_name"
+    rows = db.execute(text(sql), params).mappings().all()
+    return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+@router.get("/admin/my-specialist-profile-old", response_class=HTMLResponse)
+def my_specialist_profile(request: Request, db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    # Dočasně používáme admin e-mail; po ostrém loginu se nahradí session uživatelem.
+    email = "nekudova@astorieas.cz"
+    rows = db.execute(text("""
+        SELECT * FROM specialists
+        WHERE lower(email) = :email
+        ORDER BY specialist_name, section_code, subsection_code
+    """), {"email": email}).mappings().all()
+
+    return render(request, "my_specialist_profile.html", {
+        "active": "my_specialist_profile",
+        "rows": rows,
+        "email": email,
+    })
+
+
+@router.post("/admin/my-specialist-profile-old/{item_id}/availability")
+def my_specialist_availability(
+    item_id: int,
+    available: str = Form(""),
+    unavailable_reason: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    db.execute(text("""
+        UPDATE specialists
+        SET available = :available,
+            unavailable_reason = :unavailable_reason
+        WHERE id = :id
+    """), {
+        "id": item_id,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPDATE", "specialist_availability", str(item_id), dict(old or {}), {
+            "available": bool(available), "unavailable_reason": unavailable_reason
+        }, "Specialista upravil vlastní dostupnost")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/my-specialist-profile-old", status_code=303)
+
+
+@router.get("/api/routing/specialists")
+def api_routing_specialists(section_code: str = "", subsection_code: str = "", db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    ensure_taxonomy_tables_(db)
+
+    sql = """
+        SELECT *
+        FROM specialists
+        WHERE is_active = TRUE
+          AND available = TRUE
+    """
+    params = {}
+
+    if section_code:
+        sql += " AND section_code = :section_code"
+        params["section_code"] = section_code.upper()
+
+    if subsection_code:
+        sql += " AND (subsection_code = :subsection_code OR COALESCE(subsection_code, '') = '')"
+        params["subsection_code"] = subsection_code.upper()
+
+    sql += " ORDER BY specialist_name LIMIT 50"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    return {
+        "ok": True,
+        "routing": {
+            "section_code": section_code.upper() if section_code else "",
+            "subsection_code": subsection_code.upper() if subsection_code else "",
+            "count": len(rows),
+        },
+        "specialists": [
+            {
+                "id": r["id"],
+                "name": r["specialist_name"],
+                "email": r["email"],
+                "phone": r["phone"],
+                "region": r["region"],
+                "section_code": r["section_code"],
+                "subsection_code": r["subsection_code"],
+                "if_share": r["if_share"],
+                "ps_share": r["ps_share"],
+            }
+            for r in rows
+        ],
+    }
+
+
+
+
+# -------------------------------------------------------------------
+# v1.2.2 Specialist Profile & Sections Fix
+# -------------------------------------------------------------------
+
+def seed_default_hub_taxonomy_(db: Session):
+    ensure_taxonomy_tables_(db)
+
+    defaults_sections = [
+        ("FLOTILY", "Flotily", "🚗", 10),
+        ("MAJETEK", "Majetek", "🏡", 20),
+        ("ZIVOT", "Život", "❤️", 30),
+        ("PODNIKATELE", "Podnikatelé", "🏢", 40),
+        ("PENZE", "Penze", "💼", 50),
+        ("UVERY", "Úvěry", "🏦", 60),
+        ("OBNOVA", "Obnova", "♻️", 70),
+        ("INVESTICE", "Investice", "📈", 80),
+        ("ZLATO", "Zlato", "💰", 90),
+        ("ZVIRE", "Zvíře", "🐕", 100),
+    ]
+
+    defaults_subsections = [
+        ("FLOTILY", "FLOTILY_FIREMNI", "Firemní flotily", 10),
+        ("FLOTILY", "AUTODOPRAVCI", "Autodopravci", 20),
+        ("MAJETEK", "DOMACNOSTI", "Domácnosti", 10),
+        ("MAJETEK", "NEMOVITOSTI", "Nemovitosti", 20),
+        ("ZIVOT", "ZIVOTNI_POJISTENI", "Životní pojištění", 10),
+        ("PODNIKATELE", "PODNIKATELSKA_RIZIKA", "Podnikatelská rizika", 10),
+        ("PENZE", "DPS", "Doplňkové penzijní spoření", 10),
+        ("UVERY", "HYPOTEKY", "Hypotéky", 10),
+        ("OBNOVA", "RETENCE", "Obnova / retence", 10),
+        ("INVESTICE", "INVESTICE_OBECNE", "Investice", 10),
+        ("ZLATO", "INVESTICNI_ZLATO", "Investiční zlato", 10),
+        ("ZVIRE", "POJISTENI_ZVIRAT", "Pojištění zvířat", 10),
+    ]
+
+    for code, name, icon, order in defaults_sections:
+        db.execute(text("""
+            INSERT INTO hub_sections (section_code, section_name, icon, sort_order, is_active)
+            VALUES (:code, :name, :icon, :sort_order, TRUE)
+            ON CONFLICT (section_code) DO NOTHING
+        """), {"code": code, "name": name, "icon": icon, "sort_order": order})
+
+    for section_code, sub_code, sub_name, order in defaults_subsections:
+        db.execute(text("""
+            INSERT INTO hub_subsections (section_code, subsection_code, subsection_name, sort_order, is_active)
+            VALUES (:section_code, :sub_code, :sub_name, :sort_order, TRUE)
+            ON CONFLICT (subsection_code) DO NOTHING
+        """), {
+            "section_code": section_code,
+            "sub_code": sub_code,
+            "sub_name": sub_name,
+            "sort_order": order,
+        })
+
+    db.commit()
+
+
+@router.post("/admin/sections/seed-defaults")
+def sections_seed_defaults(db: Session = Depends(get_db)):
+    seed_default_hub_taxonomy_(db)
+    try:
+        safe_audit(db, "admin@astorie.local", "UPSERT", "taxonomy", "defaults", {}, {"seed": "default_hub_taxonomy"}, "Doplnění výchozích sekcí a podsekcí")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+@router.get("/admin/my-specialist-profile", response_class=HTMLResponse)
+def my_specialist_profile_v071(request: Request, db: Session = Depends(get_db)):
+    ensure_specialists_table_(db)
+    seed_default_hub_taxonomy_(db)
+
+    current_user = {
+        "advisor_id": "501",
+        "name": "Nekudová Dagmar",
+        "email": "nekudova@astorieas.cz",
+        "phone": "737 233 888",
+    }
+
+    rows = db.execute(text("""
+        SELECT s.*,
+               hs.section_name,
+               hss.subsection_name
+        FROM specialists s
+        LEFT JOIN hub_sections hs ON hs.section_code = s.section_code
+        LEFT JOIN hub_subsections hss ON hss.subsection_code = s.subsection_code
+        WHERE lower(s.email) = :email
+        ORDER BY s.specialist_name, hs.sort_order, hss.sort_order, s.section_code, s.subsection_code
+    """), {"email": current_user["email"].lower()}).mappings().all()
+
+    sections = db.execute(text("""
+        SELECT section_code, section_name, icon
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+
+    subsections = db.execute(text("""
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)).mappings().all()
+
+    return render(request, "my_specialist_profile.html", {
+        "active": "my_specialist_profile",
+        "rows": rows,
+        "sections": sections,
+        "subsections": subsections,
+        "current_user": current_user,
+        "email": current_user["email"],
+    })
+
+
+@router.post("/admin/my-specialist-profile/add-specialization")
+def my_specialist_add_specialization_v071(
+    section_code: str = Form(...),
+    subsection_code: str = Form(""),
+    role_description: str = Form(""),
+    region: str = Form("ČR"),
+    if_share: str = Form(""),
+    ps_share: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    seed_default_hub_taxonomy_(db)
+
+    current_user = {
+        "advisor_id": "501",
+        "name": "Nekudová Dagmar",
+        "email": "nekudova@astorieas.cz",
+        "phone": "737 233 888",
+    }
+
+    db.execute(text("""
+        INSERT INTO specialists
+        (advisor_id, specialist_name, email, phone, section_code, subsection_code,
+         role_description, region, if_share, ps_share, available, is_active, note)
+        VALUES
+        (:advisor_id, :name, :email, :phone, :section_code, :subsection_code,
+         :role_description, :region, :if_share, :ps_share, TRUE, TRUE, 'Založeno z profilu specialisty')
+    """), {
+        "advisor_id": current_user["advisor_id"],
+        "name": current_user["name"],
+        "email": current_user["email"].lower(),
+        "phone": current_user["phone"],
+        "section_code": section_code.upper().strip(),
+        "subsection_code": subsection_code.upper().strip(),
+        "role_description": role_description,
+        "region": region,
+        "if_share": if_share,
+        "ps_share": ps_share,
+    })
+    db.commit()
+
+    try:
+        safe_audit(db, current_user["email"], "CREATE", "specialist_profile", current_user["email"], {}, {
+            "section_code": section_code,
+            "subsection_code": subsection_code,
+            "role_description": role_description,
+        }, "Specialista si přidal odbornost do profilu")
+    except Exception:
+        pass
+
+    return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+
+
+@router.post("/admin/my-specialist-profile/{item_id}/availability")
+def my_specialist_availability_v071(
+    item_id: int,
+    available: str = Form(""),
+    unavailable_reason: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_specialists_table_(db)
+    old = db.execute(text("SELECT * FROM specialists WHERE id = :id"), {"id": item_id}).mappings().first()
+    db.execute(text("""
+        UPDATE specialists
+        SET available = :available,
+            unavailable_reason = :unavailable_reason
+        WHERE id = :id
+    """), {
+        "id": item_id,
+        "available": bool(available),
+        "unavailable_reason": unavailable_reason,
+    })
+    db.commit()
+    try:
+        safe_audit(db, "admin@astorie.local", "UPDATE", "specialist_availability", str(item_id), dict(old or {}), {
+            "available": bool(available), "unavailable_reason": unavailable_reason
+        }, "Specialista upravil vlastní dostupnost")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/my-specialist-profile", status_code=303)
+
+
+
+
+
+# -------------------------------------------------------------------
+# v1.2.2 Visible Sections Fix
+# -------------------------------------------------------------------
+
+def ensure_visible_hub_sections_(db: Session):
+    """
+    Zajistí, že poradenská část HUBu vždy uvidí základní sekce.
+    Nedestruktivní: nic nemaže a existující sekce nepřepisuje.
+    """
+    try:
+        seed_default_hub_taxonomy_(db)
+    except NameError:
+        ensure_taxonomy_tables_(db)
+        defaults_sections = [
+            ("FLOTILY", "Flotily", "🚗", 10),
+            ("MAJETEK", "Majetek", "🏡", 20),
+            ("ZIVOT", "Život", "❤️", 30),
+            ("PODNIKATELE", "Podnikatelé", "🏢", 40),
+            ("PENZE", "Penze", "💼", 50),
+            ("UVERY", "Úvěry", "🏦", 60),
+            ("OBNOVA", "Obnova", "♻️", 70),
+            ("INVESTICE", "Investice", "📈", 80),
+            ("ZLATO", "Zlato", "💰", 90),
+            ("ZVIRE", "Zvíře", "🐕", 100),
+        ]
+        defaults_subsections = [
+            ("FLOTILY", "FLOTILY_FIREMNI", "Firemní flotily", 10),
+            ("FLOTILY", "AUTODOPRAVCI", "Autodopravci", 20),
+            ("MAJETEK", "DOMACNOSTI", "Domácnosti", 10),
+            ("MAJETEK", "NEMOVITOSTI", "Nemovitosti", 20),
+            ("ZIVOT", "ZIVOTNI_POJISTENI", "Životní pojištění", 10),
+            ("PODNIKATELE", "PODNIKATELSKA_RIZIKA", "Podnikatelská rizika", 10),
+            ("PENZE", "DPS", "Doplňkové penzijní spoření", 10),
+            ("UVERY", "HYPOTEKY", "Hypotéky", 10),
+            ("OBNOVA", "RETENCE", "Obnova / retence", 10),
+            ("INVESTICE", "INVESTICE_OBECNE", "Investice", 10),
+            ("ZLATO", "INVESTICNI_ZLATO", "Investiční zlato", 10),
+            ("ZVIRE", "POJISTENI_ZVIRAT", "Pojištění zvířat", 10),
+        ]
+        for code, name, icon, order in defaults_sections:
+            db.execute(text("""
+                INSERT INTO hub_sections (section_code, section_name, icon, sort_order, is_active)
+                VALUES (:code, :name, :icon, :sort_order, TRUE)
+                ON CONFLICT (section_code) DO NOTHING
+            """), {"code": code, "name": name, "icon": icon, "sort_order": order})
+        for section_code, sub_code, sub_name, order in defaults_subsections:
+            db.execute(text("""
+                INSERT INTO hub_subsections (section_code, subsection_code, subsection_name, sort_order, is_active)
+                VALUES (:section_code, :sub_code, :sub_name, :sort_order, TRUE)
+                ON CONFLICT (subsection_code) DO NOTHING
+            """), {"section_code": section_code, "sub_code": sub_code, "sub_name": sub_name, "sort_order": order})
+        db.commit()
+
+
+@router.get("/api/taxonomy/visible-sections")
+def api_visible_sections_v072(db: Session = Depends(get_db)):
+    ensure_visible_hub_sections_(db)
+    sections = db.execute(text("""
+        SELECT section_code, section_name, icon, image_url
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+    subsections = db.execute(text("""
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)).mappings().all()
+    return {
+        "ok": True,
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+        "sections": [dict(s) for s in sections],
+        "subsections": [dict(s) for s in subsections],
+    }
+
+
+@router.post("/admin/sections/force-visible-defaults")
+def sections_force_visible_defaults_v072(db: Session = Depends(get_db)):
+    ensure_visible_hub_sections_(db)
+    return RedirectResponse("/admin/sections", status_code=303)
+
+
+
+
+
+
+
+def ensure_user_hub_tables_v082_(db: Session):
+    """
+    v1.2.2 – bezpečné tabulky pro TIPy.
+    Nedestruktivní: tabulku vytvoří nebo doplní chybějící sloupce.
+    """
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS tips (
+            id TEXT PRIMARY KEY,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+            adviser_original_id TEXT NOT NULL DEFAULT '',
+            adviser_name TEXT NOT NULL DEFAULT '',
+            adviser_email TEXT NOT NULL DEFAULT '',
+            specialist_name TEXT NOT NULL DEFAULT '',
+            specialist_email TEXT NOT NULL DEFAULT '',
+            client_name TEXT NOT NULL DEFAULT '',
+            client_phone TEXT NOT NULL DEFAULT '',
+            client_identifier TEXT NOT NULL DEFAULT '',
+            potential_amount NUMERIC(14,2),
+            adviser_note TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'Nový',
+            policy_no TEXT NOT NULL DEFAULT '',
+            final_volume NUMERIC(14,2),
+            specialist_feedback TEXT NOT NULL DEFAULT ''
+        )
+    """))
+
+    # Bezpečné doplnění sloupců pro případy, kdy už tabulka existuje ze starší verze.
+    alters = [
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_original_id TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_email TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_email TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS client_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS client_phone TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS client_identifier TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS potential_amount NUMERIC(14,2)",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS adviser_note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Nový'",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS policy_no TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS final_volume NUMERIC(14,2)",
+        "ALTER TABLE tips ADD COLUMN IF NOT EXISTS specialist_feedback TEXT NOT NULL DEFAULT ''",
+    ]
+    for stmt in alters:
+        db.execute(text(stmt))
+
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_adviser ON tips (adviser_original_id)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_status ON tips (status)"))
+    db.execute(text("CREATE INDEX IF NOT EXISTS idx_tips_created ON tips (created_at DESC)"))
+    db.commit()
+
+
+@router.get("/api/tips/status")
+def api_tips_status_v082(db: Session = Depends(get_db)):
+    try:
+        ensure_user_hub_tables_v082_(db)
+        count = db.execute(text("SELECT COUNT(*) FROM tips")).scalar()
+        latest = db.execute(text("SELECT created_at, client_name, status FROM tips ORDER BY created_at DESC LIMIT 5")).mappings().all()
+        return {
+            "ok": True,
+            "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+            "count": count,
+            "latest": [dict(r) for r in latest],
+        }
+    except Exception as e:
+        return {"ok": False, "version": "1.2.2-admin-taxonomy-specialists-links-safe", "error": str(e)}
+
+
+
+
+# -------------------------------------------------------------------
+# v1.2.2 Adviser HUB routes fix
+# -------------------------------------------------------------------
+
+def hub_user_context_v083_():
+    return {
+        "advisor_id": "501",
+        "name": "Nekudová Dagmar",
+        "email": "nekudova@astorieas.cz",
+        "phone": "737 233 888",
+        "role": "IF",
+    }
+
+
+def hub_render_v083_(request: Request, template_name: str, context: dict):
+    base = {
+        "request": request,
+        "app_name": "HUB ASTORIE",
+        "version": "1.2.2-admin-taxonomy-specialists-links-safe",
+        "user": hub_user_context_v083_(),
+    }
+    base.update(context)
+    return request.app.state.templates.TemplateResponse(template_name, base)
+
+
+def ensure_hub_taxonomy_v083_(db: Session):
+    try:
+        ensure_visible_hub_sections_(db)
+    except Exception:
+        try:
+            seed_default_hub_taxonomy_(db)
+        except Exception:
+            pass
+
+
+@router.get("/hub")
+def hub_home_v083():
+    return RedirectResponse("/hub/new-tip", status_code=302)
+
+
+@router.get("/hub/new-tip-old-v085", response_class=HTMLResponse)
+def hub_new_tip_v083(request: Request, db: Session = Depends(get_db)):
+    ensure_user_hub_tables_v082_(db)
+    ensure_hub_taxonomy_v083_(db)
+
+    sections = db.execute(text("""
+        SELECT section_code, section_name, icon
+        FROM hub_sections
+        WHERE is_active = TRUE
+        ORDER BY sort_order, section_name
+    """)).mappings().all()
+
+    subsections = db.execute(text("""
+        SELECT subsection_code, subsection_name, section_code
+        FROM hub_subsections
+        WHERE is_active = TRUE
+        ORDER BY section_code, sort_order, subsection_name
+    """)).mappings().all()
+
+    try:
+        ensure_specialists_table_(db)
+        specialists = db.execute(text("""
+            SELECT *
+            FROM specialists
+            WHERE is_active = TRUE
+              AND available = TRUE
+            ORDER BY specialist_name, section_code, subsection_code
+            LIMIT 200
+        """)).mappings().all()
+    except Exception:
+        specialists = []
+
+    return hub_render_v083_(request, "hub_new_tip.html", {
+        "active": "new_tip",
+        "sections": sections,
+        "subsections": subsections,
+        "specialists": specialists,
+    })
+
+
+@router.post("/hub/tips/create-old-v085")
+def hub_create_tip_v083(
+    section_code: str = Form(""),
+    subsection_code: str = Form(""),
+    specialist_email: str = Form(""),
+    specialist_name: str = Form(""),
+    client_name: str = Form(...),
+    client_phone: str = Form(""),
+    client_identifier: str = Form(""),
+    potential_amount: str = Form(""),
+    adviser_note: str = Form(""),
+    policy_no: str = Form(""),
+    final_volume: str = Form(""),
+    closed_at_input: str = Form(""),
+    next_business: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_user_hub_tables_v082_(db)
+    user = hub_user_context_v083_()
+
+    amount = None
+    if potential_amount:
+        try:
+            amount = Decimal(str(potential_amount).replace(" ", "").replace("Kč", "").replace(",", "."))
+        except Exception:
+            amount = None
+
+    tip_id = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO tips
+          (id, adviser_original_id, adviser_name, adviser_email, specialist_name, specialist_email,
+           client_name, client_phone, client_identifier, potential_amount, adviser_note, status, policy_no)
+        VALUES
+          (:id, :advisor_id, :advisor_name, :advisor_email, :specialist_name, :specialist_email,
+           :client_name, :client_phone, :client_identifier, :potential_amount, :adviser_note, 'Nový', :policy_no)
+    """), {
+        "id": tip_id,
+        "advisor_id": user["advisor_id"],
+        "advisor_name": user["name"],
+        "advisor_email": user["email"],
+        "specialist_name": specialist_name,
+        "specialist_email": specialist_email,
+        "client_name": client_name,
+        "client_phone": client_phone,
+        "client_identifier": client_identifier,
+        "potential_amount": amount,
+        "adviser_note": f"[Sekce: {section_code}; Podsekce: {subsection_code}]\n{adviser_note}",
+        "policy_no": policy_no,
+        "final_volume": final_amount,
+        "closed_at": closed_value,
+        "next_business": next_business,
+    })
+    db.commit()
+    return RedirectResponse("/hub/my-tips?created=1", status_code=303)
+
+
+@router.get("/hub/my-tips-old-v085", response_class=HTMLResponse)
+def hub_my_tips_v083(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    created: str = "",
+    db: Session = Depends(get_db),
+):
+    ensure_user_hub_tables_v082_(db)
+    user = hub_user_context_v083_()
+
+    sql = """
+        SELECT *
+        FROM tips
+        WHERE COALESCE(adviser_original_id, '') = :advisor_id
+    """
+    params = {"advisor_id": user["advisor_id"]}
+
+    if q:
+        sql += """
+          AND (
+            lower(COALESCE(client_name, '')) LIKE :q OR
+            lower(COALESCE(client_identifier, '')) LIKE :q OR
+            lower(COALESCE(specialist_name, '')) LIKE :q OR
+            lower(COALESCE(policy_no, '')) LIKE :q OR
+            lower(COALESCE(adviser_note, '')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+
+    if status:
+        sql += " AND status = :status"
+        params["status"] = status
+
+    sql += " ORDER BY created_at DESC LIMIT 300"
+    rows = db.execute(text(sql), params).mappings().all()
+
+    stats = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE status ILIKE 'sjednáno') AS won,
+          COUNT(*) FILTER (WHERE status ILIKE 'storno') AS lost,
+          COUNT(*) FILTER (WHERE status NOT ILIKE 'sjednáno' AND status NOT ILIKE 'storno') AS open
+        FROM tips
+        WHERE COALESCE(adviser_original_id, '') = :advisor_id
+    """), {"advisor_id": user["advisor_id"]}).mappings().first()
+
+    return hub_render_v083_(request, "hub_my_tips.html", {
+        "active": "my_tips",
+        "rows": rows,
+        "stats": stats,
+        "q": q,
+        "status": status,
+        "created": created,
+    })
+
+
+@router.get("/hub/calculators-old-v083", response_class=HTMLResponse)
+def hub_calculators_v083(request: Request, db: Session = Depends(get_db)):
+    return hub_render_v083_(request, "hub_calculators.html", {"active": "calculators", "links": [], "rates": [], "q": ""})
+
+
+@router.get("/hub/partners-old-v083", response_class=HTMLResponse)
+def hub_partners_v083(request: Request, q: str = "", selected: str = "", tab: str = "contacts", db: Session = Depends(get_db)):
+    dashboard = fetch_partner_dashboard_v111(db, selected) if selected else {}
+    partner_history = fetch_partner_history_v111(db, selected) if selected else []
+    partner_requests = fetch_partner_requests_v111(db, selected) if selected else []
+
+    # v1.2.2 safe route fix: proměnné pro šablonu musí existovat vždy.
+    try:
+        dashboard = fetch_partner_dashboard_v111(db, selected) if selected and globals().get("fetch_partner_dashboard_v111") else {}
+    except Exception:
+        dashboard = {}
+        try:
+            db.rollback()
+        except Exception:
+            pass
+    try:
+        partner_history = fetch_partner_history_v111(db, selected) if selected and globals().get("fetch_partner_history_v111") else []
+    except Exception:
+        partner_history = []
+        try:
+            db.rollback()
+        except Exception:
+            pass
+    try:
+        partner_requests = fetch_partner_requests_v111(db, selected) if selected and globals().get("fetch_partner_requests_v111") else []
+    except Exception:
+        partner_requests = []
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+    return hub_render_v083_(request, "hub_partners.html", {
+        "active": "partners", "partners": [], "partner": None,
+        "contacts": [], "links": [], "products": [], "q": q, "selected": selected, "tab": tab
+    })
 
 
 @router.get("/hub/contacts-old-v083", response_class=HTMLResponse)
@@ -7050,16 +8545,3 @@ def release_1_4_9_status(db: Session = Depends(get_db)):
 @router.get("/api/release-1-5-2/status")
 def release_1_5_2_status(db: Session = Depends(get_db)):
     return {"ok": True, "version": "1.5.2-admin-contacts-top-form-table-ux-safe", "safe": True, "db_changed": False, "changed_modules": ["admin_contacts_ui"], "unchanged_modules": ["users", "permissions", "partners", "tips", "rates", "terminations", "email", "products", "links"]}
-
-
-@router.get("/api/release-1-5-3/status")
-def release_1_5_3_status(db: Session = Depends(get_db)):
-    return {
-        "ok": True,
-        "version": "1.5.3-admin-modules-stats-productivity-restore-safe",
-        "safe": True,
-        "db_changed": False,
-        "changed_modules": ["admin_modules_route", "admin_productivity_route", "hub_stats_route"],
-        "unchanged_modules": ["tips", "partners", "contacts", "rates", "terminations", "email", "users", "permissions"],
-        "message": "Opraven routing Mapa modulů, Produktivita a Statistiky bez zásahu do ostatních modulů."
-    }
