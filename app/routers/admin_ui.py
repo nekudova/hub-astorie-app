@@ -1658,6 +1658,15 @@ def release_150_status(db: Session = Depends(get_db)):
 
 
 
+@router.get("/api/release-1-5-1/status")
+def release_151_status(db: Session = Depends(get_db)):
+    ensure_user_permissions_v150(db)
+    ensure_contact_role_tables_v149(db)
+    cnt_perm = db.execute(text("SELECT count(*) FROM module_permissions")).scalar() or 0
+    cnt_roles = db.execute(text("SELECT count(*) FROM contact_roles")).scalar() or 0
+    return {"ok": True, "version": "1.5.1-admin-contacts-permissions-ux-safe", "safe": True, "db_changed": False, "module_permissions": cnt_perm, "contact_roles": cnt_roles, "changed_modules": ["admin_contacts_ui", "admin_permissions_ui"], "unchanged_modules": ["partners", "tips", "rates", "terminations", "email", "products", "links"]}
+
+
 def ensure_specialists_table_(db: Session):
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS specialists (

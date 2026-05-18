@@ -1,46 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-toolbar">
-  <div>
-    <h1 class="page-title">Oprávnění menu</h1>
-    <p class="page-subtitle">Nastavení viditelnosti modulů podle rolí. Uživatel s více rolemi uvidí součet povolených položek.</p>
-  </div>
-  <a class="btn soft" href="/admin/advisors">← Zpět na uživatele</a>
-</div>
-
-<section class="card table-card section-space">
-  <div class="table-head"><span>Moduly a role</span><span>Hub + Admin</span></div>
-  <div class="table-scroll permissions-scroll-v150">
-    <table class="permissions-table-v150">
-      <thead>
-        <tr>
-          <th>Část</th><th>Modul</th><th>URL</th>
-          {% for r in system_roles %}<th>{{ r }}</th>{% endfor %}
-          <th>Akce</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in rows %}
-        <tr>
-          <form method="post" action="/admin/permissions/{{ row.area }}/{{ row.module_id }}/update">
-            <td><span class="pill-v150 {{ row.area }}">{{ 'Poradce' if row.area == 'hub' else 'Admin' }}</span></td>
-            <td><strong>{{ row.module_name }}</strong></td>
-            <td><small>{{ row.module_url }}</small></td>
-            <td><input type="checkbox" name="IF" value="1" {% if row.if_allowed %}checked{% endif %}></td>
-            <td><input type="checkbox" name="PS" value="1" {% if row.ps_allowed %}checked{% endif %}></td>
-            <td><input type="checkbox" name="ADMIN" value="1" {% if row.admin_allowed %}checked{% endif %}></td>
-            <td><input type="checkbox" name="BO" value="1" {% if row.bo_allowed %}checked{% endif %}></td>
-            <td><input type="checkbox" name="VEDENI" value="1" {% if row.vedeni_allowed %}checked{% endif %}></td>
-            <td><button class="btn soft micro" type="submit">Uložit řádek</button></td>
-          </form>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
 <style>
-.permissions-scroll-v150{max-height:76vh;overflow:auto}.permissions-table-v150 th{position:sticky;top:0;z-index:2}.permissions-table-v150 td{text-align:center}.permissions-table-v150 td:nth-child(2),.permissions-table-v150 td:nth-child(3){text-align:left}.pill-v150{border-radius:999px;padding:4px 9px;font-weight:900;font-size:12px;background:#eef6f7;color:#003D4C}.pill-v150.admin{background:#fff1e8;color:#c33a00}.pill-v150.hub{background:#e8f9ee;color:#126b32}
+.permissions-v151{display:grid;gap:16px;color:#0e2a35}.perm-hero-v151{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;background:linear-gradient(135deg,#fff,#f6fbfc);border:1px solid #dce9ed;border-radius:24px;padding:20px 22px;box-shadow:0 14px 34px rgba(0,61,76,.06)}.perm-hero-v151 h1{margin:0;color:#003D4C;font-size:32px}.perm-hero-v151 p{margin:6px 0 0;color:#5f7680}.btn-v151{border:1px solid #d6e7eb;background:#fff;color:#003D4C;border-radius:13px;padding:10px 13px;font-weight:900;text-decoration:none;cursor:pointer}.btn-v151.soft{background:#eef7f8}.btn-v151.micro{padding:7px 10px;font-size:12px}.perm-toolbar-v151{position:sticky;top:0;z-index:6;background:rgba(245,250,251,.96);backdrop-filter:blur(10px);border:1px solid #dce9ed;border-radius:20px;padding:12px;display:grid;grid-template-columns:1fr 180px 180px;gap:10px}.perm-toolbar-v151 input,.perm-toolbar-v151 select{border:1px solid #cfe1e6;border-radius:14px;padding:11px 13px;background:#fff;font:inherit}.perm-card-v151{background:#fff;border:1px solid #dce9ed;border-radius:24px;box-shadow:0 14px 34px rgba(0,61,76,.06);overflow:hidden}.perm-head-v151{display:flex;justify-content:space-between;align-items:center;background:#eaf5f7;border-bottom:1px solid #dce9ed;padding:13px 18px}.perm-head-v151 strong{color:#003D4C}.perm-table-wrap-v151{max-height:72vh;overflow:auto}.perm-table-v151{width:100%;border-collapse:separate;border-spacing:0}.perm-table-v151 th{position:sticky;top:0;z-index:2;background:#f1f8f9;color:#4d6470;text-transform:uppercase;font-size:11px;letter-spacing:.06em;padding:10px;border-bottom:1px solid #dce9ed}.perm-table-v151 td{padding:9px 10px;border-bottom:1px solid #edf4f6;vertical-align:middle}.perm-table-v151 tr:hover{background:#fbfdfe}.perm-table-v151 .left{text-align:left}.perm-table-v151 .center{text-align:center}.area-pill-v151{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-weight:900;font-size:11px}.area-pill-v151.hub{background:#e8f9ee;color:#126b32}.area-pill-v151.admin{background:#fff1e8;color:#c33a00}.url-v151{font-size:12px;color:#6b7f88}.module-v151{font-weight:900;color:#003D4C}.role-toggle-v151{display:inline-flex;align-items:center;justify-content:center}.role-toggle-v151 input{position:absolute;opacity:0;pointer-events:none}.role-toggle-v151 span{min-width:42px;height:28px;border-radius:999px;border:1px solid #d6e7eb;background:#f1f5f9;color:#64748b;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;transition:.15s ease}.role-toggle-v151 input:checked+span{background:#003D4C;color:#fff;border-color:#003D4C;box-shadow:0 5px 14px rgba(0,61,76,.18)}.role-toggle-v151.admin input:checked+span{background:#FC4C02;border-color:#FC4C02}.save-col-v151{text-align:right;white-space:nowrap}.legend-v151{display:flex;gap:8px;flex-wrap:wrap;color:#607580;font-size:12px}.mini-muted-v151{color:#607580;font-size:12px}@media(max-width:900px){.perm-toolbar-v151{grid-template-columns:1fr}.perm-table-v151 th:nth-child(3),.perm-table-v151 td:nth-child(3){display:none}}
 </style>
+
+<div class="permissions-v151">
+  <section class="perm-hero-v151">
+    <div>
+      <h1>Oprávnění menu</h1>
+      <p>Nastavení viditelnosti modulů podle rolí. Uživatel s více rolemi uvidí součet povolených položek.</p>
+    </div>
+    <a class="btn-v151 soft" href="/admin/advisors">← Zpět na uživatele</a>
+  </section>
+
+  <div class="perm-toolbar-v151">
+    <input id="permSearch151" type="text" placeholder="Hledat modul, URL, část…">
+    <select id="permArea151"><option value="">Všechny části</option><option value="hub">Poradce</option><option value="admin">Admin</option></select>
+    <select id="permRole151"><option value="">Všechny role</option>{% for r in system_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select>
+  </div>
+
+  <section class="perm-card-v151">
+    <div class="perm-head-v151">
+      <strong>Moduly a role</strong>
+      <div class="legend-v151"><span>tmavá = povoleno</span><span>šedá = skryto</span><span>oranžová = Admin</span></div>
+    </div>
+    <div class="perm-table-wrap-v151">
+      <table class="perm-table-v151" id="permTable151">
+        <thead>
+          <tr>
+            <th class="left">Část</th><th class="left">Modul</th><th class="left">URL</th>
+            {% for r in system_roles %}<th class="center">{{ r }}</th>{% endfor %}
+            <th>Akce</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr data-area="{{ row.area }}" data-search="{{ (row.area ~ ' ' ~ row.module_name ~ ' ' ~ row.module_url)|lower }}">
+            <form method="post" action="/admin/permissions/{{ row.area }}/{{ row.module_id }}/update">
+              <td class="left"><span class="area-pill-v151 {{ row.area }}">{{ 'Poradce' if row.area == 'hub' else 'Admin' }}</span></td>
+              <td class="left"><span class="module-v151">{{ row.module_name }}</span></td>
+              <td class="left"><span class="url-v151">{{ row.module_url }}</span></td>
+              <td class="center"><label class="role-toggle-v151"><input type="checkbox" name="IF" value="1" {% if row.if_allowed %}checked{% endif %}><span>IF</span></label></td>
+              <td class="center"><label class="role-toggle-v151"><input type="checkbox" name="PS" value="1" {% if row.ps_allowed %}checked{% endif %}><span>PS</span></label></td>
+              <td class="center"><label class="role-toggle-v151 admin"><input type="checkbox" name="ADMIN" value="1" {% if row.admin_allowed %}checked{% endif %}><span>ADM</span></label></td>
+              <td class="center"><label class="role-toggle-v151"><input type="checkbox" name="BO" value="1" {% if row.bo_allowed %}checked{% endif %}><span>BO</span></label></td>
+              <td class="center"><label class="role-toggle-v151"><input type="checkbox" name="VEDENI" value="1" {% if row.vedeni_allowed %}checked{% endif %}><span>VED</span></label></td>
+              <td class="save-col-v151"><button class="btn-v151 micro" type="submit">Uložit</button></td>
+            </form>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<script>
+(function(){
+ const q=document.getElementById('permSearch151'), area=document.getElementById('permArea151'), role=document.getElementById('permRole151'), rows=[...document.querySelectorAll('#permTable151 tbody tr')];
+ function apply(){const needle=(q.value||'').toLowerCase().trim(), a=area.value, r=role.value; rows.forEach(tr=>{let ok=true; if(needle&&!tr.dataset.search.includes(needle)) ok=false; if(a&&tr.dataset.area!==a) ok=false; if(r){const inp=tr.querySelector('input[name="'+r+'"]'); if(!inp||!inp.checked) ok=false;} tr.style.display=ok?'':'none';});}
+ [q,area,role].forEach(el=>el&&el.addEventListener('input',apply));
+})();
+</script>
 {% endblock %}
