@@ -823,9 +823,23 @@ def form_bridge_page(request: Request):
 @router.get("/admin/terminations", response_class=HTMLResponse)
 def terminations_page(request: Request, partner_code: str = "", db: Session = Depends(get_db)):
     partner = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first() if partner_code else None
+    partners = db.query(Partner).filter(Partner.is_active == True).order_by(Partner.name).limit(1000).all()
+    partner_items = [
+        {
+            "partner_code": x.partner_code or "",
+            "name": x.name or "",
+            "ico": x.ico or "",
+            "data_box": x.data_box or "",
+            "registry_email": x.registry_email or "",
+            "address_full": x.address_full or "",
+            "city": x.city or "",
+        }
+        for x in partners
+    ]
     return render(request, "terminations.html", {
         "active": "terminations",
         "partner": partner,
+        "partners": partner_items,
         "partner_code": partner_code.upper() if partner_code else "",
     })
 
@@ -3336,6 +3350,52 @@ def api_hub_partner_summary_v086(partner_code: str, db: Session = Depends(get_db
         },
     }
 
+
+
+@router.get("/hub/terminations", response_class=HTMLResponse)
+def hub_terminations_v146(request: Request, selected: str = "", db: Session = Depends(get_db)):
+    partners = []
+    partner = None
+    if table_exists_v084_(db, "partners"):
+        partners = fetch_all_safe_v084_(db, """
+            SELECT partner_code, name, ico, data_box, registry_email, address_full, street, city, zip_code
+            FROM partners
+            WHERE COALESCE(is_active, TRUE) = TRUE
+            ORDER BY name
+            LIMIT 1000
+        """)
+        if selected:
+            partner = fetch_one_safe_v084_(db, """
+                SELECT partner_code, name, ico, data_box, registry_email, address_full, street, city, zip_code
+                FROM partners
+                WHERE upper(partner_code) = upper(:code)
+                LIMIT 1
+            """, {"code": selected})
+    return hub_render_v083_(request, "hub_terminations.html", {
+        "active": "terminations",
+        "partners": [dict(p) for p in partners],
+        "partner": dict(partner) if partner else None,
+        "selected": selected,
+    })
+
+
+@router.post("/hub/terminations/preview", response_class=HTMLResponse)
+def hub_termination_preview_v146(
+    request: Request,
+    partner_code: str = Form(""),
+    termination_type: str = Form("A"),
+    client_name: str = Form(""),
+    client_identifier: str = Form(""),
+    client_address: str = Form(""),
+    policy_no: str = Form(""),
+    insurance_type: str = Form(""),
+    insured_subject: str = Form(""),
+    bank_account: str = Form(""),
+    extra_date: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    return termination_preview(request, partner_code, termination_type, client_name, client_identifier, client_address, policy_no, insurance_type, insured_subject, bank_account, extra_date, note, db)
 
 
 @router.get("/hub/forms", response_class=HTMLResponse)
@@ -8009,4 +8069,17 @@ def release_145_status():
         "db_changed": False,
         "changed_modules": ["admin_contacts_template", "admin_products_template", "admin_links_template"],
         "unchanged_modules": ["new_tip", "my_tips", "partners", "admin_rates", "hub_calculators", "database", "routes"],
+    }
+
+
+@router.get("/api/release-1-4-6/status")
+def release_146_status():
+    return {
+        "ok": True,
+        "version": "1.4.6-terminations-advisor-builder-safe",
+        "message": "Výpovědi jsou dostupné i v poradenském HUBu, s výběrem partnera ze seznamu a živým náhledem dokumentu.",
+        "safe": True,
+        "changed_sections": ["hub_terminations", "admin_terminations_ux", "hub_forms_link"],
+        "db_changed": False,
+        "untouched": ["Nový TIP", "Moje TIPy", "Partneři", "Sazebník", "Kontakty", "Produkty", "Odkazy"]
     }
