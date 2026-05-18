@@ -1,128 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-toolbar">
-  <div>
-    <h1 class="page-title">Odkazy</h1>
-    <p class="page-subtitle">Správa odkazů rozdělená na interní odkazy ASTORIE a odkazy partnerů.</p>
-  </div>
-  <a class="btn soft" href="/api/admin/links-health" target="_blank">Kontrola odkazů</a>
+<style>
+.admin-workspace-v145{display:grid;gap:18px}.admin-hero-v145{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;background:linear-gradient(135deg,#fff,#f5fafb);border:1px solid #dce9ed;border-radius:24px;padding:22px 24px;box-shadow:0 14px 34px rgba(0,61,76,.06)}.admin-hero-v145 h1{margin:0;color:#003D4C;font-size:34px}.admin-hero-v145 p{margin:6px 0 0;color:#5f7680}.admin-hero-actions-v145{display:flex;gap:10px;flex-wrap:wrap}.admin-kpis-v145{display:flex;gap:10px;flex-wrap:wrap}.admin-kpi-v145{background:#fff;border:1px solid #dce9ed;border-radius:16px;padding:10px 14px;min-width:120px}.admin-kpi-v145 span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6a7d86;font-weight:900}.admin-kpi-v145 strong{font-size:24px;color:#003D4C}.admin-panel-v145{background:#fff;border:1px solid #dce9ed;border-radius:24px;box-shadow:0 14px 34px rgba(0,61,76,.06);overflow:hidden}.admin-toolbar-v145{display:grid;grid-template-columns:minmax(260px,1fr) auto auto;gap:12px;align-items:center;padding:16px;background:#f7fbfc;border-bottom:1px solid #dce9ed}.admin-toolbar-v145 input,.admin-toolbar-v145 select{border:1px solid #cfe1e6;border-radius:14px;padding:12px 14px;font:inherit;background:#fff}.admin-toolbar-v145 details{position:relative}.admin-toolbar-v145 summary{list-style:none;cursor:pointer}.admin-toolbar-v145 summary::-webkit-details-marker{display:none}.admin-form-drawer-v145{position:absolute;right:0;top:52px;width:min(560px,90vw);background:#fff;border:1px solid #dce9ed;border-radius:22px;box-shadow:0 24px 60px rgba(0,61,76,.22);padding:18px;z-index:20}.admin-form-drawer-v145 h2{margin:0 0 12px;color:#003D4C}.admin-form-grid-v145{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-form-grid-v145 .span-2{grid-column:1/-1}.admin-form-grid-v145 label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#607580;font-weight:900;margin:0 0 5px}.admin-form-grid-v145 input,.admin-form-grid-v145 textarea,.admin-form-grid-v145 select{width:100%;border:1px solid #cfe1e6;border-radius:13px;padding:11px 12px;font:inherit}.admin-form-grid-v145 textarea{min-height:84px}.admin-form-actions-v145{display:flex;justify-content:flex-end;margin-top:14px}.admin-table-wrap-v145{max-height:68vh;overflow:auto}.admin-table-v145{width:100%;border-collapse:separate;border-spacing:0}.admin-table-v145 thead th{position:sticky;top:0;z-index:3;background:#eaf4f6;color:#4a5f6a;font-size:12px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:12px 14px}.admin-table-v145 td{padding:12px 14px;border-bottom:1px solid #eef4f6;vertical-align:top}.admin-table-v145 tbody tr:hover{background:#f8fbfc}.admin-table-v145 strong{color:#003D4C}.cell-main-v145{display:grid;gap:2px}.cell-main-v145 small{color:#6a7d86;word-break:break-word}.pill-v145{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:900;background:#eef7f8;color:#003D4C}.pill-v145.ok{background:#e6f9ee;color:#107a38}.pill-v145.warn{background:#fff3d6;color:#8a5a00}.pill-v145.scope{background:#fff1df;color:#a94b00}.mini-btn-v145{display:inline-flex;border:1px solid #d3e3e7;background:#fff;color:#003D4C;border-radius:10px;padding:7px 9px;font-weight:900;text-decoration:none}.empty-v145{text-align:center;color:#637783;padding:28px!important}.smart-field{position:relative}@media(max-width:900px){.admin-hero-v145,.admin-toolbar-v145{display:block}.admin-kpis-v145,.admin-hero-actions-v145{margin-top:12px}.admin-toolbar-v145>*{margin-bottom:10px}.admin-form-grid-v145{grid-template-columns:1fr}.admin-table-wrap-v145{max-height:none}}
+</style>
+{% set ns = namespace(internal=0, partner=0) %}{% for l in links %}{% set pc=(l.partner_code or '')|upper %}{% set cat=(l.category or '')|lower %}{% if pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat %}{% set ns.internal=ns.internal+1 %}{% else %}{% set ns.partner=ns.partner+1 %}{% endif %}{% endfor %}
+<div class="admin-workspace-v145">
+  <section class="admin-hero-v145"><div><h1>Odkazy</h1><p>Jedna kompaktní pracovní evidence interních i partnerských odkazů. Přepínačem zobrazíte jen typ, se kterým právě pracujete.</p></div><div class="admin-hero-actions-v145"><a class="btn soft" href="/api/admin/links-health" target="_blank">Kontrola odkazů</a></div></section>
+  <div class="admin-kpis-v145"><div class="admin-kpi-v145"><span>Celkem</span><strong>{{ links|length }}</strong></div><div class="admin-kpi-v145"><span>Interní</span><strong>{{ ns.internal }}</strong></div><div class="admin-kpi-v145"><span>Partnerské</span><strong>{{ ns.partner }}</strong></div></div>
+  <section class="admin-panel-v145"><div class="admin-toolbar-v145"><input type="text" id="links-filter" placeholder="Hledat název, URL, kategorii, partnera, poznámku…"><select id="link-scope-filter" onchange="filterLinksScopeV145()"><option value="">Všechny odkazy</option><option value="internal">Interní ASTORIE</option><option value="partner">Partnerské odkazy</option></select><details><summary class="btn orange">+ Nový odkaz</summary><div class="admin-form-drawer-v145"><h2>Nový odkaz</h2><form method="post" action="/admin/links/create"><div class="admin-form-grid-v145"><div class="span-2"><label>Typ odkazu</label><select id="link_scope" onchange="togglePartnerForLink()"><option value="astorie">ASTORIE / interní odkaz</option><option value="partner">Partnerský odkaz</option></select></div><div id="partner_select_box" class="smart-field span-2" style="display:none;"><label>Partner</label><input type="text" id="partner_search" placeholder="Začněte psát název / kód / IČO partnera" autocomplete="off"><input type="hidden" name="partner_code" id="partner_code"></div><input type="hidden" name="partner_code" id="astorie_partner_code" value="ASTORIE"><div class="span-2"><label>Název</label><input type="text" name="title" required></div><div class="span-2"><label>URL</label><input type="url" name="url" required></div><div><label>Kategorie</label><input type="text" name="category" placeholder="např. ASTORIE, kalkulačka, partner, metodika"></div><div><label>Poznámka</label><input type="text" name="note"></div></div><div class="admin-form-actions-v145"><button class="btn orange" type="submit">Uložit odkaz</button></div></form></div></details></div>
+  <div class="admin-table-wrap-v145"><table id="links-table" class="admin-table-v145"><thead><tr><th>Typ</th><th>Partner / kategorie</th><th>Název</th><th>URL</th><th>Poznámka</th><th>Stav</th><th>Akce</th></tr></thead><tbody>{% for l in links %}{% set pc=(l.partner_code or '')|upper %}{% set cat=(l.category or '')|lower %}{% set internal = pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat %}<tr data-scope="{{ 'internal' if internal else 'partner' }}"><td>{% if internal %}<span class="pill-v145 scope">ASTORIE</span>{% else %}<span class="pill-v145">Partner</span>{% endif %}</td><td><div class="cell-main-v145"><strong>{{ l.partner_code or 'ASTORIE' }}</strong><small>{{ l.category or '—' }}</small></div></td><td><strong>{{ l.title or '—' }}</strong></td><td><small>{{ l.url or '—' }}</small></td><td>{{ l.note or '—' }}</td><td>{% if l.is_active %}<span class="pill-v145 ok">Aktivní</span>{% else %}<span class="pill-v145 warn">Neaktivní</span>{% endif %}</td><td>{% if l.url %}<a class="mini-btn-v145" href="{{ l.url }}" target="_blank">Otevřít</a>{% endif %}</td></tr>{% else %}<tr><td class="empty-v145" colspan="7">Zatím nejsou vložené žádné odkazy.</td></tr>{% endfor %}</tbody></table></div></section>
 </div>
-
-<section class="grid cols-2">
-  <div class="card">
-    <h2 style="margin-top:0;color:var(--petrol);">Nový odkaz</h2>
-    <form method="post" action="/admin/links/create">
-      <label>Typ odkazu</label>
-      <select id="link_scope" onchange="togglePartnerForLink()">
-        <option value="astorie">ASTORIE / interní odkaz</option>
-        <option value="partner">Partnerský odkaz</option>
-      </select>
-
-      <div id="partner_select_box" style="display:none;">
-        <div class="smart-field">
-          <label>Partner</label>
-          <input type="text" id="partner_search" placeholder="Začněte psát název / kód / IČO partnera" autocomplete="off">
-          <input type="hidden" name="partner_code" id="partner_code">
-        </div>
-      </div>
-
-      <input type="hidden" name="partner_code" id="astorie_partner_code" value="ASTORIE">
-
-      <label>Název</label><input type="text" name="title" required>
-      <label>URL</label><input type="url" name="url" required>
-      <label>Kategorie</label><input type="text" name="category" placeholder="např. ASTORIE, kalkulačka, partner, metodika">
-      <label>Poznámka</label><textarea name="note"></textarea>
-      <button class="btn orange" type="submit">Uložit odkaz</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2 style="margin-top:0;color:var(--petrol);">Pravidlo rozdělení</h2>
-    <p style="color:#637386;font-weight:700;line-height:1.5;">
-      Interní odkazy ASTORIE mají kód partnera <strong>ASTORIE</strong> nebo kategorii obsahující „Astorie“.
-      Partnerské odkazy mají vyplněný konkrétní kód partnera.
-    </p>
-  </div>
-</section>
-
-<section class="card table-card section-space">
-  <div class="table-head">Interní odkazy ASTORIE</div>
-  <div class="quick-filter"><input type="text" id="astorie-link-filter" placeholder="Rychle filtrovat interní odkazy…"></div>
-  <div class="table-scroll">
-    <table id="astorie-links-table">
-      <thead><tr><th>Kategorie</th><th>Název</th><th>URL</th><th>Poznámka</th><th>Stav</th></tr></thead>
-      <tbody>
-        {% for l in links %}
-          {% set pc = (l.partner_code or '')|upper %}
-          {% set cat = (l.category or '')|lower %}
-          {% if pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat %}
-            <tr>
-              <td>{{ l.category }}</td>
-              <td><strong>{{ l.title }}</strong></td>
-              <td><a href="{{ l.url }}" target="_blank">Otevřít</a></td>
-              <td>{{ l.note }}</td>
-              <td>{% if l.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
-            </tr>
-          {% endif %}
-        {% else %}
-          <tr><td colspan="5">Zatím nejsou vložené žádné odkazy.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section class="card table-card section-space">
-  <div class="table-head">Partnerské odkazy</div>
-  <div class="quick-filter"><input type="text" id="partner-link-filter" placeholder="Rychle filtrovat partnerské odkazy…"></div>
-  <div class="table-scroll">
-    <table id="partner-links-table">
-      <thead><tr><th>Partner</th><th>Název</th><th>URL</th><th>Kategorie</th><th>Poznámka</th><th>Stav</th></tr></thead>
-      <tbody>
-        {% for l in links %}
-          {% set pc = (l.partner_code or '')|upper %}
-          {% set cat = (l.category or '')|lower %}
-          {% if not (pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat) %}
-            <tr>
-              <td>{{ l.partner_code }}</td>
-              <td><strong>{{ l.title }}</strong></td>
-              <td><a href="{{ l.url }}" target="_blank">Otevřít</a></td>
-              <td>{{ l.category }}</td>
-              <td>{{ l.note }}</td>
-              <td>{% if l.is_active %}<span class="status ok">Aktivní</span>{% else %}<span class="status warn">Neaktivní</span>{% endif %}</td>
-            </tr>
-          {% endif %}
-        {% else %}
-          <tr><td colspan="6">Zatím nejsou vložené žádné odkazy.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-
 <script>
-function togglePartnerForLink(){
-  const scope = document.getElementById('link_scope').value;
-  const box = document.getElementById('partner_select_box');
-  const partnerCode = document.getElementById('partner_code');
-  const astorieCode = document.getElementById('astorie_partner_code');
-  if(scope === 'partner'){
-    box.style.display = '';
-    partnerCode.disabled = false;
-    astorieCode.disabled = true;
-  }else{
-    box.style.display = 'none';
-    partnerCode.disabled = true;
-    astorieCode.disabled = false;
-  }
-}
-document.addEventListener('DOMContentLoaded',()=>{
-  togglePartnerForLink();
-  if(window.HubSmart){
-    HubSmart.initPartnerAutocomplete('#partner_search',{hiddenSelector:'#partner_code'});
-    HubSmart.initTableFilter('#astorie-link-filter','#astorie-links-table');
-    HubSmart.initTableFilter('#partner-link-filter','#partner-links-table');
-  }
-});
+function togglePartnerForLink(){const scope=document.getElementById('link_scope').value;const box=document.getElementById('partner_select_box');const partnerCode=document.getElementById('partner_code');const astorieCode=document.getElementById('astorie_partner_code');if(scope==='partner'){box.style.display='';partnerCode.disabled=false;astorieCode.disabled=true;}else{box.style.display='none';partnerCode.disabled=true;astorieCode.disabled=false;}}
+function filterLinksScopeV145(){const val=document.getElementById('link-scope-filter').value;document.querySelectorAll('#links-table tbody tr').forEach(tr=>{if(!tr.dataset.scope){return;}tr.style.display=val && tr.dataset.scope!==val?'none':'';});}
+document.addEventListener('DOMContentLoaded',()=>{togglePartnerForLink();if(window.HubSmart){HubSmart.initPartnerAutocomplete('#partner_search',{hiddenSelector:'#partner_code'});HubSmart.initTableFilter('#links-filter','#links-table');}});
 </script>
 {% endblock %}

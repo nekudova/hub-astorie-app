@@ -7997,3 +7997,16 @@ def admin_rate_update(
     db.commit()
     audit(db, "UPDATE_RATE", "commission_rates", {"id": rate_id, "old": dict(old) if old else {}, "new": {"section_code": section_code, "area": area, "partner": partner_name, "product": business_type, "base": product_type, "rate": rate_txt, "active": is_active, "note": note}})
     return RedirectResponse(url=f"/admin/rates/{rate_id}", status_code=303)
+
+
+@router.get("/api/release-1-4-5/status")
+def release_145_status():
+    return {
+        "ok": True,
+        "version": "1.4.5-admin-contacts-products-links-ux-safe",
+        "message": "Admin moduly Kontakty, Produkty a Odkazy mají kompaktní pracovní UX. Databáze, routy, Partneři, Nový TIP, Moje TIPy a Sazebník se nemění.",
+        "safe": True,
+        "db_changed": False,
+        "changed_modules": ["admin_contacts_template", "admin_products_template", "admin_links_template"],
+        "unchanged_modules": ["new_tip", "my_tips", "partners", "admin_rates", "hub_calculators", "database", "routes"],
+    }
