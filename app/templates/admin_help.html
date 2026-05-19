@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hub-card">
+  <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;">
+    <div>
+      <h1>Admin – Nápověda</h1>
+      <p class="page-subtitle">Samostatný průvodce systémem. Nejedná se o FAQ ani o Odkazy ASTORIE.</p>
+    </div>
+  </div>
+
+  <form method="post" action="/admin/help/create" class="suggest-form" style="grid-template-columns:1fr 1fr 110px 120px;align-items:end;">
+    <div><label>Kategorie</label><input name="category" placeholder="Nový TIP / Partneři / Sazebník…" required></div>
+    <div><label>Název článku</label><input name="title" required></div>
+    <div><label>Ikona</label><input name="icon" value="❓"></div>
+    <div><label>Pořadí</label><input name="sort_order" type="number" value="100"></div>
+    <div style="grid-column:1/-1"><label>Krátký souhrn</label><input name="summary" placeholder="Jedna věta, k čemu článek slouží."></div>
+    <div style="grid-column:1/-1"><label>Text návodu</label><textarea name="body" required placeholder="Pište jednoduše a krokově, aby postup pochopil i úplný začátečník."></textarea></div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="btn orange">Přidat článek</button></div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Pořadí</th><th>Kategorie</th><th>Název</th><th>Souhrn</th><th>Stav</th><th>Akce</th></tr></thead>
+      <tbody>
+      {% for a in articles %}
+        <tr>
+          <td>{{ a.sort_order }}</td>
+          <td>{{ a.category }}</td>
+          <td><strong>{{ a.icon }} {{ a.title }}</strong></td>
+          <td>{{ a.summary }}</td>
+          <td>{{ 'Aktivní' if a.is_active else 'Neaktivní' }}</td>
+          <td style="white-space:nowrap">
+            <form method="post" action="/admin/help/{{ a.id }}/toggle" style="display:inline"><button class="btn small">{{ 'Skrýt' if a.is_active else 'Zobrazit' }}</button></form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Nápověda zatím není vyplněna.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

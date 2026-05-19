@@ -1,48 +1,32 @@
 {% extends "hub_base.html" %}
 {% block content %}
-<div class="hub-card">
-  <h1>Odkazy ASTORIE</h1>
-  <p class="page-subtitle">Rychlý přístup k interním firemním aplikacím, portálům a důležitým odkazům. Partnerské odkazy patří primárně do detailu partnera.</p>
-
-  <form method="get" class="hub-filters">
-    <input name="q" value="{{ q or '' }}" placeholder="Hledat odkaz, portál, kategorii…">
-    <button class="btn orange">Hledat</button>
-  </form>
-
-  <h2>Interní odkazy ASTORIE</h2>
-  <div class="portal-grid">
-    {% for l in links %}
-      {% set pc = (l.partner_code or '')|upper %}
-      {% set cat = (l.category or '')|lower %}
-      {% if pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat %}
-        <div class="portal-card">
-          <span class="portal-letter">🔗</span>
-          <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
-          <p>{{ l.category or 'ASTORIE' }}</p>
-          <p class="muted">{{ l.note or '' }}</p>
-          <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít portál</a>
-        </div>
-      {% endif %}
-    {% else %}
-      <div class="empty-state">Zatím nejsou vložené interní odkazy ASTORIE.</div>
-    {% endfor %}
+<div class="hub-card help-v156">
+  <div class="section-head" style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px;">
+    <div>
+      <div class="eyebrow">ASTORIE HUB</div>
+      <h1>Nápověda a průvodce systémem</h1>
+      <p class="page-subtitle">Praktické návody pro poradce. FAQ je samostatná oblast – zde je krokový průvodce, jak systém správně používat.</p>
+    </div>
+    <form method="get" class="hub-filters" style="min-width:320px;display:flex;gap:8px;">
+      <input name="q" value="{{ q or '' }}" placeholder="Hledat v nápovědě…">
+      <button class="btn orange">Hledat</button>
+    </form>
   </div>
 
-  <h2 style="margin-top:28px;">Partnerské odkazy</h2>
-  <p class="page-subtitle">Tyto odkazy se zobrazují také v detailu partnera.</p>
   <div class="portal-grid">
-    {% for l in links %}
-      {% set pc = (l.partner_code or '')|upper %}
-      {% set cat = (l.category or '')|lower %}
-      {% if not (pc in ['', 'AST', 'ASTORIE', 'ASTORIEAS'] or 'astorie' in cat or 'intern' in cat) %}
-        <div class="portal-card">
-          <span class="portal-letter">{{ (l.partner_code or 'P')[:1] }}</span>
-          <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
-          <p>{{ l.partner_code }}</p>
-          <p class="muted">{{ l.category or '' }}</p>
-          <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít</a>
-        </div>
-      {% endif %}
+    {% for a in articles %}
+      <article class="portal-card" style="border-left:5px solid #FC4C02;">
+        <span class="portal-letter">{{ a.icon or '❓' }}</span>
+        <h3>{{ a.title }}</h3>
+        <p><strong>{{ a.category or 'Obecné' }}</strong></p>
+        <p class="muted">{{ a.summary or '' }}</p>
+        <details style="margin-top:10px;">
+          <summary class="btn dark" style="display:inline-block;cursor:pointer;">Zobrazit postup</summary>
+          <div style="white-space:pre-wrap;margin-top:12px;line-height:1.55;">{{ a.body }}</div>
+        </details>
+      </article>
+    {% else %}
+      <div class="empty-state">Nápověda zatím není vyplněna. Admin ji doplní v sekci Admin → Nápověda.</div>
     {% endfor %}
   </div>
 </div>
