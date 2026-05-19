@@ -2984,7 +2984,7 @@ def hub_partners_v084(
                 WHERE upper(COALESCE(partner_code,'')) = upper(:code)
                   AND COALESCE(is_active, TRUE) = TRUE
                   AND COALESCE(is_archived, FALSE) = FALSE
-                  AND COALESCE(source_type, 'partner_link') IN ('', 'partner_link')
+    
                 LIMIT 500
             """, {"code": selected})
 
@@ -3137,11 +3137,15 @@ def hub_contacts_v084(request: Request, q: str = "", db: Session = Depends(get_d
 
 
 @router.get("/hub/calculators", response_class=HTMLResponse)
-def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
+def hub_calculators_v159(request: Request, q: str = "", db: Session = Depends(get_db)):
+    """v1.5.9: poradenské Kalkulačky berou data z admin evidence odkazů, ale pouze kalkulační odkazy.
+    Neprovádí žádný import ani mazání dat. Pouze bezpečné SELECTy + fallbacky pro historická data.
+    """
     try:
         ensure_data_cleanup_structures_v156_(db)
     except Exception:
-        pass
+        try: db.rollback()
+        except Exception: pass
     links = []
     rates = []
 
@@ -3151,10 +3155,13 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
             WHERE COALESCE(l.is_active, TRUE) = TRUE
               AND COALESCE(l.is_archived, FALSE) = FALSE
               AND (
-                    COALESCE(l.source_type, '') = 'online_calculator'
-                 OR upper(COALESCE(l.partner_code,'')) IN ('KALKULACKY','CALCULATORS','ONLINE_KALKULACKY')
-                 OR lower(COALESCE(l.category,'')) LIKE '%kalkula%'
-                 OR lower(COALESCE(l.title,'')) LIKE '%kalkula%'
+                    lower(COALESCE(l.source_type, '')) IN ('online_calculator','calculator','kalkulacka','kalkulačka')
+                 OR lower(COALESCE(l.source_sheet, '')) IN ('import_online kalkulacky_links','import_online_kalkulacky_links','import_online kalkulačky_links')
+                 OR upper(COALESCE(l.partner_code,'')) IN ('KALKULACKY','KALKULAČKY','CALCULATORS','ONLINE_KALKULACKY','ONLINE_KALKULAČKY')
+                 OR lower(COALESCE(l.visibility,'')) LIKE '%kalkul%'
+                 OR lower(COALESCE(l.category,'')) LIKE '%kalkul%'
+                 OR lower(COALESCE(l.note,'')) LIKE '%kalkul%'
+                 OR lower(COALESCE(l.title,'')) LIKE '%kalkul%'
               )
         """
         if q:
@@ -3162,6 +3169,7 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
               AND (
                 lower(COALESCE(l.title, '')) LIKE :q OR
                 lower(COALESCE(p.name, '')) LIKE :q OR
+                lower(COALESCE(l.partner_code, '')) LIKE :q OR
                 lower(COALESCE(l.category, '')) LIKE :q OR
                 lower(COALESCE(l.url, '')) LIKE :q
               )
@@ -3171,23 +3179,22 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
         links = fetch_all_safe_v084_(db, f"""
             SELECT l.*, p.name AS partner_name
             FROM partner_links l
-            LEFT JOIN partners p ON p.partner_code = l.partner_code
+            LEFT JOIN partners p ON upper(p.partner_code) = upper(l.partner_code)
             {where}
-            ORDER BY COALESCE(p.name, ''), l.title
-            LIMIT 300
+            ORDER BY COALESCE(p.name, l.partner_code, ''), l.title
+            LIMIT 500
         """, params)
 
     if table_exists_v084_(db, "commission_rates"):
-        # v1.4.3: sazebník vrací přesné aliasy podle sloupců Google Sheets pro frontend, aby se neztrácely
-        # sazby, typy a produkty jen kvůli rozdílným názvům sloupců v databázi.
+        # v1.5.9: stejná DB tabulka jako Admin Sazebník. Žádné čtení ze Sheets.
         rates = fetch_all_safe_v084_(db, """
             SELECT
                 cr.*,
                 COALESCE(NULLIF(s.name, ''), cr.section_code, '') AS section_display,
                 COALESCE(NULLIF(cr.area, ''), '') AS area_display,
                 COALESCE(NULLIF(cr.partner_name, ''), '') AS partner_display,
-                COALESCE(NULLIF(cr.business_type, ''), '') AS product_display,
-                COALESCE(NULLIF(cr.product_type, ''), '') AS base_display,
+                COALESCE(NULLIF(cr.business_type, ''), NULLIF(cr.product_type,''), '') AS product_display,
+                COALESCE(NULLIF(cr.product_type, ''), NULLIF(cr.base_type,''), '') AS base_display,
                 CASE
                     WHEN cr.rate_percent IS NULL THEN ''
                     WHEN cr.rate_percent = ROUND(cr.rate_percent) THEN TRIM(TO_CHAR(cr.rate_percent, 'FM999999990')) || ' %'
@@ -3195,19 +3202,20 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
                 END AS rate_display
             FROM commission_rates cr
             LEFT JOIN sections s ON s.section_code = cr.section_code
-            LEFT JOIN subsections ss ON ss.subsection_code = cr.subsection_code
             WHERE COALESCE(cr.is_active, TRUE) = TRUE
+              AND COALESCE(cr.deleted_at IS NULL, TRUE)
             ORDER BY COALESCE(cr.priority, 0) DESC, section_display, area_display, cr.partner_name, product_display, base_display
-            LIMIT 2000
+            LIMIT 3000
         """)
 
     return hub_render_v083_(request, "hub_calculators.html", {
         "active": "calculators",
         "links": links,
+        "calculators": links,
         "rates": rates,
+        "commission_rates": rates,
         "q": q,
     })
-
 
 @router.get("/hub/forms-old-v086", response_class=HTMLResponse)
 def hub_forms_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
@@ -9047,22 +9055,25 @@ def delete_row_v158_(db: Session, table: str, item_id, back_url: str):
 
 
 @router.get("/hub/links", response_class=HTMLResponse)
-def hub_astorie_links_v158(request: Request, q: str = "", db: Session = Depends(get_db)):
-    """Poradenská sekce Odkazy ASTORIE čte výhradně interní ASTORIE odkazy. Kalkulačky a partnerské odkazy sem nepatří."""
+def hub_astorie_links_v159(request: Request, q: str = "", db: Session = Depends(get_db)):
+    """v1.5.9: Odkazy ASTORIE čtou interní odkazy z admin evidence. Nečtou kalkulačky ani partner-detail odkazy."""
     try:
         ensure_admin_crud_safety_v158_(db)
     except Exception:
-        pass
+        try: db.rollback()
+        except Exception: pass
     params = {}
     where = """
         WHERE COALESCE(l.is_active, TRUE) = TRUE
           AND COALESCE(l.is_archived, FALSE) = FALSE
+          AND lower(COALESCE(l.source_type,'')) NOT IN ('online_calculator','calculator','kalkulacka','kalkulačka')
+          AND upper(COALESCE(l.partner_code,'')) NOT IN ('KALKULACKY','KALKULAČKY','CALCULATORS','ONLINE_KALKULACKY','ONLINE_KALKULAČKY')
           AND (
-                COALESCE(l.source_type,'') = 'astorie_link'
+                lower(COALESCE(l.source_type,'')) IN ('astorie_link','astorie','internal','interni','interní')
+             OR lower(COALESCE(l.source_sheet,'')) IN ('import_astorie_links','import_astorie links')
              OR upper(COALESCE(l.partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS','ASTORIE_A_S')
+             OR lower(COALESCE(l.visibility,'')) IN ('astorie','internal','interni','interní')
           )
-          AND COALESCE(l.source_type,'') <> 'online_calculator'
-          AND upper(COALESCE(l.partner_code,'')) NOT IN ('KALKULACKY','CALCULATORS','ONLINE_KALKULACKY')
     """
     if q:
         where += """
@@ -9079,10 +9090,9 @@ def hub_astorie_links_v158(request: Request, q: str = "", db: Session = Depends(
         FROM partner_links l
         {where}
         ORDER BY COALESCE(l.category,''), COALESCE(l.title,'')
-        LIMIT 400
+        LIMIT 500
     """, params) if table_exists_v084_(db, "partner_links") else []
     return hub_render_v083_(request, "hub_links.html", {"active": "links", "links": links, "q": q})
-
 
 @router.post("/admin/contacts/{item_id}/archive")
 def archive_contact_v158(item_id: int, db: Session = Depends(get_db)):
@@ -9145,4 +9155,31 @@ def api_release_158_status(db: Session = Depends(get_db)):
         "unchanged": ["TIP workflow", "users", "roles", "SMTP", "commission rates", "terminations", "login"],
         "partner_link_sources": sources,
         "errors": errors,
+    }
+
+
+@router.get("/api/release-1-5-9/status")
+def release_159_status(db: Session = Depends(get_db)):
+    def count(sql):
+        try:
+            return int(db.execute(text(sql)).scalar() or 0)
+        except Exception:
+            try: db.rollback()
+            except Exception: pass
+            return None
+    return {
+        "ok": True,
+        "version": "1.5.9-production-source-bridge-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": ["hub_links", "hub_calculators", "hub_contacts", "hub_menu"],
+        "unchanged_modules": ["tips", "users", "permissions", "email", "terminations", "admin_data", "imports"],
+        "counts": {
+            "partner_links_total": count("SELECT COUNT(*) FROM partner_links"),
+            "astorie_links_visible": count("SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND (lower(COALESCE(source_type,'')) IN ('astorie_link','astorie','internal','interni','interní') OR lower(COALESCE(source_sheet,'')) IN ('import_astorie_links','import_astorie links') OR upper(COALESCE(partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS','ASTORIE_A_S'))"),
+            "calculator_links_visible": count("SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND (lower(COALESCE(source_type,'')) IN ('online_calculator','calculator','kalkulacka','kalkulačka') OR lower(COALESCE(source_sheet,'')) IN ('import_online kalkulacky_links','import_online_kalkulacky_links','import_online kalkulačky_links') OR upper(COALESCE(partner_code,'')) IN ('KALKULACKY','KALKULAČKY','CALCULATORS','ONLINE_KALKULACKY','ONLINE_KALKULAČKY') OR lower(COALESCE(category,'')) LIKE '%kalkul%' OR lower(COALESCE(title,'')) LIKE '%kalkul%')"),
+            "commission_rates_total": count("SELECT COUNT(*) FROM commission_rates"),
+            "global_contacts_total": count("SELECT COUNT(*) FROM global_contacts"),
+        }
     }
