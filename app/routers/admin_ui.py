@@ -533,7 +533,7 @@ def contact_role_groups_v149(roles):
 def contacts_page(request: Request, q: str = "", partner: str = "", role_group: str = "", db: Session = Depends(get_db)):
     roles = get_contact_roles_v149(db)
     groups = contact_role_groups_v149(roles)
-    query = db.query(PartnerContact)
+    query = db.query(PartnerContact).filter(PartnerContact.is_active == True)
     if partner:
         query = query.filter(PartnerContact.partner_code == partner.upper())
     if role_group:
@@ -622,7 +622,7 @@ def update_contact_role(role_id: int, group_name: str = Form(...), role_name: st
 
 @router.get("/admin/links", response_class=HTMLResponse)
 def links_page(request: Request, q: str = "", partner: str = "", db: Session = Depends(get_db)):
-    query = db.query(PartnerLink)
+    query = db.query(PartnerLink).filter(PartnerLink.is_active == True)
     if partner:
         query = query.filter(PartnerLink.partner_code == partner.upper())
     if q:
@@ -651,7 +651,7 @@ def duplicate_link(item_id: int, db: Session = Depends(get_db)):
 
 @router.get("/admin/products", response_class=HTMLResponse)
 def products_page(request: Request, q: str = "", partner: str = "", db: Session = Depends(get_db)):
-    query = db.query(PartnerProduct)
+    query = db.query(PartnerProduct).filter(PartnerProduct.is_active == True)
     if partner:
         query = query.filter(PartnerProduct.partner_code == partner.upper())
     if q:
@@ -3686,11 +3686,15 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
         """, {"code": partner_code})
 
     if table_exists_v084_(db, "partner_links"):
+        # v1.5.7: detail partnera smí zobrazit jen partnerské odkazy.
+        # Interní ASTORIE odkazy a online kalkulačky patří do samostatných modulů.
         links = fetch_all_safe_v084_(db, """
             SELECT *
             FROM partner_links
             WHERE upper(partner_code) = upper(:code)
               AND COALESCE(is_active, TRUE) = TRUE
+              AND COALESCE(is_archived, FALSE) = FALSE
+              AND COALESCE(source_type, 'partner_link') IN ('', 'partner_link')
             ORDER BY category, title
             LIMIT 100
         """, {"code": partner_code})
@@ -8939,5 +8943,188 @@ def api_release_156_status(db: Session = Depends(get_db)):
         "protected_tables": ["users", "roles", "tips", "permissions", "sections", "subsections", "commission_rates", "terminations", "email_logs"],
         "tables": tables,
         "link_sources": sources,
+        "errors": errors,
+    }
+
+
+# -------------------------------------------------------------------
+# v1.5.7 – Production source routing + Admin archive/delete SAFE
+# -------------------------------------------------------------------
+RELEASE_157 = "1.5.7-production-source-routing-admin-crud-safe"
+
+
+def ensure_admin_crud_safety_v157_(db: Session):
+    """Nedestruktivní doplnění sloupců pro archivaci a oddělení zdrojů odkazů."""
+    stmts = [
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_sheet TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS import_key TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
+        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
+        "ALTER TABLE contact_roles ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE contact_roles ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
+        "ALTER TABLE help_articles ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE help_articles ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
+    ]
+    for st in stmts:
+        try:
+            db.execute(text(st))
+        except Exception:
+            db.rollback()
+    db.commit()
+
+
+def archive_row_v157_(db: Session, table: str, item_id, back_url: str):
+    ensure_admin_crud_safety_v157_(db)
+    db.execute(text(f"""
+        UPDATE {table}
+        SET is_active = FALSE,
+            is_archived = TRUE,
+            archived_at = now()
+        WHERE id = :id
+    """), {"id": item_id})
+    db.commit()
+    return RedirectResponse(back_url, status_code=303)
+
+
+def delete_row_v157_(db: Session, table: str, item_id, back_url: str):
+    ensure_admin_crud_safety_v157_(db)
+    db.execute(text(f"DELETE FROM {table} WHERE id = :id"), {"id": item_id})
+    db.commit()
+    return RedirectResponse(back_url, status_code=303)
+
+
+@router.get("/hub/links", response_class=HTMLResponse)
+def hub_astorie_links_v157(request: Request, q: str = "", db: Session = Depends(get_db)):
+    """Poradenská sekce Odkazy ASTORIE čte jen interní ASTORIE odkazy z Adminu."""
+    ensure_admin_crud_safety_v157_(db)
+    params = {}
+    where = """
+        WHERE COALESCE(l.is_active, TRUE) = TRUE
+          AND COALESCE(l.is_archived, FALSE) = FALSE
+          AND (
+                COALESCE(l.source_type,'') = 'astorie_link'
+             OR upper(COALESCE(l.partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS')
+             OR lower(COALESCE(l.category,'')) LIKE '%astorie%'
+             OR lower(COALESCE(l.category,'')) LIKE '%intern%'
+          )
+          AND COALESCE(l.source_type,'') <> 'online_calculator'
+    """
+    if q:
+        where += """
+          AND (
+            lower(COALESCE(l.title,'')) LIKE :q OR
+            lower(COALESCE(l.url,'')) LIKE :q OR
+            lower(COALESCE(l.category,'')) LIKE :q OR
+            lower(COALESCE(l.note,'')) LIKE :q
+          )
+        """
+        params["q"] = f"%{q.lower()}%"
+    links = fetch_all_safe_v084_(db, f"""
+        SELECT l.*
+        FROM partner_links l
+        {where}
+        ORDER BY COALESCE(l.category,''), COALESCE(l.title,'')
+        LIMIT 400
+    """, params) if table_exists_v084_(db, "partner_links") else []
+    return hub_render_v083_(request, "hub_links.html", {"active": "links", "links": links, "q": q})
+
+
+@router.post("/admin/contacts/{item_id}/archive")
+def archive_contact_v157(item_id: int, db: Session = Depends(get_db)):
+    return archive_row_v157_(db, "partner_contacts", item_id, "/admin/contacts")
+
+@router.post("/admin/contacts/{item_id}/delete")
+def delete_contact_v157(item_id: int, db: Session = Depends(get_db)):
+    return delete_row_v157_(db, "partner_contacts", item_id, "/admin/contacts")
+
+@router.post("/admin/links/{item_id}/archive")
+def archive_link_v157(item_id: int, db: Session = Depends(get_db)):
+    return archive_row_v157_(db, "partner_links", item_id, "/admin/links")
+
+@router.post("/admin/links/{item_id}/delete")
+def delete_link_v157(item_id: int, db: Session = Depends(get_db)):
+    return delete_row_v157_(db, "partner_links", item_id, "/admin/links")
+
+@router.post("/admin/products/{item_id}/archive")
+def archive_product_v157(item_id: int, db: Session = Depends(get_db)):
+    return archive_row_v157_(db, "partner_products", item_id, "/admin/products")
+
+@router.post("/admin/products/{item_id}/delete")
+def delete_product_v157(item_id: int, db: Session = Depends(get_db)):
+    return delete_row_v157_(db, "partner_products", item_id, "/admin/products")
+
+@router.post("/admin/contact-roles/{role_id}/archive")
+def archive_contact_role_v157(role_id: int, db: Session = Depends(get_db)):
+    return archive_row_v157_(db, "contact_roles", role_id, "/admin/contact-roles")
+
+@router.post("/admin/contact-roles/{role_id}/delete")
+def delete_contact_role_v157(role_id: int, db: Session = Depends(get_db)):
+    return delete_row_v157_(db, "contact_roles", role_id, "/admin/contact-roles")
+
+@router.post("/admin/help/{article_id}/archive")
+def archive_help_article_v157(article_id: str, db: Session = Depends(get_db)):
+    return archive_row_v157_(db, "help_articles", article_id, "/admin/help")
+
+@router.post("/admin/help/{article_id}/delete")
+def delete_help_article_v157(article_id: str, db: Session = Depends(get_db)):
+    return delete_row_v157_(db, "help_articles", article_id, "/admin/help")
+
+@router.post("/admin/sections/{section_code}/archive")
+def archive_section_v157(section_code: str, db: Session = Depends(get_db)):
+    db.execute(text("UPDATE sections SET is_active = FALSE WHERE upper(section_code)=upper(:code)"), {"code": section_code})
+    if table_exists_v084_(db, "hub_sections"):
+        db.execute(text("UPDATE hub_sections SET is_active = FALSE WHERE upper(section_code)=upper(:code)"), {"code": section_code})
+    db.commit()
+    return RedirectResponse("/admin/sections", status_code=303)
+
+@router.post("/admin/subsections/{subsection_code}/archive")
+def archive_subsection_v157(subsection_code: str, db: Session = Depends(get_db)):
+    db.execute(text("UPDATE subsections SET is_active = FALSE WHERE upper(subsection_code)=upper(:code)"), {"code": subsection_code})
+    if table_exists_v084_(db, "hub_subsections"):
+        db.execute(text("UPDATE hub_subsections SET is_active = FALSE WHERE upper(subsection_code)=upper(:code)"), {"code": subsection_code})
+    db.commit()
+    return RedirectResponse("/admin/sections", status_code=303)
+
+@router.get("/api/release-1-5-7/status")
+def api_release_157_status(db: Session = Depends(get_db)):
+    errors = []
+    try:
+        ensure_admin_crud_safety_v157_(db)
+    except Exception as exc:
+        errors.append(str(exc))
+    counts = {}
+    for table in ["partner_links", "partner_contacts", "partner_products", "contact_roles", "help_articles"]:
+        try:
+            counts[table] = int(db.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar() or 0) if table_exists_v084_(db, table) else 0
+        except Exception as exc:
+            errors.append(f"{table}: {exc}")
+            try: db.rollback()
+            except Exception: pass
+    sources = []
+    try:
+        sources = [dict(r) for r in db.execute(text("""
+            SELECT COALESCE(source_type,'') AS source_type, COUNT(*) AS count_total
+            FROM partner_links
+            GROUP BY COALESCE(source_type,'')
+            ORDER BY source_type
+        """)).mappings().all()]
+    except Exception:
+        try: db.rollback()
+        except Exception: pass
+    return {
+        "ok": not errors,
+        "version": RELEASE_157,
+        "safe": True,
+        "db_destructive": False,
+        "changed": ["hub astorie links source routing", "partner detail partner links only", "admin archive/delete endpoints"],
+        "unchanged": ["TIP workflow", "users", "roles", "SMTP", "commission rates", "terminations", "login"],
+        "counts": counts,
+        "partner_link_sources": sources,
         "errors": errors,
     }
