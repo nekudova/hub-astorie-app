@@ -1,2 +1,1 @@
-1.3.3-emergency-rollback-safe
-Nouzová stabilizační verze: vrací poradenské sekce na stabilní routy z v1.2.6. DB ani Partneři se nemění.
+1.5.8-source-routing-stabilization-safe
