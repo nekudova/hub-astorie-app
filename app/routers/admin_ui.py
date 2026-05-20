@@ -75,7 +75,6 @@ ADMIN_MODULES_V150 = [
     ("specialists", "👤 Specialisté", "/admin/specialists"),
     ("email", "✉️ E-maily / SMTP", "/admin/email"),
     ("import", "⬆️ Import dat", "/admin/import"),
-    ("help", "❓ Nápověda", "/admin/help"),
 ]
 
 
@@ -2983,8 +2982,6 @@ def hub_partners_v084(
                 FROM partner_contacts
                 WHERE upper(COALESCE(partner_code,'')) = upper(:code)
                   AND COALESCE(is_active, TRUE) = TRUE
-                  AND COALESCE(is_archived, FALSE) = FALSE
-    
                 LIMIT 500
             """, {"code": selected})
 
@@ -3106,28 +3103,6 @@ def hub_contacts_v084(request: Request, q: str = "", db: Session = Depends(get_d
         LIMIT 500
     """, params)
 
-    # v1.5.8 fallback: pokud historický import uložil interní kontakty ASTORIE do partner_contacts,
-    # poradenské menu Kontakty je zobrazí jako globální kontakty. Partnerské kontakty běžných pojišťoven zůstávají v detailu partnera.
-    if not rows and table_exists_v084_(db, "partner_contacts"):
-        rows = fetch_all_safe_v084_(db, """
-            SELECT
-                id::text AS id,
-                COALESCE(full_name,'') AS contact_name,
-                COALESCE(role,'') AS role_description,
-                COALESCE(contact_type,'') AS department,
-                COALESCE(phone,'') AS phone,
-                COALESCE(email,'') AS email,
-                COALESCE(territory,'') AS location,
-                COALESCE(note,'') AS note,
-                COALESCE(is_vip, FALSE) AS is_vip,
-                COALESCE(is_active, TRUE) AS is_active
-            FROM partner_contacts
-            WHERE COALESCE(is_active, TRUE) = TRUE
-              AND upper(COALESCE(partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS','ASTORIE_A_S')
-            ORDER BY COALESCE(is_vip, FALSE) DESC, full_name
-            LIMIT 500
-        """)
-
     return hub_render_v083_(request, "hub_contacts.html", {
         "active": "contacts",
         "rows": rows,
@@ -3137,15 +3112,7 @@ def hub_contacts_v084(request: Request, q: str = "", db: Session = Depends(get_d
 
 
 @router.get("/hub/calculators", response_class=HTMLResponse)
-def hub_calculators_v159(request: Request, q: str = "", db: Session = Depends(get_db)):
-    """v1.5.9: poradenské Kalkulačky berou data z admin evidence odkazů, ale pouze kalkulační odkazy.
-    Neprovádí žádný import ani mazání dat. Pouze bezpečné SELECTy + fallbacky pro historická data.
-    """
-    try:
-        ensure_data_cleanup_structures_v156_(db)
-    except Exception:
-        try: db.rollback()
-        except Exception: pass
+def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
     links = []
     rates = []
 
@@ -3153,15 +3120,11 @@ def hub_calculators_v159(request: Request, q: str = "", db: Session = Depends(ge
         params = {}
         where = """
             WHERE COALESCE(l.is_active, TRUE) = TRUE
-              AND COALESCE(l.is_archived, FALSE) = FALSE
               AND (
-                    lower(COALESCE(l.source_type, '')) IN ('online_calculator','calculator','kalkulacka','kalkulačka')
-                 OR lower(COALESCE(l.source_sheet, '')) IN ('import_online kalkulacky_links','import_online_kalkulacky_links','import_online kalkulačky_links')
-                 OR upper(COALESCE(l.partner_code,'')) IN ('KALKULACKY','KALKULAČKY','CALCULATORS','ONLINE_KALKULACKY','ONLINE_KALKULAČKY')
-                 OR lower(COALESCE(l.visibility,'')) LIKE '%kalkul%'
-                 OR lower(COALESCE(l.category,'')) LIKE '%kalkul%'
-                 OR lower(COALESCE(l.note,'')) LIKE '%kalkul%'
-                 OR lower(COALESCE(l.title,'')) LIKE '%kalkul%'
+                lower(COALESCE(l.category, '')) LIKE '%kalk%'
+                OR lower(COALESCE(l.title, '')) LIKE '%kalk%'
+                OR lower(COALESCE(l.note, '')) LIKE '%kalk%'
+                OR lower(COALESCE(l.url, '')) LIKE '%kalk%'
               )
         """
         if q:
@@ -3169,7 +3132,6 @@ def hub_calculators_v159(request: Request, q: str = "", db: Session = Depends(ge
               AND (
                 lower(COALESCE(l.title, '')) LIKE :q OR
                 lower(COALESCE(p.name, '')) LIKE :q OR
-                lower(COALESCE(l.partner_code, '')) LIKE :q OR
                 lower(COALESCE(l.category, '')) LIKE :q OR
                 lower(COALESCE(l.url, '')) LIKE :q
               )
@@ -3179,22 +3141,23 @@ def hub_calculators_v159(request: Request, q: str = "", db: Session = Depends(ge
         links = fetch_all_safe_v084_(db, f"""
             SELECT l.*, p.name AS partner_name
             FROM partner_links l
-            LEFT JOIN partners p ON upper(p.partner_code) = upper(l.partner_code)
+            LEFT JOIN partners p ON p.partner_code = l.partner_code
             {where}
-            ORDER BY COALESCE(p.name, l.partner_code, ''), l.title
-            LIMIT 500
+            ORDER BY COALESCE(p.name, ''), l.title
+            LIMIT 300
         """, params)
 
     if table_exists_v084_(db, "commission_rates"):
-        # v1.5.9: stejná DB tabulka jako Admin Sazebník. Žádné čtení ze Sheets.
+        # v1.4.3: sazebník vrací přesné aliasy podle sloupců Google Sheets pro frontend, aby se neztrácely
+        # sazby, typy a produkty jen kvůli rozdílným názvům sloupců v databázi.
         rates = fetch_all_safe_v084_(db, """
             SELECT
                 cr.*,
                 COALESCE(NULLIF(s.name, ''), cr.section_code, '') AS section_display,
                 COALESCE(NULLIF(cr.area, ''), '') AS area_display,
                 COALESCE(NULLIF(cr.partner_name, ''), '') AS partner_display,
-                COALESCE(NULLIF(cr.business_type, ''), NULLIF(cr.product_type,''), '') AS product_display,
-                COALESCE(NULLIF(cr.product_type, ''), NULLIF(cr.base_type,''), '') AS base_display,
+                COALESCE(NULLIF(cr.business_type, ''), '') AS product_display,
+                COALESCE(NULLIF(cr.product_type, ''), '') AS base_display,
                 CASE
                     WHEN cr.rate_percent IS NULL THEN ''
                     WHEN cr.rate_percent = ROUND(cr.rate_percent) THEN TRIM(TO_CHAR(cr.rate_percent, 'FM999999990')) || ' %'
@@ -3202,20 +3165,19 @@ def hub_calculators_v159(request: Request, q: str = "", db: Session = Depends(ge
                 END AS rate_display
             FROM commission_rates cr
             LEFT JOIN sections s ON s.section_code = cr.section_code
+            LEFT JOIN subsections ss ON ss.subsection_code = cr.subsection_code
             WHERE COALESCE(cr.is_active, TRUE) = TRUE
-              AND COALESCE(cr.deleted_at IS NULL, TRUE)
             ORDER BY COALESCE(cr.priority, 0) DESC, section_display, area_display, cr.partner_name, product_display, base_display
-            LIMIT 3000
+            LIMIT 2000
         """)
 
     return hub_render_v083_(request, "hub_calculators.html", {
         "active": "calculators",
         "links": links,
-        "calculators": links,
         "rates": rates,
-        "commission_rates": rates,
         "q": q,
     })
+
 
 @router.get("/hub/forms-old-v086", response_class=HTMLResponse)
 def hub_forms_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
@@ -3250,33 +3212,38 @@ def hub_forms_v084(request: Request, q: str = "", db: Session = Depends(get_db))
 
 @router.get("/hub/help", response_class=HTMLResponse)
 def hub_help_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
-    try:
-        ensure_data_cleanup_structures_v156_(db)
-    except Exception:
-        pass
-    params = {}
-    where = "WHERE COALESCE(is_active, TRUE)=TRUE"
-    if q:
-        where += """
-          AND (
-            lower(COALESCE(title,'')) LIKE :q OR
-            lower(COALESCE(category,'')) LIKE :q OR
-            lower(COALESCE(summary,'')) LIKE :q OR
-            lower(COALESCE(body,'')) LIKE :q
-          )
-        """
-        params["q"] = f"%{q.lower()}%"
-    try:
-        articles = fetch_all_safe_v084_(db, f"""
-            SELECT id, category, title, summary, body, icon, sort_order, is_active
-            FROM help_articles
+    # V této fázi použijeme FAQ/odkazy z partnerů jako první datový základ nápovědy.
+    faqs = []
+    links = []
+
+    if table_exists_v084_(db, "partner_links"):
+        params = {}
+        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        if q:
+            where += """
+              AND (
+                lower(COALESCE(title, '')) LIKE :q OR
+                lower(COALESCE(note, '')) LIKE :q OR
+                lower(COALESCE(category, '')) LIKE :q
+              )
+            """
+            params["q"] = f"%{q.lower()}%"
+
+        links = fetch_all_safe_v084_(db, f"""
+            SELECT *
+            FROM partner_links
             {where}
-            ORDER BY sort_order, category, title
+            ORDER BY category, title
             LIMIT 200
         """, params)
-    except Exception:
-        articles = []
-    return hub_render_v083_(request, "hub_help.html", {"active": "help", "q": q, "articles": articles})
+
+    return hub_render_v083_(request, "hub_help.html", {
+        "active": "help",
+        "q": q,
+        "faqs": faqs,
+        "links": links,
+    })
+
 
 @router.get("/api/hub/data-status")
 def api_hub_data_status_v084(db: Session = Depends(get_db)):
@@ -3729,8 +3696,6 @@ def api_hub_partner_form_source_v086(partner_code: str, db: Session = Depends(ge
             FROM partner_links
             WHERE upper(partner_code) = upper(:code)
               AND COALESCE(is_active, TRUE) = TRUE
-              AND COALESCE(is_archived, FALSE) = FALSE
-              AND COALESCE(source_type, 'partner_link') IN ('', 'partner_link')
             ORDER BY category, title
             LIMIT 100
         """, {"code": partner_code})
@@ -7129,28 +7094,6 @@ def hub_contacts_v103(request: Request, q: str = "", db: Session = Depends(get_d
         LIMIT 500
     """, params)
 
-    # v1.5.8 fallback: pokud historický import uložil interní kontakty ASTORIE do partner_contacts,
-    # poradenské menu Kontakty je zobrazí jako globální kontakty. Partnerské kontakty běžných pojišťoven zůstávají v detailu partnera.
-    if not rows and table_exists_v084_(db, "partner_contacts"):
-        rows = fetch_all_safe_v084_(db, """
-            SELECT
-                id::text AS id,
-                COALESCE(full_name,'') AS contact_name,
-                COALESCE(role,'') AS role_description,
-                COALESCE(contact_type,'') AS department,
-                COALESCE(phone,'') AS phone,
-                COALESCE(email,'') AS email,
-                COALESCE(territory,'') AS location,
-                COALESCE(note,'') AS note,
-                COALESCE(is_vip, FALSE) AS is_vip,
-                COALESCE(is_active, TRUE) AS is_active
-            FROM partner_contacts
-            WHERE COALESCE(is_active, TRUE) = TRUE
-              AND upper(COALESCE(partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS','ASTORIE_A_S')
-            ORDER BY COALESCE(is_vip, FALSE) DESC, full_name
-            LIMIT 500
-        """)
-
     return hub_render_v083_(request, "hub_contacts.html", {
         "active": "contacts",
         "rows": rows,
@@ -8602,584 +8545,3 @@ def release_1_4_9_status(db: Session = Depends(get_db)):
 @router.get("/api/release-1-5-2/status")
 def release_1_5_2_status(db: Session = Depends(get_db)):
     return {"ok": True, "version": "1.5.2-admin-contacts-top-form-table-ux-safe", "safe": True, "db_changed": False, "changed_modules": ["admin_contacts_ui"], "unchanged_modules": ["users", "permissions", "partners", "tips", "rates", "terminations", "email", "products", "links"]}
-
-
-# -------------------------------------------------------------------
-# v1.5.6 DATA CLEANUP & IMPORT SEPARATION SAFE
-# - FAQ není Nápověda
-# - Sekce/Podsekce se v tomto importu nepřepisují
-# - Odkazy jsou striktně oddělené podle zdrojového listu
-# - Specialisté se importují jen s validací vazby sekce/podsekce
-# -------------------------------------------------------------------
-RELEASE_156 = "1.5.6-data-cleanup-import-separation-safe"
-
-
-def ensure_data_cleanup_structures_v156_(db: Session):
-    """Pouze bezpečné CREATE/ALTER. Bez DROP/TRUNCATE a bez přepisu kritických dat."""
-    # partner_links rozšiřujeme o metadata zdroje, aby se už nemíchaly ASTORIE odkazy, kalkulačky a partner odkazy.
-    if table_exists_v084_(db, "partner_links"):
-        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT ''"))
-        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_sheet TEXT NOT NULL DEFAULT ''"))
-        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS import_key TEXT NOT NULL DEFAULT ''"))
-        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''"))
-        db.execute(text("CREATE INDEX IF NOT EXISTS ix_partner_links_source_type_v156 ON partner_links(source_type)"))
-        db.execute(text("CREATE INDEX IF NOT EXISTS ix_partner_links_import_key_v156 ON partner_links(import_key)"))
-    db.execute(text("""
-        CREATE TABLE IF NOT EXISTS faq_items (
-            id TEXT PRIMARY KEY,
-            faq_id TEXT NOT NULL DEFAULT '',
-            scope TEXT NOT NULL DEFAULT 'general',
-            title TEXT NOT NULL DEFAULT '',
-            question TEXT NOT NULL DEFAULT '',
-            answer TEXT NOT NULL DEFAULT '',
-            partner_code TEXT NOT NULL DEFAULT '',
-            category TEXT NOT NULL DEFAULT '',
-            tags TEXT NOT NULL DEFAULT '',
-            priority INTEGER NOT NULL DEFAULT 100,
-            is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
-            is_active BOOLEAN NOT NULL DEFAULT TRUE,
-            source_sheet TEXT NOT NULL DEFAULT 'FAQ',
-            import_key TEXT NOT NULL DEFAULT '',
-            created_at TIMESTAMP DEFAULT now(),
-            updated_at TIMESTAMP DEFAULT now()
-        )
-    """))
-    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_faq_items_import_key_v156 ON faq_items(import_key)"))
-    db.execute(text("""
-        CREATE TABLE IF NOT EXISTS help_articles (
-            id TEXT PRIMARY KEY,
-            category TEXT NOT NULL DEFAULT '',
-            title TEXT NOT NULL,
-            summary TEXT NOT NULL DEFAULT '',
-            body TEXT NOT NULL DEFAULT '',
-            icon TEXT NOT NULL DEFAULT '❓',
-            sort_order INTEGER NOT NULL DEFAULT 100,
-            is_active BOOLEAN NOT NULL DEFAULT TRUE,
-            created_at TIMESTAMP DEFAULT now(),
-            updated_at TIMESTAMP DEFAULT now()
-        )
-    """))
-    # Výchozí průvodce - jen když tabulka nemá žádný článek.
-    cnt = int(db.execute(text("SELECT COUNT(*) FROM help_articles")).scalar() or 0)
-    if cnt == 0:
-        defaults = [
-            ("new-tip", "Nový TIP", "Jak zadat nový TIP", "Vyber oblast, podsekci a specialistu. Formulář se otevře až po výběru specialisty.", "1) Otevři Nový TIP.\n2) Vyber oblast.\n3) Vyber podsekci.\n4) Vyber specialistu, který přijímá TIPy.\n5) Vyplň povinná pole. Poznámka je nepovinná.\n6) Odešli TIP. Systém odešle zprávu poradci i specialistovi.", "📝", 10),
-            ("my-tips", "Moje TIPy", "Jak sledovat vlastní TIPy", "V Moje TIPy vidíš stav, specialistu a doplněné údaje o obchodu.", "1) Otevři Moje TIPy.\n2) Sleduj stav TIPu.\n3) U uzavřených obchodů kontroluj číslo smlouvy, datum uzavření a výši obchodu.\n4) Pokud něco chybí, kontaktuj specialistu nebo administrátora.", "📌", 20),
-            ("partners", "Partneři", "Jak pracovat s Partnery", "Partneři obsahují kontakty, produkty, odkazy a informace pro práci poradce.", "1) Otevři Partneři.\n2) Vyhledej pojišťovnu nebo partnera.\n3) V detailu partnera použij kontakty, produkty nebo odkazy.\n4) Partnerské odkazy se nemíchají s Odkazy ASTORIE ani Kalkulačkami.", "🏢", 30),
-            ("rates", "Sazebník", "Jak používat Sazebník provizí", "Sazebník čte ostrá data z DB a nabízí filtry podle sekce, oblasti, partnera, produktu, základu a provize.", "1) Otevři Kalkulačky / Sazebník.\n2) Použij filtry nebo fulltext.\n3) Kontroluj sloupce Sekce, Oblast, Partner, Produkt, Základ a Provize.\n4) Správa sazeb patří do Admin → Sazebník provizí.", "📊", 40),
-            ("terminations", "Výpovědi", "Jak vytvořit výpověď", "Výpověď se tvoří formulářem s náhledem a ukládá se do archivu.", "1) Otevři Výpovědi.\n2) Vyber partnera/pojišťovnu.\n3) Doplň údaje klienta a smlouvy.\n4) Sleduj náhled vpravo.\n5) Vygeneruj PDF. Dokument se uloží do evidence.", "📄", 50),
-        ]
-        for id_, cat, title, summary, body, icon, order in defaults:
-            db.execute(text("""
-                INSERT INTO help_articles (id, category, title, summary, body, icon, sort_order, is_active)
-                VALUES (:id, :category, :title, :summary, :body, :icon, :sort_order, TRUE)
-                ON CONFLICT (id) DO NOTHING
-            """), {"id": id_, "category": cat, "title": title, "summary": summary, "body": body, "icon": icon, "sort_order": order})
-    db.execute(text("""
-        CREATE TABLE IF NOT EXISTS import_audit_v156 (
-            id TEXT PRIMARY KEY,
-            created_at TIMESTAMP DEFAULT now(),
-            source_sheet TEXT NOT NULL,
-            action TEXT NOT NULL,
-            created_count INTEGER NOT NULL DEFAULT 0,
-            updated_count INTEGER NOT NULL DEFAULT 0,
-            skipped_count INTEGER NOT NULL DEFAULT 0,
-            error_count INTEGER NOT NULL DEFAULT 0,
-            details TEXT NOT NULL DEFAULT ''
-        )
-    """))
-    db.commit()
-
-
-def _v156_str(v):
-    return xlsx_cell_to_str_v093_(v).strip()
-
-
-def _v156_bool(v, default=True):
-    if v in (None, ""):
-        return default
-    return xlsx_bool_v093_(v)
-
-
-def _v156_link_key(source_type, partner_code, url, title):
-    raw = f"{source_type}|{(partner_code or '').upper()}|{(url or '').strip().lower()}|{(title or '').strip().lower()}"
-    return re.sub(r"\s+", " ", raw)[:900]
-
-
-def sync_links_from_sheet_v156_(db: Session, wb, sheet_name: str, source_type: str, default_partner: str = ""):
-    stats = {"rows": 0, "created": 0, "updated": 0, "skipped": 0, "errors": []}
-    ensure_data_cleanup_structures_v156_(db)
-    seen_keys = []
-    for row in xlsx_rows_v093_(wb, sheet_name):
-        stats["rows"] += 1
-        try:
-            partner_code = _v156_str(xlsx_pick_v093_(row, "Partner_ID", default=default_partner)).upper()
-            title = _v156_str(xlsx_pick_v093_(row, "Název", "Nazev", "Title"))
-            url = _v156_str(xlsx_pick_v093_(row, "URL", "Url", "Odkaz"))
-            if source_type == "astorie_link" and not partner_code:
-                partner_code = "ASTORIE"
-            if source_type == "online_calculator" and not partner_code:
-                partner_code = "KALKULACKY"
-            if not title or not url:
-                stats["skipped"] += 1
-                continue
-            key = _v156_link_key(source_type, partner_code, url, title)
-            seen_keys.append(key)
-            params = {
-                "partner_code": partner_code,
-                "title": title,
-                "url": url,
-                "category": _v156_str(xlsx_pick_v093_(row, "Typ", "Kategorie")),
-                "note": _v156_str(xlsx_pick_v093_(row, "Poznámka", "Poznamka", "K čemu se používá")),
-                "visibility": _v156_str(xlsx_pick_v093_(row, "Viditelnost")),
-                "source_type": source_type,
-                "source_sheet": sheet_name,
-                "import_key": key,
-                "is_active": _v156_bool(xlsx_pick_v093_(row, "Viditelnost", "Aktivní", "Aktivni", default="ANO"), True),
-            }
-            existing = db.execute(text("SELECT id FROM partner_links WHERE import_key=:import_key LIMIT 1"), {"import_key": key}).mappings().first()
-            if existing:
-                db.execute(text("""
-                    UPDATE partner_links
-                    SET partner_code=:partner_code, title=:title, url=:url, category=:category, note=:note,
-                        visibility=:visibility, source_type=:source_type, source_sheet=:source_sheet, is_active=:is_active
-                    WHERE import_key=:import_key
-                """), params)
-                stats["updated"] += 1
-            else:
-                db.execute(text("""
-                    INSERT INTO partner_links
-                    (partner_code, title, url, category, note, visibility, is_active, source_type, source_sheet, import_key)
-                    VALUES
-                    (:partner_code, :title, :url, :category, :note, :visibility, :is_active, :source_type, :source_sheet, :import_key)
-                """), params)
-                stats["created"] += 1
-        except Exception as exc:
-            stats["skipped"] += 1
-            stats["errors"].append(str(exc))
-    # Source-safe cleanup: deaktivujeme pouze záznamy z téhož source_type/source_sheet, které už nejsou ve zdrojovém listu.
-    if seen_keys:
-        db.execute(text("""
-            UPDATE partner_links
-            SET is_active = FALSE
-            WHERE source_type = :source_type
-              AND source_sheet = :source_sheet
-              AND import_key <> ''
-              AND import_key NOT IN :seen_keys
-        """), {"source_type": source_type, "source_sheet": sheet_name, "seen_keys": tuple(seen_keys)})
-    db.execute(text("""
-        INSERT INTO import_audit_v156 (id, source_sheet, action, created_count, updated_count, skipped_count, error_count, details)
-        VALUES (:id, :source_sheet, 'SYNC_LINKS', :created, :updated, :skipped, :errors, :details)
-    """), {"id": str(uuid.uuid4()), "source_sheet": sheet_name, "created": stats["created"], "updated": stats["updated"], "skipped": stats["skipped"], "errors": len(stats["errors"]), "details": json.dumps(stats, ensure_ascii=False)[:5000]})
-    db.commit()
-    return stats
-
-
-def sync_faq_from_sheet_v156_(db: Session, wb, sheet_name: str):
-    stats = {"rows": 0, "created": 0, "updated": 0, "skipped": 0, "errors": []}
-    ensure_data_cleanup_structures_v156_(db)
-    for row in xlsx_rows_v093_(wb, sheet_name):
-        stats["rows"] += 1
-        try:
-            faq_id = _v156_str(xlsx_pick_v093_(row, "FAQ_ID")) or str(uuid.uuid4())
-            question = _v156_str(xlsx_pick_v093_(row, "Otazka", "Otázka"))
-            answer = _v156_str(xlsx_pick_v093_(row, "Odpoved", "Odpověď"))
-            title = _v156_str(xlsx_pick_v093_(row, "Titulek", "Název", "Nazev")) or question[:90]
-            if not question and not answer and not title:
-                stats["skipped"] += 1
-                continue
-            import_key = f"{sheet_name}|{faq_id}"[:900]
-            params = {
-                "id": str(uuid.uuid4()), "faq_id": faq_id, "scope": _v156_str(xlsx_pick_v093_(row, "Typ", default="general")),
-                "title": title, "question": question, "answer": answer,
-                "partner_code": _v156_str(xlsx_pick_v093_(row, "Partner_ID")).upper(),
-                "category": _v156_str(xlsx_pick_v093_(row, "Kategorie")),
-                "tags": _v156_str(xlsx_pick_v093_(row, "Tagy")),
-                "priority": xlsx_num_v093_(xlsx_pick_v093_(row, "Priorita"), 100),
-                "is_pinned": _v156_bool(xlsx_pick_v093_(row, "Pin"), False),
-                "is_active": (_v156_str(xlsx_pick_v093_(row, "Stav", default="aktivní")).lower() not in {"neaktivní", "neaktivni", "skryto", "0"}),
-                "source_sheet": sheet_name, "import_key": import_key,
-            }
-            if db.execute(text("SELECT id FROM faq_items WHERE import_key=:import_key"), {"import_key": import_key}).first():
-                db.execute(text("""
-                    UPDATE faq_items SET faq_id=:faq_id, scope=:scope, title=:title, question=:question, answer=:answer,
-                    partner_code=:partner_code, category=:category, tags=:tags, priority=:priority, is_pinned=:is_pinned,
-                    is_active=:is_active, source_sheet=:source_sheet, updated_at=now()
-                    WHERE import_key=:import_key
-                """), params)
-                stats["updated"] += 1
-            else:
-                db.execute(text("""
-                    INSERT INTO faq_items (id, faq_id, scope, title, question, answer, partner_code, category, tags, priority, is_pinned, is_active, source_sheet, import_key)
-                    VALUES (:id, :faq_id, :scope, :title, :question, :answer, :partner_code, :category, :tags, :priority, :is_pinned, :is_active, :source_sheet, :import_key)
-                """), params)
-                stats["created"] += 1
-        except Exception as exc:
-            stats["skipped"] += 1
-            stats["errors"].append(str(exc))
-    db.execute(text("""
-        INSERT INTO import_audit_v156 (id, source_sheet, action, created_count, updated_count, skipped_count, error_count, details)
-        VALUES (:id, :source_sheet, 'SYNC_FAQ', :created, :updated, :skipped, :errors, :details)
-    """), {"id": str(uuid.uuid4()), "source_sheet": sheet_name, "created": stats["created"], "updated": stats["updated"], "skipped": stats["skipped"], "errors": len(stats["errors"]), "details": json.dumps(stats, ensure_ascii=False)[:5000]})
-    db.commit()
-    return stats
-
-
-def sync_specialists_from_sheet_v156_(db: Session, wb):
-    stats = {"rows": 0, "created": 0, "updated": 0, "skipped": 0, "invalid_relation": 0, "errors": []}
-    ensure_data_cleanup_structures_v156_(db)
-    ensure_specialists_table_(db)
-    for row in xlsx_rows_v093_(wb, "Specialisté"):
-        stats["rows"] += 1
-        try:
-            advisor_id = _v156_str(xlsx_pick_v093_(row, "ID_PS", "ID_poradce", "ID"))
-            name = _v156_str(xlsx_pick_v093_(row, "Jméno", "Jmeno"))
-            email = _v156_str(xlsx_pick_v093_(row, "E-mail", "Email", "Mail")).lower()
-            section_code = _v156_str(xlsx_pick_v093_(row, "Sekce_ID", "ID_sekce")).upper()
-            subsection_code = _v156_str(xlsx_pick_v093_(row, "Podsekce_ID", "ID_podsekce")).upper()
-            if not advisor_id or not name or not email or not section_code:
-                stats["skipped"] += 1
-                continue
-            # Validace: podsekce musí patřit do zvolené sekce, jinak záznam nepustíme.
-            if subsection_code:
-                valid = db.execute(text("""
-                    SELECT 1 FROM hub_subsections WHERE upper(subsection_code)=upper(:sub) AND upper(section_code)=upper(:sec)
-                    UNION ALL
-                    SELECT 1 FROM subsections WHERE upper(subsection_code)=upper(:sub) AND upper(section_code)=upper(:sec)
-                    LIMIT 1
-                """), {"sub": subsection_code, "sec": section_code}).first()
-                if not valid:
-                    stats["invalid_relation"] += 1
-                    stats["skipped"] += 1
-                    stats["errors"].append(f"{name}: podsekce {subsection_code} nepatří do sekce {section_code}")
-                    continue
-            params = {
-                "advisor_id": advisor_id, "specialist_name": name, "email": email,
-                "phone": _v156_str(xlsx_pick_v093_(row, "Tel", "Telefon")),
-                "section_code": section_code, "subsection_code": subsection_code,
-                "role_description": _v156_str(xlsx_pick_v093_(row, "Role")),
-                "region": _v156_str(xlsx_pick_v093_(row, "Region")),
-                "if_share": _v156_str(xlsx_pick_v093_(row, "IF%", "IF_podil", "IF podíl")),
-                "ps_share": _v156_str(xlsx_pick_v093_(row, "PS%", "PS_podil", "PS podíl")),
-                "available": (_v156_str(xlsx_pick_v093_(row, "Dostupnost", default="ANO")).lower() not in {"ne", "nepřijímá", "neprijima", "0", "false"}),
-                "unavailable_reason": _v156_str(xlsx_pick_v093_(row, "Duvod_nedostupnosti", "Důvod nedostupnosti")),
-                "is_active": _v156_bool(xlsx_pick_v093_(row, "Aktivní", "Aktivni", default="ANO"), True),
-                "note": _v156_str(xlsx_pick_v093_(row, "Poznámka", "Poznamka")),
-            }
-            existing = db.execute(text("""
-                SELECT id FROM specialists
-                WHERE upper(advisor_id)=upper(:advisor_id) AND upper(section_code)=upper(:section_code)
-                  AND COALESCE(upper(subsection_code),'')=COALESCE(upper(:subsection_code),'') AND lower(email)=lower(:email)
-                LIMIT 1
-            """), params).mappings().first()
-            if existing:
-                db.execute(text("""
-                    UPDATE specialists SET specialist_name=:specialist_name, phone=:phone, role_description=:role_description,
-                    region=:region, if_share=:if_share, ps_share=:ps_share, available=:available,
-                    unavailable_reason=:unavailable_reason, is_active=:is_active, note=:note
-                    WHERE id=:id
-                """), dict(params, id=existing["id"]))
-                stats["updated"] += 1
-            else:
-                db.execute(text("""
-                    INSERT INTO specialists
-                    (advisor_id, specialist_name, email, phone, section_code, subsection_code, role_description, region,
-                     if_share, ps_share, available, unavailable_reason, is_active, note)
-                    VALUES
-                    (:advisor_id, :specialist_name, :email, :phone, :section_code, :subsection_code, :role_description, :region,
-                     :if_share, :ps_share, :available, :unavailable_reason, :is_active, :note)
-                """), params)
-                stats["created"] += 1
-        except Exception as exc:
-            stats["skipped"] += 1
-            stats["errors"].append(str(exc))
-    db.execute(text("""
-        INSERT INTO import_audit_v156 (id, source_sheet, action, created_count, updated_count, skipped_count, error_count, details)
-        VALUES (:id, 'Specialisté', 'SYNC_SPECIALISTS_VALIDATED', :created, :updated, :skipped, :errors, :details)
-    """), {"id": str(uuid.uuid4()), "created": stats["created"], "updated": stats["updated"], "skipped": stats["skipped"], "errors": len(stats["errors"]), "details": json.dumps(stats, ensure_ascii=False)[:5000]})
-    db.commit()
-    return stats
-
-
-# Přesměrování XLSX importu: bezpečná oprava datového chaosu, nikoli globální reimport master dat.
-def import_hub_xlsx_data_v156_(db, wb, update_existing=False):
-    ensure_data_cleanup_structures_v156_(db)
-    result = {
-        "ok": True,
-        "version": RELEASE_156,
-        "mode": "source_safe_cleanup_sync",
-        "protected": ["users", "roles", "tips", "permissions", "sections", "subsections", "commission_rates", "terminations", "email"],
-        "astorie_links": sync_links_from_sheet_v156_(db, wb, "Import_Astorie_Links", "astorie_link", "ASTORIE"),
-        "online_calculators": sync_links_from_sheet_v156_(db, wb, "Import_Online kalkulacky_Links", "online_calculator", "KALKULACKY"),
-        "partner_links": sync_links_from_sheet_v156_(db, wb, "Import_Partner_Links", "partner_link", ""),
-        "faq": sync_faq_from_sheet_v156_(db, wb, "FAQ") if "FAQ" in getattr(wb, "sheetnames", []) else {"rows":0,"created":0,"updated":0,"skipped":0,"errors":[]},
-        "specialists": sync_specialists_from_sheet_v156_(db, wb),
-        "errors": [],
-    }
-    # Bezpečný quarantine pro staré namíchané kalkulačky: poradenská sekce Kalkulačky čte pouze source_type=online_calculator.
-    return result
-
-# Přepnutí stávající XLSX import stránky na bezpečný režim v1.5.6.
-import_hub_xlsx_data_v093_ = import_hub_xlsx_data_v156_
-
-
-@router.get("/admin/help", response_class=HTMLResponse)
-def admin_help_v156(request: Request, db: Session = Depends(get_db)):
-    ensure_data_cleanup_structures_v156_(db)
-    articles = fetch_all_safe_v084_(db, """
-        SELECT id, category, title, summary, body, icon, sort_order, is_active
-        FROM help_articles
-        ORDER BY sort_order, category, title
-    """)
-    return render(request, "admin_help.html", {"active": "help", "articles": articles})
-
-
-@router.post("/admin/help/create")
-def admin_help_create_v156(
-    category: str = Form(""),
-    title: str = Form(...),
-    summary: str = Form(""),
-    body: str = Form(...),
-    icon: str = Form("❓"),
-    sort_order: int = Form(100),
-    db: Session = Depends(get_db),
-):
-    ensure_data_cleanup_structures_v156_(db)
-    db.execute(text("""
-        INSERT INTO help_articles (id, category, title, summary, body, icon, sort_order, is_active)
-        VALUES (:id, :category, :title, :summary, :body, :icon, :sort_order, TRUE)
-    """), {"id": str(uuid.uuid4()), "category": category, "title": title, "summary": summary, "body": body, "icon": icon, "sort_order": sort_order})
-    db.commit()
-    return RedirectResponse("/admin/help", status_code=303)
-
-
-@router.post("/admin/help/{article_id}/toggle")
-def admin_help_toggle_v156(article_id: str, db: Session = Depends(get_db)):
-    ensure_data_cleanup_structures_v156_(db)
-    db.execute(text("UPDATE help_articles SET is_active = NOT COALESCE(is_active, TRUE), updated_at=now() WHERE id=:id"), {"id": article_id})
-    db.commit()
-    return RedirectResponse("/admin/help", status_code=303)
-
-
-@router.get("/api/release-1-5-6/status")
-def api_release_156_status(db: Session = Depends(get_db)):
-    errors = []
-    tables = {}
-    try:
-        ensure_data_cleanup_structures_v156_(db)
-    except Exception as exc:
-        errors.append(f"ensure: {exc}")
-    for t in ["partner_links", "faq_items", "help_articles", "specialists", "hub_sections", "hub_subsections", "import_audit_v156"]:
-        try:
-            exists = table_exists_v084_(db, t)
-            count = int(db.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar() or 0) if exists else 0
-            tables[t] = {"exists": bool(exists), "count": count}
-        except Exception as exc:
-            try: db.rollback()
-            except Exception: pass
-            tables[t] = {"exists": False, "count": 0, "error": str(exc)}
-            errors.append(f"{t}: {exc}")
-    sources = []
-    try:
-        if table_exists_v084_(db, "partner_links"):
-            sources = [dict(r) for r in fetch_all_safe_v084_(db, """
-                SELECT COALESCE(source_type,'') AS source_type, COALESCE(source_sheet,'') AS source_sheet,
-                       COUNT(*) AS count_total,
-                       SUM(CASE WHEN COALESCE(is_active, TRUE) THEN 1 ELSE 0 END) AS count_active
-                FROM partner_links
-                GROUP BY COALESCE(source_type,''), COALESCE(source_sheet,'')
-                ORDER BY source_type, source_sheet
-            """)]
-    except Exception as exc:
-        errors.append(f"sources: {exc}")
-    return {
-        "ok": len(errors) == 0,
-        "version": RELEASE_156,
-        "message": "Bezpečné oddělení importů: ASTORIE odkazy, online kalkulačky, partner odkazy, FAQ a specialisté. FAQ není Nápověda. Sekce/Podsekce se automaticky nepřepisují.",
-        "safe": True,
-        "db_changed": "only_safe_create_alter_and_source_tagged_sync",
-        "protected_tables": ["users", "roles", "tips", "permissions", "sections", "subsections", "commission_rates", "terminations", "email_logs"],
-        "tables": tables,
-        "link_sources": sources,
-        "errors": errors,
-    }
-
-
-# -------------------------------------------------------------------
-# v1.5.8 – Source routing stabilization + safe archive endpoints
-# -------------------------------------------------------------------
-RELEASE_158 = "1.5.8-source-routing-stabilization-safe"
-
-
-def ensure_admin_crud_safety_v158_(db: Session):
-    """Nedestruktivní doplnění sloupců pro archivaci a oddělení zdrojů. Neprovádí žádný TRUNCATE/DROP."""
-    stmts = [
-        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_sheet TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS import_key TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
-        "ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
-        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
-        "ALTER TABLE partner_contacts ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
-        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
-        "ALTER TABLE partner_products ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE",
-    ]
-    for st in stmts:
-        try:
-            db.execute(text(st))
-        except Exception:
-            try: db.rollback()
-            except Exception: pass
-    db.commit()
-
-
-def archive_row_v158_(db: Session, table: str, item_id, back_url: str):
-    ensure_admin_crud_safety_v158_(db)
-    db.execute(text(f"""
-        UPDATE {table}
-        SET is_active = FALSE,
-            is_archived = TRUE,
-            archived_at = now()
-        WHERE id = :id
-    """), {"id": item_id})
-    db.commit()
-    return RedirectResponse(back_url, status_code=303)
-
-
-def delete_row_v158_(db: Session, table: str, item_id, back_url: str):
-    ensure_admin_crud_safety_v158_(db)
-    db.execute(text(f"DELETE FROM {table} WHERE id = :id"), {"id": item_id})
-    db.commit()
-    return RedirectResponse(back_url, status_code=303)
-
-
-@router.get("/hub/links", response_class=HTMLResponse)
-def hub_astorie_links_v159(request: Request, q: str = "", db: Session = Depends(get_db)):
-    """v1.5.9: Odkazy ASTORIE čtou interní odkazy z admin evidence. Nečtou kalkulačky ani partner-detail odkazy."""
-    try:
-        ensure_admin_crud_safety_v158_(db)
-    except Exception:
-        try: db.rollback()
-        except Exception: pass
-    params = {}
-    where = """
-        WHERE COALESCE(l.is_active, TRUE) = TRUE
-          AND COALESCE(l.is_archived, FALSE) = FALSE
-          AND lower(COALESCE(l.source_type,'')) NOT IN ('online_calculator','calculator','kalkulacka','kalkulačka')
-          AND upper(COALESCE(l.partner_code,'')) NOT IN ('KALKULACKY','KALKULAČKY','CALCULATORS','ONLINE_KALKULACKY','ONLINE_KALKULAČKY')
-          AND (
-                lower(COALESCE(l.source_type,'')) IN ('astorie_link','astorie','internal','interni','interní')
-             OR lower(COALESCE(l.source_sheet,'')) IN ('import_astorie_links','import_astorie links')
-             OR upper(COALESCE(l.partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS','ASTORIE_A_S')
-             OR lower(COALESCE(l.visibility,'')) IN ('astorie','internal','interni','interní')
-          )
-    """
-    if q:
-        where += """
-          AND (
-            lower(COALESCE(l.title,'')) LIKE :q OR
-            lower(COALESCE(l.url,'')) LIKE :q OR
-            lower(COALESCE(l.category,'')) LIKE :q OR
-            lower(COALESCE(l.note,'')) LIKE :q
-          )
-        """
-        params["q"] = f"%{q.lower()}%"
-    links = fetch_all_safe_v084_(db, f"""
-        SELECT l.*
-        FROM partner_links l
-        {where}
-        ORDER BY COALESCE(l.category,''), COALESCE(l.title,'')
-        LIMIT 500
-    """, params) if table_exists_v084_(db, "partner_links") else []
-    return hub_render_v083_(request, "hub_links.html", {"active": "links", "links": links, "q": q})
-
-@router.post("/admin/contacts/{item_id}/archive")
-def archive_contact_v158(item_id: int, db: Session = Depends(get_db)):
-    return archive_row_v158_(db, "partner_contacts", item_id, "/admin/contacts")
-
-@router.post("/admin/contacts/{item_id}/delete")
-def delete_contact_v158(item_id: int, db: Session = Depends(get_db)):
-    return delete_row_v158_(db, "partner_contacts", item_id, "/admin/contacts")
-
-@router.post("/admin/links/{item_id}/archive")
-def archive_link_v158(item_id: int, db: Session = Depends(get_db)):
-    return archive_row_v158_(db, "partner_links", item_id, "/admin/links")
-
-@router.post("/admin/links/{item_id}/delete")
-def delete_link_v158(item_id: int, db: Session = Depends(get_db)):
-    return delete_row_v158_(db, "partner_links", item_id, "/admin/links")
-
-@router.post("/admin/products/{item_id}/archive")
-def archive_product_v158(item_id: int, db: Session = Depends(get_db)):
-    return archive_row_v158_(db, "partner_products", item_id, "/admin/products")
-
-@router.post("/admin/products/{item_id}/delete")
-def delete_product_v158(item_id: int, db: Session = Depends(get_db)):
-    return delete_row_v158_(db, "partner_products", item_id, "/admin/products")
-
-@router.get("/api/release-1-5-8/status")
-def api_release_158_status(db: Session = Depends(get_db)):
-    errors = []
-    try:
-        ensure_admin_crud_safety_v158_(db)
-    except Exception as exc:
-        errors.append(str(exc))
-    sources = []
-    try:
-        if table_exists_v084_(db, "partner_links"):
-            sources = [dict(r) for r in db.execute(text("""
-                SELECT COALESCE(source_type,'') AS source_type,
-                       COALESCE(partner_code,'') AS partner_code,
-                       COUNT(*) AS count_total
-                FROM partner_links
-                GROUP BY COALESCE(source_type,''), COALESCE(partner_code,'')
-                ORDER BY source_type, partner_code
-            """)).mappings().all()]
-    except Exception as exc:
-        errors.append(f"sources: {exc}")
-        try: db.rollback()
-        except Exception: pass
-    return {
-        "ok": not errors,
-        "version": RELEASE_158,
-        "safe": True,
-        "db_destructive": False,
-        "changed": [
-            "poradenské Odkazy ASTORIE čtou pouze interní odkazy",
-            "Kalkulačky čtou online kalkulačky i historické záznamy s partner_code=KALKULACKY",
-            "Partner detail čte pouze partner odkazy",
-            "Kontakty poradce zobrazí global_contacts a bezpečný ASTORIE fallback",
-            "Admin archive/delete endpoints bez zásahu do TIPů a uživatelů"
-        ],
-        "unchanged": ["TIP workflow", "users", "roles", "SMTP", "commission rates", "terminations", "login"],
-        "partner_link_sources": sources,
-        "errors": errors,
-    }
-
-
-@router.get("/api/release-1-5-9/status")
-def release_159_status(db: Session = Depends(get_db)):
-    def count(sql):
-        try:
-            return int(db.execute(text(sql)).scalar() or 0)
-        except Exception:
-            try: db.rollback()
-            except Exception: pass
-            return None
-    return {
-        "ok": True,
-        "version": "1.5.9-production-source-bridge-safe",
-        "safe": True,
-        "db_changed": False,
-        "data_deleted": False,
-        "changed_modules": ["hub_links", "hub_calculators", "hub_contacts", "hub_menu"],
-        "unchanged_modules": ["tips", "users", "permissions", "email", "terminations", "admin_data", "imports"],
-        "counts": {
-            "partner_links_total": count("SELECT COUNT(*) FROM partner_links"),
-            "astorie_links_visible": count("SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND (lower(COALESCE(source_type,'')) IN ('astorie_link','astorie','internal','interni','interní') OR lower(COALESCE(source_sheet,'')) IN ('import_astorie_links','import_astorie links') OR upper(COALESCE(partner_code,'')) IN ('ASTORIE','AST','ASTORIEAS','ASTORIE_A_S'))"),
-            "calculator_links_visible": count("SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND (lower(COALESCE(source_type,'')) IN ('online_calculator','calculator','kalkulacka','kalkulačka') OR lower(COALESCE(source_sheet,'')) IN ('import_online kalkulacky_links','import_online_kalkulacky_links','import_online kalkulačky_links') OR upper(COALESCE(partner_code,'')) IN ('KALKULACKY','KALKULAČKY','CALCULATORS','ONLINE_KALKULACKY','ONLINE_KALKULAČKY') OR lower(COALESCE(category,'')) LIKE '%kalkul%' OR lower(COALESCE(title,'')) LIKE '%kalkul%')"),
-            "commission_rates_total": count("SELECT COUNT(*) FROM commission_rates"),
-            "global_contacts_total": count("SELECT COUNT(*) FROM global_contacts"),
-        }
-    }
