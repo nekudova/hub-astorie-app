@@ -949,3 +949,113 @@ button[disabled]{
   opacity:.7;
   cursor:not-allowed;
 }
+
+
+/* =========================================================
+   v1.5.5c SAFE UI PATCH – profesionální checkbox/toggle vzhled
+   Pouze vizuální vrstva. Nemění backend, formuláře, name/value ani routy.
+   ========================================================= */
+.admin-crud input[type="checkbox"],
+.partner-workspace-v111 input[type="checkbox"],
+.partner-safe-v112 input[type="checkbox"],
+input[type="checkbox"]:not(.native-checkbox):not(.visually-hidden):not(.sr-only) {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  padding: 0 !important;
+  margin: 0 7px 0 0 !important;
+  border: 1.5px solid #B9D0D7 !important;
+  border-radius: 6px !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 2px rgba(0,61,76,.06) !important;
+  display: inline-grid !important;
+  place-content: center !important;
+  vertical-align: middle !important;
+  cursor: pointer !important;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .12s ease !important;
+}
+
+input[type="checkbox"]:not(.native-checkbox):not(.visually-hidden):not(.sr-only)::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid #FFFFFF;
+  border-bottom: 2px solid #FFFFFF;
+  transform: rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform .12s ease;
+  margin-top: -1px;
+}
+
+input[type="checkbox"]:not(.native-checkbox):not(.visually-hidden):not(.sr-only):checked {
+  background: #003D4C !important;
+  border-color: #003D4C !important;
+  box-shadow: 0 6px 14px rgba(0,61,76,.18) !important;
+}
+
+input[type="checkbox"]:not(.native-checkbox):not(.visually-hidden):not(.sr-only):checked::before {
+  transform: rotate(-45deg) scale(1);
+}
+
+input[type="checkbox"]:not(.native-checkbox):not(.visually-hidden):not(.sr-only):focus-visible {
+  outline: 3px solid rgba(252,76,2,.18) !important;
+  outline-offset: 2px !important;
+}
+
+.table input[type="checkbox"],
+.table-scroll input[type="checkbox"],
+.table-wrap input[type="checkbox"] {
+  margin-right: 0 !important;
+}
+
+.mini-check,
+.checkline,
+.table td label:has(input[type="checkbox"]),
+.grid-form div:has(input[type="checkbox"]) label,
+.admin-crud td label:has(input[type="checkbox"]) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 26px !important;
+  color: #425967 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
+}
+
+.checkline {
+  gap: 10px !important;
+  min-height: 36px !important;
+}
+
+/* stavové buňky v admin tabulkách – kompaktní, bez obřích nativních checkboxů */
+.table td:has(input[type="checkbox"]) {
+  vertical-align: middle !important;
+}
+
+/* V sekci Oprávnění menu se používají vlastní pill přepínače, ty nesmí přebrat checkbox styl. */
+.role-toggle-v151 input[type="checkbox"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.role-toggle-v151 input[type="checkbox"]::before { content: none !important; }
+
+/* jemné štítkové rozlišení, když je checkbox použit jako Aktivní / TOP */
+.admin-crud .table td label,
+.panel .table td label {
+  line-height: 1.15 !important;
+}

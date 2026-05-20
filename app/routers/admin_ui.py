@@ -8889,3 +8889,35 @@ def partner_status_admin_v155b(
         item.is_active = bool(is_active)
         db.commit()
     return RedirectResponse("/admin/partners", status_code=303)
+
+
+@router.get("/api/release-1-5-5c/status")
+def release_1_5_5c_status():
+    return {
+        "ok": True,
+        "version": "1.5.5c-admin-checkbox-ui-polish-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": [
+            "admin_checkbox_visuals",
+            "admin_contacts_ui",
+            "admin_links_ui",
+            "admin_products_ui",
+            "admin_sections_ui",
+            "admin_partner_detail_ui"
+        ],
+        "unchanged_modules": [
+            "production_hub",
+            "tips",
+            "login",
+            "users",
+            "permissions_backend",
+            "smtp",
+            "terminations",
+            "rates_backend",
+            "imports",
+            "database"
+        ],
+        "note": "Pouze vizuální oprava checkboxů/přepínačů v Adminu. Backend, DB a produkční čtení dat beze změny."
+    }
