@@ -69,8 +69,7 @@
             <td><input class="table-input" name="image_url" value="{{ s.image_url or '' }}"></td>
             <td><input class="table-input" name="note" value="{{ s.note or '' }}"></td>
             <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if s.is_active %}checked{% endif %}> aktivní</label></td>
-            <td><button class="btn soft micro" type="submit">Uložit</button></td>
-          </form>
+            <td><div class="small-actions"><button class="btn soft micro" type="submit">Uložit</button></form><form method="post" action="/admin/sections/{{ s.section_code }}/archive" onsubmit="return confirm('Archivovat sekci? Záznam zůstane v DB jako neaktivní.');"><button class="btn soft micro" type="submit">Archiv</button></form></div></td>
         </tr>
         {% else %}
         <tr><td colspan="8">Zatím nejsou založené žádné sekce.</td></tr>
@@ -102,8 +101,7 @@
             <td><input class="table-input small-cell" type="number" name="sort_order" value="{{ ss.sort_order }}"></td>
             <td><input class="table-input" name="note" value="{{ ss.note or '' }}"></td>
             <td><label class="mini-check"><input type="checkbox" name="is_active" value="1" {% if ss.is_active %}checked{% endif %}> aktivní</label></td>
-            <td><button class="btn soft micro" type="submit">Uložit</button></td>
-          </form>
+            <td><div class="small-actions"><button class="btn soft micro" type="submit">Uložit</button></form><form method="post" action="/admin/subsections/{{ ss.subsection_code }}/archive" onsubmit="return confirm('Archivovat podsekci? Záznam zůstane v DB jako neaktivní.');"><button class="btn soft micro" type="submit">Archiv</button></form></div></td>
         </tr>
         {% else %}
         <tr><td colspan="7">Zatím nejsou založené žádné podsekce.</td></tr>

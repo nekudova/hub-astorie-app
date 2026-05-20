@@ -634,8 +634,14 @@ def links_page(request: Request, q: str = "", partner: str = "", db: Session = D
 
 
 @router.post("/admin/links/create")
-def create_link(request: Request, partner_code: str = Form(...), title: str = Form(...), url: str = Form(...), category: str = Form(""), note: str = Form(""), db: Session = Depends(get_db)):
-    db.add(PartnerLink(partner_code=partner_code.upper().strip(), title=title, url=url, category=category, note=note, is_active=True))
+def create_link(request: Request, partner_code: str = Form(...), title: str = Form(...), url: str = Form(...), category: str = Form(""), note: str = Form(""), source_type: str = Form(""), db: Session = Depends(get_db)):
+    ensure_link_source_columns_v155a_(db)
+    item = PartnerLink(partner_code=partner_code.upper().strip(), title=title, url=url, category=category, note=note, is_active=True)
+    db.add(item)
+    db.flush()
+    st = (source_type or "").strip().upper()
+    if st in ("ASTORIE_LINK", "ONLINE_CALCULATOR", "PARTNER_LINK"):
+        db.execute(text("UPDATE partner_links SET source_type = :st WHERE id = :id"), {"st": st, "id": item.id})
     db.commit()
     return RedirectResponse("/admin/links", status_code=303)
 
@@ -8756,3 +8762,130 @@ def archive_partner_v155a(partner_code: str, db: Session = Depends(get_db)):
         item.is_active = False
         db.commit()
     return _safe_redirect_back("/admin/partners")
+
+
+# --- v1.5.5b: Admin Data Control SAFE – CRUD UI endpoints only ----------------------
+@router.get("/api/release-1-5-5b/status")
+def release_155b_status(db: Session = Depends(get_db)):
+    return {
+        "ok": True,
+        "version": "1.5.5b-admin-data-control-crud-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted_automatically": False,
+        "changed_modules": ["admin_contacts", "admin_contact_roles", "admin_links", "admin_products", "admin_sections", "admin_partners_status_ui"],
+        "unchanged_modules": ["hub_production", "tips", "users", "permissions", "email", "terminations", "rates", "login", "import"],
+        "message": "Pouze admin UI a bezpečné CRUD endpointy. Žádný import, žádné automatické mazání dat."
+    }
+
+@router.post("/admin/contacts/{item_id}/save")
+def save_contact_admin_v155b(
+    item_id: int,
+    partner_code: str = Form(...),
+    full_name: str = Form(...),
+    role: str = Form(""),
+    email: str = Form(""),
+    phone: str = Form(""),
+    specialization: str = Form(""),
+    contact_type: str = Form(""),
+    territory: str = Form(""),
+    is_vip: str = Form(""),
+    note: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    item = db.query(PartnerContact).filter(PartnerContact.id == item_id).first()
+    if item:
+        item.partner_code = (partner_code or "").upper().strip()
+        item.full_name = full_name.strip()
+        item.role = role.strip()
+        item.email = email.strip()
+        item.phone = phone.strip()
+        item.specialization = specialization.strip()
+        item.contact_type = contact_type.strip()
+        item.territory = territory.strip()
+        item.is_vip = bool(is_vip)
+        item.is_top = bool(is_vip)
+        item.note = note.strip()
+        item.is_active = bool(is_active)
+        db.commit()
+    return RedirectResponse("/admin/contacts", status_code=303)
+
+@router.post("/admin/contacts/{item_id}/archive")
+def archive_contact_admin_v155b(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerContact).filter(PartnerContact.id == item_id).first()
+    if item:
+        item.is_active = False
+        db.commit()
+    return RedirectResponse("/admin/contacts", status_code=303)
+
+@router.post("/admin/contacts/{item_id}/delete")
+def delete_contact_admin_v155b(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerContact).filter(PartnerContact.id == item_id).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    return RedirectResponse("/admin/contacts", status_code=303)
+
+@router.post("/admin/links/{item_id}/save")
+def save_link_admin_v155b(
+    item_id: int,
+    partner_code: str = Form(...),
+    title: str = Form(...),
+    url: str = Form(...),
+    category: str = Form(""),
+    note: str = Form(""),
+    source_type: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    ensure_link_source_columns_v155a_(db)
+    item = db.query(PartnerLink).filter(PartnerLink.id == item_id).first()
+    if item:
+        item.partner_code = (partner_code or "").upper().strip()
+        item.title = title.strip()
+        item.url = url.strip()
+        item.category = category.strip()
+        item.note = note.strip()
+        item.is_active = bool(is_active)
+        st = (source_type or "").strip().upper()
+        if st in ("ASTORIE_LINK", "ONLINE_CALCULATOR", "PARTNER_LINK"):
+            db.execute(text("UPDATE partner_links SET source_type = :st WHERE id = :id"), {"st": st, "id": item_id})
+        db.commit()
+    return RedirectResponse("/admin/links", status_code=303)
+
+@router.post("/admin/products/{item_id}/save")
+def save_product_admin_v155b(
+    item_id: int,
+    partner_code: str = Form(...),
+    area: str = Form(""),
+    subarea: str = Form(""),
+    product_name: str = Form(...),
+    note: str = Form(""),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    item = db.query(PartnerProduct).filter(PartnerProduct.id == item_id).first()
+    if item:
+        item.partner_code = (partner_code or "").upper().strip()
+        item.area = area.strip()
+        item.subarea = subarea.strip()
+        item.product_name = product_name.strip()
+        item.note = note.strip()
+        item.is_active = bool(is_active)
+        db.commit()
+    return RedirectResponse("/admin/products", status_code=303)
+
+@router.post("/admin/partners/{partner_code}/status")
+def partner_status_admin_v155b(
+    partner_code: str,
+    partner_status: str = Form("aktivní"),
+    is_active: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    item = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if item:
+        item.partner_status = partner_status.strip() or "aktivní"
+        item.is_active = bool(is_active)
+        db.commit()
+    return RedirectResponse("/admin/partners", status_code=303)

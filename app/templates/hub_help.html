@@ -1,33 +1,36 @@
 {% extends "hub_base.html" %}
 {% block content %}
-<div class="hub-card help-v156">
-  <div class="section-head" style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px;">
+<div class="hub-card">
+  <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;">
     <div>
-      <div class="eyebrow">ASTORIE HUB</div>
       <h1>Nápověda a průvodce systémem</h1>
-      <p class="page-subtitle">Praktické návody pro poradce. FAQ je samostatná oblast – zde je krokový průvodce, jak systém správně používat.</p>
+      <p class="page-subtitle">Praktický průvodce HUBem. FAQ je samostatná oblast; zde jsou návody, jak systém používat krok za krokem.</p>
     </div>
-    <form method="get" class="hub-filters" style="min-width:320px;display:flex;gap:8px;">
+    <form method="get" style="display:flex;gap:10px;min-width:360px;">
       <input name="q" value="{{ q or '' }}" placeholder="Hledat v nápovědě…">
       <button class="btn orange">Hledat</button>
     </form>
   </div>
 
-  <div class="portal-grid">
-    {% for a in articles %}
-      <article class="portal-card" style="border-left:5px solid #FC4C02;">
-        <span class="portal-letter">{{ a.icon or '❓' }}</span>
-        <h3>{{ a.title }}</h3>
-        <p><strong>{{ a.category or 'Obecné' }}</strong></p>
-        <p class="muted">{{ a.summary or '' }}</p>
-        <details style="margin-top:10px;">
-          <summary class="btn dark" style="display:inline-block;cursor:pointer;">Zobrazit postup</summary>
-          <div style="white-space:pre-wrap;margin-top:12px;line-height:1.55;">{{ a.body }}</div>
-        </details>
-      </article>
-    {% else %}
-      <div class="empty-state">Nápověda zatím není vyplněna. Admin ji doplní v sekci Admin → Nápověda.</div>
-    {% endfor %}
-  </div>
+  {% if articles %}
+    <div class="portal-grid" style="margin-top:22px;">
+      {% for a in articles %}
+        <div class="portal-card">
+          <span class="portal-letter">❓</span>
+          <h3>{{ a.title }}</h3>
+          <p>{{ a.category or 'Nápověda' }}</p>
+          <p class="muted">{% if a.summary %}{{ a.summary }}{% elif a.body %}{{ a.body[:180] }}{% endif %}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="portal-grid" style="margin-top:22px;">
+      <div class="portal-card"><span class="portal-letter">📝</span><h3>Jak zadat nový TIP</h3><p>Nový TIP</p><p class="muted">Vyberte oblast, podsekci a specialistu. Formulář se otevře až po výběru specialisty. Povinné údaje vyplňte co nejpřesněji.</p></div>
+      <div class="portal-card"><span class="portal-letter">📌</span><h3>Jak sledovat vlastní TIPy</h3><p>Moje TIPy</p><p class="muted">V přehledu vidíte odeslané TIPy, TIPy k vyřízení a archiv. Sledujte stav, poslední zprávu a doplněné údaje obchodu.</p></div>
+      <div class="portal-card"><span class="portal-letter">🏢</span><h3>Jak pracovat s Partnery</h3><p>Partneři</p><p class="muted">Detail partnera obsahuje kontakty, produkty, odkazy a požadavky na změny. Partnerské odkazy patří jen sem.</p></div>
+      <div class="portal-card"><span class="portal-letter">📊</span><h3>Jak používat Sazebník provizí</h3><p>Kalkulačky</p><p class="muted">Sazebník čte ostrá data z DB a nabízí filtry podle sekce, oblasti, partnera, produktu, základu a provize.</p></div>
+      <div class="portal-card"><span class="portal-letter">📄</span><h3>Jak vytvořit výpověď</h3><p>Výpovědi</p><p class="muted">Vyberte partnera, doplňte údaje klienta a smlouvy. Náhled ukáže budoucí dokument a výpověď se ukládá do archivu.</p></div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

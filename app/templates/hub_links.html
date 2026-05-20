@@ -1,34 +1,24 @@
 {% extends "hub_base.html" %}
 {% block content %}
-<div class="hub-card" style="padding:26px;">
-  <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px;">
-    <div>
-      <h1 style="margin:0;color:var(--petrol);font-size:32px;">Odkazy ASTORIE</h1>
-      <p class="page-subtitle" style="margin-top:6px;">Interní firemní odkazy. Partnerské odkazy jsou pouze v detailu partnera a kalkulačky v sekci Kalkulačky.</p>
-    </div>
-    <form method="get" style="display:flex;gap:10px;min-width:420px;">
-      <input name="q" value="{{ q or '' }}" placeholder="Hledat odkaz, portál, kategorii…" style="flex:1;">
-      <button class="btn orange">Hledat</button>
-    </form>
-  </div>
-
-  <div class="ast-links-grid-v159">
+<div class="hub-card">
+  <h1>Odkazy ASTORIE</h1>
+  <p class="page-subtitle">Interní odkazy ASTORIE. Partnerské odkazy jsou pouze v detailu partnera a kalkulačky pouze v sekci Kalkulačky.</p>
+  <form method="get" class="hub-filters">
+    <input name="q" value="{{ q or '' }}" placeholder="Hledat interní odkaz, portál, kategorii…">
+    <button class="btn orange">Hledat</button>
+  </form>
+  <div class="portal-grid">
     {% for l in links %}
-      <article class="ast-link-card-v159">
-        <div class="ast-link-icon-v159">🔗</div>
-        <div class="ast-link-content-v159">
-          <h3>{{ l.title or 'Odkaz ASTORIE' }}</h3>
-          {% if l.category %}<div class="ast-link-cat-v159">{{ l.category }}</div>{% endif %}
-          {% if l.note %}<p>{{ l.note }}</p>{% endif %}
-        </div>
-        {% if l.url %}<a class="btn dark" href="{{ l.url }}" target="_blank" rel="noopener">Otevřít portál</a>{% endif %}
-      </article>
+      <div class="portal-card">
+        <span class="portal-letter">🔗</span>
+        <h3>{{ l.title or l.link_name or 'Odkaz' }}</h3>
+        <p>{{ l.category or 'ASTORIE' }}</p>
+        <p class="muted">{{ l.note or '' }}</p>
+        <a class="btn dark" href="{{ l.url }}" target="_blank">Otevřít portál</a>
+      </div>
     {% else %}
-      <div class="empty-state">Zatím nejsou načtené žádné interní odkazy ASTORIE. Zkontrolujte Admin → Odkazy, typ interní ASTORIE.</div>
+      <div class="empty-state">Zatím nejsou vložené interní odkazy ASTORIE.</div>
     {% endfor %}
   </div>
 </div>
-<style>
-.ast-links-grid-v159{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.ast-link-card-v159{display:flex;flex-direction:column;gap:12px;border:1px solid #DCE9ED;border-radius:18px;padding:18px;background:#fff;box-shadow:0 12px 28px rgba(0,61,76,.06);min-height:210px}.ast-link-icon-v159{width:44px;height:44px;border-radius:14px;background:#EEF7F8;display:grid;place-items:center;font-size:20px}.ast-link-content-v159{flex:1}.ast-link-content-v159 h3{margin:0;color:#003D4C;font-size:20px;line-height:1.2}.ast-link-cat-v159{margin-top:8px;font-weight:900;text-transform:uppercase;color:#102935}.ast-link-content-v159 p{color:#667883;font-weight:700;line-height:1.35}@media(max-width:1200px){.ast-links-grid-v159{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.ast-links-grid-v159{grid-template-columns:1fr}}
-</style>
 {% endblock %}
