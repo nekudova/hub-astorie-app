@@ -28,7 +28,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.2.2",
+        "version": "v1.5.5a",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -53,6 +53,7 @@ HUB_MODULES_V150 = [
     ("calcs", "🧮 Kalkulačky", "/hub/calculators"),
     ("partners", "🏢 Partneři", "/hub/partners"),
     ("contacts", "☎️ Kontakty", "/hub/contacts"),
+    ("links", "🔗 Odkazy ASTORIE", "/hub/links"),
     ("vypovedi", "📄 Výpovědi", "/hub/terminations"),
     ("formulare", "📑 Formuláře", "/hub/forms"),
     ("napoveda", "❓ Nápověda", "/hub/help"),
@@ -2893,6 +2894,93 @@ def fetch_one_safe_v084_(db: Session, sql: str, params: dict | None = None):
         return None
 
 
+
+def ensure_link_source_columns_v155a_(db: Session):
+    """v1.5.5a: pouze bezpečné doplnění metadat odkazů.
+    Nic nemaže. Starším záznamům doplní source_type jen tam, kde chybí.
+    """
+    if not table_exists_v084_(db, "partner_links"):
+        return
+    try:
+        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS source_type TEXT"))
+        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE"))
+        db.execute(text("ALTER TABLE partner_links ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT ''"))
+        # ASTORIE interní odkazy – bez partnera nebo s ASTORIE kódem.
+        db.execute(text("""
+            UPDATE partner_links
+            SET source_type = 'ASTORIE_LINK'
+            WHERE COALESCE(source_type,'') = ''
+              AND (
+                upper(COALESCE(partner_code,'')) IN ('', 'AST', 'ASTORIE', 'ASTORIEAS')
+                OR lower(COALESCE(category,'')) LIKE '%astorie%'
+                OR lower(COALESCE(category,'')) LIKE '%intern%'
+                OR lower(COALESCE(note,'')) LIKE '%astorie%'
+                OR lower(COALESCE(visibility,'')) LIKE '%astorie%'
+                OR lower(COALESCE(visibility,'')) LIKE '%intern%'
+              )
+        """))
+        # Online kalkulačky – jen záznamy, které nebyly interní. Je to fallback pro starší import bez source_type.
+        db.execute(text("""
+            UPDATE partner_links
+            SET source_type = 'ONLINE_CALCULATOR'
+            WHERE COALESCE(source_type,'') = ''
+              AND (
+                lower(COALESCE(category,'')) LIKE '%kalk%'
+                OR lower(COALESCE(title,'')) LIKE '%kalk%'
+                OR lower(COALESCE(note,'')) LIKE '%kalk%'
+                OR lower(COALESCE(visibility,'')) LIKE '%kalk%'
+                OR lower(COALESCE(visibility,'')) LIKE '%calculator%'
+              )
+        """))
+        # Vše ostatní je partnerský odkaz.
+        db.execute(text("""
+            UPDATE partner_links
+            SET source_type = 'PARTNER_LINK'
+            WHERE COALESCE(source_type,'') = ''
+        """))
+        db.commit()
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
+def link_source_where_v155a_(source_type: str, alias: str = "") -> str:
+    prefix = (alias + ".") if alias else ""
+    if source_type == "ASTORIE_LINK":
+        return f"""(
+            COALESCE({prefix}source_type,'') = 'ASTORIE_LINK'
+            OR (
+                COALESCE({prefix}source_type,'') = '' AND (
+                    upper(COALESCE({prefix}partner_code,'')) IN ('', 'AST', 'ASTORIE', 'ASTORIEAS')
+                    OR lower(COALESCE({prefix}category,'')) LIKE '%astorie%'
+                    OR lower(COALESCE({prefix}category,'')) LIKE '%intern%'
+                    OR lower(COALESCE({prefix}note,'')) LIKE '%astorie%'
+                    OR lower(COALESCE({prefix}visibility,'')) LIKE '%astorie%'
+                    OR lower(COALESCE({prefix}visibility,'')) LIKE '%intern%'
+                )
+            )
+        )"""
+    if source_type == "ONLINE_CALCULATOR":
+        return f"""(
+            COALESCE({prefix}source_type,'') = 'ONLINE_CALCULATOR'
+            OR (
+                COALESCE({prefix}source_type,'') = '' AND (
+                    lower(COALESCE({prefix}category,'')) LIKE '%kalk%'
+                    OR lower(COALESCE({prefix}title,'')) LIKE '%kalk%'
+                    OR lower(COALESCE({prefix}note,'')) LIKE '%kalk%'
+                    OR lower(COALESCE({prefix}visibility,'')) LIKE '%kalk%'
+                    OR lower(COALESCE({prefix}visibility,'')) LIKE '%calculator%'
+                )
+            )
+        )"""
+    return f"""(
+        COALESCE({prefix}source_type,'') = 'PARTNER_LINK'
+        OR COALESCE({prefix}source_type,'') = ''
+    )"""
+
+
 @router.get("/hub/partners", response_class=HTMLResponse)
 def hub_partners_v084(
     request: Request,
@@ -2986,11 +3074,14 @@ def hub_partners_v084(
             """, {"code": selected})
 
         if selected and table_exists_v084_(db, "partner_links"):
-            links = fetch_all_safe_v084_(db, """
+            ensure_link_source_columns_v155a_(db)
+            links = fetch_all_safe_v084_(db, f"""
                 SELECT *
                 FROM partner_links
                 WHERE upper(COALESCE(partner_code,'')) = upper(:code)
                   AND COALESCE(is_active, TRUE) = TRUE
+                  AND COALESCE(is_archived, FALSE) = FALSE
+                  AND {link_source_where_v155a_("PARTNER_LINK")}
                 LIMIT 500
             """, {"code": selected})
 
@@ -3117,15 +3208,12 @@ def hub_calculators_v084(request: Request, q: str = "", db: Session = Depends(ge
     rates = []
 
     if table_exists_v084_(db, "partner_links"):
+        ensure_link_source_columns_v155a_(db)
         params = {}
-        where = """
+        where = f"""
             WHERE COALESCE(l.is_active, TRUE) = TRUE
-              AND (
-                lower(COALESCE(l.category, '')) LIKE '%kalk%'
-                OR lower(COALESCE(l.title, '')) LIKE '%kalk%'
-                OR lower(COALESCE(l.note, '')) LIKE '%kalk%'
-                OR lower(COALESCE(l.url, '')) LIKE '%kalk%'
-              )
+              AND COALESCE(l.is_archived, FALSE) = FALSE
+              AND {link_source_where_v155a_("ONLINE_CALCULATOR", "l")}
         """
         if q:
             where += """
@@ -3210,38 +3298,66 @@ def hub_forms_v084(request: Request, q: str = "", db: Session = Depends(get_db))
     })
 
 
-@router.get("/hub/help", response_class=HTMLResponse)
-def hub_help_v084(request: Request, q: str = "", db: Session = Depends(get_db)):
-    # V této fázi použijeme FAQ/odkazy z partnerů jako první datový základ nápovědy.
-    faqs = []
+@router.get("/hub/links", response_class=HTMLResponse)
+def hub_links_v155a(request: Request, q: str = "", db: Session = Depends(get_db)):
+    """Produkční Odkazy ASTORIE: pouze interní ASTORIE odkazy.
+    Nezobrazuje partnerské odkazy ani online kalkulačky.
+    """
     links = []
-
     if table_exists_v084_(db, "partner_links"):
+        ensure_link_source_columns_v155a_(db)
         params = {}
-        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        where = f"""
+            WHERE COALESCE(is_active, TRUE) = TRUE
+              AND COALESCE(is_archived, FALSE) = FALSE
+              AND {link_source_where_v155a_("ASTORIE_LINK")}
+        """
         if q:
             where += """
               AND (
                 lower(COALESCE(title, '')) LIKE :q OR
                 lower(COALESCE(note, '')) LIKE :q OR
-                lower(COALESCE(category, '')) LIKE :q
+                lower(COALESCE(category, '')) LIKE :q OR
+                lower(COALESCE(url, '')) LIKE :q
               )
             """
             params["q"] = f"%{q.lower()}%"
-
         links = fetch_all_safe_v084_(db, f"""
             SELECT *
             FROM partner_links
             {where}
-            ORDER BY category, title
+            ORDER BY COALESCE(category,''), title
+            LIMIT 300
+        """, params)
+    return hub_render_v083_(request, "hub_links.html", {
+        "active": "links",
+        "q": q,
+        "links": links,
+    })
+
+
+@router.get("/hub/help", response_class=HTMLResponse)
+def hub_help_v155a(request: Request, q: str = "", db: Session = Depends(get_db)):
+    """Samostatná Nápověda. FAQ a Odkazy ASTORIE se nemíchají."""
+    articles = []
+    # Pokud bude později vytvořena admin tabulka help_articles, použijeme ji.
+    if table_exists_v084_(db, "help_articles"):
+        params = {}
+        where = "WHERE COALESCE(is_active, TRUE) = TRUE"
+        if q:
+            where += " AND (lower(COALESCE(title,'')) LIKE :q OR lower(COALESCE(body,'')) LIKE :q OR lower(COALESCE(category,'')) LIKE :q)"
+            params["q"] = f"%{q.lower()}%"
+        articles = fetch_all_safe_v084_(db, f"""
+            SELECT * FROM help_articles {where}
+            ORDER BY COALESCE(sort_order,100), COALESCE(category,''), title
             LIMIT 200
         """, params)
-
     return hub_render_v083_(request, "hub_help.html", {
         "active": "help",
         "q": q,
-        "faqs": faqs,
-        "links": links,
+        "articles": articles,
+        "links": [],
+        "faqs": [],
     })
 
 
@@ -8545,3 +8661,98 @@ def release_1_4_9_status(db: Session = Depends(get_db)):
 @router.get("/api/release-1-5-2/status")
 def release_1_5_2_status(db: Session = Depends(get_db)):
     return {"ok": True, "version": "1.5.2-admin-contacts-top-form-table-ux-safe", "safe": True, "db_changed": False, "changed_modules": ["admin_contacts_ui"], "unchanged_modules": ["users", "permissions", "partners", "tips", "rates", "terminations", "email", "products", "links"]}
+
+
+# --- v1.5.5a: safe admin CRUD helpers + release check ----------------------
+@router.get("/api/release-1-5-5a/status")
+def release_155a_status(db: Session = Depends(get_db)):
+    counts = {}
+    try:
+        ensure_link_source_columns_v155a_(db)
+    except Exception:
+        pass
+    for name, sql in {
+        "astorie_links": "SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND COALESCE(is_archived,FALSE)=FALSE AND source_type='ASTORIE_LINK'",
+        "online_calculators": "SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND COALESCE(is_archived,FALSE)=FALSE AND source_type='ONLINE_CALCULATOR'",
+        "partner_links": "SELECT COUNT(*) FROM partner_links WHERE COALESCE(is_active, TRUE)=TRUE AND COALESCE(is_archived,FALSE)=FALSE AND source_type='PARTNER_LINK'",
+        "rates": "SELECT COUNT(*) FROM commission_rates WHERE COALESCE(is_active, TRUE)=TRUE",
+    }.items():
+        try:
+            counts[name] = db.execute(text(sql)).scalar() if table_exists_v084_(db, sql.split('FROM ')[1].split()[0]) else 0
+        except Exception:
+            counts[name] = None
+    return {
+        "ok": True,
+        "version": "1.5.5a-link-source-help-crud-safe",
+        "safe": True,
+        "db_changed": "only metadata columns source_type/is_archived on partner_links if missing; no deletes, no imports",
+        "changed_modules": ["hub_links", "hub_help", "hub_calculators_source_filter", "partner_detail_link_filter", "admin_crud_routes"],
+        "unchanged_modules": ["tips", "users", "permissions", "email", "terminations", "rates_data", "login"],
+        "counts": counts,
+    }
+
+
+def _safe_redirect_back(default_url: str):
+    return RedirectResponse(default_url, status_code=303)
+
+@router.post("/admin/links/{item_id}/archive")
+def archive_link_v155a(item_id: int, db: Session = Depends(get_db)):
+    ensure_link_source_columns_v155a_(db)
+    item = db.query(PartnerLink).filter(PartnerLink.id == item_id).first()
+    if item:
+        db.execute(text("UPDATE partner_links SET is_archived = TRUE, is_active = FALSE WHERE id = :id"), {"id": item_id})
+        db.commit()
+    return _safe_redirect_back("/admin/links")
+
+@router.post("/admin/links/{item_id}/delete")
+def delete_link_v155a(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerLink).filter(PartnerLink.id == item_id).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    return _safe_redirect_back("/admin/links")
+
+@router.post("/admin/products/{item_id}/archive")
+def archive_product_v155a(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerProduct).filter(PartnerProduct.id == item_id).first()
+    if item:
+        item.is_active = False
+        db.commit()
+    return _safe_redirect_back("/admin/products")
+
+@router.post("/admin/products/{item_id}/delete")
+def delete_product_v155a(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(PartnerProduct).filter(PartnerProduct.id == item_id).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    return _safe_redirect_back("/admin/products")
+
+@router.post("/admin/contact-roles/{role_id}/delete")
+def delete_contact_role_v155a(role_id: int, db: Session = Depends(get_db)):
+    if table_exists_v084_(db, "contact_roles"):
+        db.execute(text("DELETE FROM contact_roles WHERE id = :id"), {"id": role_id})
+        db.commit()
+    return _safe_redirect_back("/admin/contact-roles")
+
+@router.post("/admin/sections/{section_code}/archive")
+def archive_section_v155a(section_code: str, db: Session = Depends(get_db)):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("UPDATE hub_sections SET is_active = FALSE WHERE upper(section_code)=upper(:c)"), {"c": section_code})
+    db.commit()
+    return _safe_redirect_back("/admin/sections")
+
+@router.post("/admin/subsections/{subsection_code}/archive")
+def archive_subsection_v155a(subsection_code: str, db: Session = Depends(get_db)):
+    ensure_taxonomy_tables_(db)
+    db.execute(text("UPDATE hub_subsections SET is_active = FALSE WHERE upper(subsection_code)=upper(:c)"), {"c": subsection_code})
+    db.commit()
+    return _safe_redirect_back("/admin/sections")
+
+@router.post("/admin/partners/{partner_code}/archive")
+def archive_partner_v155a(partner_code: str, db: Session = Depends(get_db)):
+    item = db.query(Partner).filter(Partner.partner_code == partner_code.upper()).first()
+    if item:
+        item.is_active = False
+        db.commit()
+    return _safe_redirect_back("/admin/partners")
