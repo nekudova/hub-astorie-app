@@ -1,1 +1,1 @@
-v1.5.5c-admin-checkbox-ui-polish-safe
+v1.5.5d-email-delivery-activation-safe
