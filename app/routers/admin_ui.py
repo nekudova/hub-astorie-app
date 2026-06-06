@@ -28,7 +28,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.5.5d",
+        "version": "v1.5.5a",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1515,8 +1515,8 @@ def advisor_create(
     db.commit()
 
     try:
-        subj, body, html = email_template("new_user", name=name, email=email.lower().strip(), password=password)
-        send_email(db, email.lower().strip(), subj, body, html_body=html, event_type="user_created", entity_type="user", entity_id=advisor_id or email, created_by_email="admin@astorie.local")
+        subj, body = email_template("new_user", name=name, email=email.lower().strip(), password=password)
+        send_email(db, email.lower().strip(), subj, body, event_type="user_created", entity_type="user", entity_id=advisor_id or email, created_by_email="admin@astorie.local")
     except Exception:
         try:
             db.rollback()
@@ -1610,8 +1610,8 @@ def advisor_reset_password(
     try:
         row = db.execute(text("SELECT email, name FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
         if row and row.get("email"):
-            subj, body, html = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
-            send_email(db, row.get("email"), subj, body, html_body=html, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
+            subj, body = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
+            send_email(db, row.get("email"), subj, body, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
     except Exception:
         try:
             db.rollback()
@@ -8616,31 +8616,22 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
         ORDER BY created_at DESC
         LIMIT 100
     """)).mappings().all()
-    last_error = db.execute(text("""
-        SELECT created_at, error
-        FROM email_logs
-        WHERE status = 'error' AND COALESCE(error,'') <> ''
-        ORDER BY created_at DESC
-        LIMIT 1
-    """)).mappings().first()
-    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs, "last_error": last_error})
+    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs})
 
 
 @router.post("/admin/email/test")
 def admin_email_test(to_email: str = Form(...), db: Session = Depends(get_db)):
     ensure_email_tables(db)
-    ok, err = send_email(
+    send_email(
         db,
         to_email,
         "Test e-mailu – HUB ASTORIE",
         "Dobrý den,\n\ntoto je testovací e-mail z aplikace HUB ASTORIE. Pokud Vám přišel, SMTP napojení funguje.\n\nASTORIE a.s.",
-        html_body="<p>Dobrý den,</p><p>toto je testovací e-mail z aplikace <b>HUB ASTORIE</b>.</p><p>Pokud Vám přišel, SMTP napojení funguje.</p><p>ASTORIE a.s.</p>",
         event_type="email_test",
         entity_type="system",
         created_by_email="admin@astorie.local",
     )
-    suffix = "sent=1" if ok else "error=1"
-    return RedirectResponse(f"/admin/email?{suffix}", status_code=303)
+    return RedirectResponse("/admin/email", status_code=303)
 
 
 @router.get("/api/release-1-4-8/status")
@@ -8660,37 +8651,6 @@ def release_1_4_8_status(db: Session = Depends(get_db)):
         "email_log_count": int(cnt or 0),
     }
 
-
-
-
-@router.get("/api/release-1-5-5d/status")
-def release_1_5_5d_status(db: Session = Depends(get_db)):
-    ensure_email_tables(db)
-    cfg = smtp_config_status()
-    cnt = db.execute(text("SELECT COUNT(*) FROM email_logs")).scalar()
-    recent = db.execute(text("""
-        SELECT created_at, event_type, recipient_email, subject, status, error
-        FROM email_logs
-        ORDER BY created_at DESC
-        LIMIT 5
-    """)).mappings().all()
-    return {
-        "ok": True,
-        "version": "1.5.5d-email-delivery-activation-safe",
-        "safe": True,
-        "db_changed": "additive_only_email_logs_if_missing",
-        "smtp_configured": cfg.get("configured"),
-        "smtp_enabled": cfg.get("enabled"),
-        "smtp_host": cfg.get("host"),
-        "smtp_port": cfg.get("port"),
-        "smtp_security": cfg.get("security"),
-        "smtp_from": cfg.get("from_email"),
-        "missing": cfg.get("missing"),
-        "email_log_count": int(cnt or 0),
-        "recent": [dict(r) for r in recent],
-        "changed_modules": ["email_service", "admin_email_diagnostics", "user_created_email", "password_reset_email", "tip_email_logging"],
-        "untouched": ["TIP data", "partners", "rates", "terminations", "import", "production source routing", "admin CRUD"],
-    }
 
 @router.get("/api/release-1-4-9/status")
 def release_1_4_9_status(db: Session = Depends(get_db)):
@@ -8961,41 +8921,3 @@ def release_1_5_5c_status():
         ],
         "note": "Pouze vizuální oprava checkboxů/přepínačů v Adminu. Backend, DB a produkční čtení dat beze změny."
     }
-
-
-# -------------------------------------------------------------------
-# v1.5.5e – SMTP Diagnostics SAFE
-# Pouze lepší diagnostika e-mailů. Nemění DB data ani business moduly.
-# -------------------------------------------------------------------
-@router.get("/api/release-1-5-5e/status")
-def release_1_5_5e_status(db: Session = Depends(get_db)):
-    ensure_email_tables(db)
-    cfg = public_smtp_diagnostics()
-    last = db.execute(text("""
-        SELECT created_at, status, error, smtp_host
-        FROM email_logs
-        ORDER BY created_at DESC
-        LIMIT 1
-    """)).mappings().first()
-    return {
-        "ok": True,
-        "version": "1.5.5e-email-diagnostics-safe",
-        "safe": True,
-        "db_changed": False,
-        "changed_modules": ["email_diagnostics", "smtp_error_visibility"],
-        "unchanged_modules": ["tips", "partners", "rates", "terminations", "admin_crud", "production_hub", "import"],
-        "smtp": cfg,
-        "last_email_event": dict(last) if last else None,
-    }
-
-@router.get("/api/email/diagnostics")
-def api_email_diagnostics(db: Session = Depends(get_db)):
-    ensure_email_tables(db)
-    cfg = public_smtp_diagnostics()
-    last_errors = db.execute(text("""
-        SELECT created_at, event_type, recipient_email, subject, status, error, smtp_host
-        FROM email_logs
-        ORDER BY created_at DESC
-        LIMIT 10
-    """)).mappings().all()
-    return {"ok": True, "smtp": cfg, "last_events": [dict(r) for r in last_errors]}
