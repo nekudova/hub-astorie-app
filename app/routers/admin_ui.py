@@ -8616,7 +8616,14 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
         ORDER BY created_at DESC
         LIMIT 100
     """)).mappings().all()
-    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs})
+    last_error = db.execute(text("""
+        SELECT created_at, error
+        FROM email_logs
+        WHERE status = 'error' AND COALESCE(error,'') <> ''
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)).mappings().first()
+    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs, "last_error": last_error})
 
 
 @router.post("/admin/email/test")
@@ -8954,3 +8961,41 @@ def release_1_5_5c_status():
         ],
         "note": "Pouze vizuální oprava checkboxů/přepínačů v Adminu. Backend, DB a produkční čtení dat beze změny."
     }
+
+
+# -------------------------------------------------------------------
+# v1.5.5e – SMTP Diagnostics SAFE
+# Pouze lepší diagnostika e-mailů. Nemění DB data ani business moduly.
+# -------------------------------------------------------------------
+@router.get("/api/release-1-5-5e/status")
+def release_1_5_5e_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = public_smtp_diagnostics()
+    last = db.execute(text("""
+        SELECT created_at, status, error, smtp_host
+        FROM email_logs
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)).mappings().first()
+    return {
+        "ok": True,
+        "version": "1.5.5e-email-diagnostics-safe",
+        "safe": True,
+        "db_changed": False,
+        "changed_modules": ["email_diagnostics", "smtp_error_visibility"],
+        "unchanged_modules": ["tips", "partners", "rates", "terminations", "admin_crud", "production_hub", "import"],
+        "smtp": cfg,
+        "last_email_event": dict(last) if last else None,
+    }
+
+@router.get("/api/email/diagnostics")
+def api_email_diagnostics(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = public_smtp_diagnostics()
+    last_errors = db.execute(text("""
+        SELECT created_at, event_type, recipient_email, subject, status, error, smtp_host
+        FROM email_logs
+        ORDER BY created_at DESC
+        LIMIT 10
+    """)).mappings().all()
+    return {"ok": True, "smtp": cfg, "last_events": [dict(r) for r in last_errors]}

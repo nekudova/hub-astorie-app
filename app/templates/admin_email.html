@@ -11,7 +11,13 @@
   <div class="alert success">Testovací e-mail byl odeslán. Zkontrolujte schránku příjemce.</div>
 {% endif %}
 {% if request.query_params.get('error') %}
-  <div class="alert danger">Test e-mailu skončil chybou. Detail je v posledních e-mailových událostech níže.</div>
+  <div class="alert danger"><b>Test e-mailu skončil chybou.</b><br>
+    {% if last_error and last_error.error %}
+      Poslední chyba: <code>{{ last_error.error }}</code>
+    {% else %}
+      Detail je v posledních e-mailových událostech níže.
+    {% endif %}
+  </div>
 {% endif %}
 
 <div class="grid-2">
@@ -74,14 +80,20 @@
 <section class="card mt">
   <h2>Proměnné pro Render</h2>
   <pre>EMAIL_ENABLED=true
-SMTP_HOST=smtp.vasedomena.cz
+SMTP_HOST=smtp.office365.com
 SMTP_PORT=587
 SMTP_SECURITY=starttls
-SMTP_USER=odesilatel@astorieas.cz
+SMTP_USER=nekudova@astorieas.cz
 SMTP_PASSWORD=********
-SMTP_FROM=HUB ASTORIE &lt;odesilatel@astorieas.cz&gt;
-SMTP_REPLY_TO=nekudova@astorieas.cz</pre>
+SMTP_FROM=HUB ASTORIE &lt;backoffice@astorieas.cz&gt;
+SMTP_REPLY_TO=backoffice@astorieas.cz</pre>
   <p class="muted">Podporované zabezpečení: <b>starttls</b>, <b>ssl</b>, <b>none</b>. Pro většinu firemních SMTP se používá port 587 + starttls.</p>
+</section>
+
+<section class="card mt">
+  <h2>Diagnostika</h2>
+  <p class="muted">Pokud test selže, otevřete diagnostický endpoint. Nezobrazuje heslo.</p>
+  <a class="btn" href="/api/email/diagnostics" target="_blank">Otevřít SMTP diagnostiku</a>
 </section>
 
 <section class="card mt">
