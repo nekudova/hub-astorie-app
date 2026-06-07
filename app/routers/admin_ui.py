@@ -16,7 +16,28 @@ from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
 from app.services.passwords import hash_password
-from app.services.mailer import send_email, smtp_config_status, ensure_email_tables, email_template, send_template_email, EMAIL_VERSION, public_smtp_diagnostics
+from app.services import mailer as mailer_service
+
+send_email = mailer_service.send_email
+smtp_config_status = mailer_service.smtp_config_status
+ensure_email_tables = mailer_service.ensure_email_tables
+email_template = mailer_service.email_template
+EMAIL_VERSION = getattr(mailer_service, "EMAIL_VERSION", "1.6.0a-mail-core-import-hotfix-safe")
+public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
+
+def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
+    """Compatibility wrapper. Keeps admin_ui import-safe even if Render has a stale mailer module during deployment."""
+    if hasattr(mailer_service, "send_template_email"):
+        return mailer_service.send_template_email(
+            db, to_email, template_key, data=data, event_type=event_type,
+            entity_type=entity_type, entity_id=entity_id, created_by_email=created_by_email
+        )
+    subject, body, html = email_template(template_key, **(data or {}))
+    return send_email(
+        db, to_email, subject, body, html_body=html, event_type=event_type,
+        entity_type=entity_type, entity_id=entity_id, created_by_email=created_by_email,
+        template_key=template_key
+    )
 from app.services.importer import IMPORT_HANDLERS
 from app.services.ares import fetch_ares_subject
 
