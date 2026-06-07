@@ -78,18 +78,24 @@
       </thead>
       <tbody>
       {% for p in policies %}
+        {% set form_id = 'policy_' ~ loop.index %}
         <tr>
-          <form method="post" action="/admin/email/policy/update">
-            <td><b>{{ p.section_code }}</b><br><span class="muted">{{ p.section_name or '—' }}</span><input type="hidden" name="section_code" value="{{ p.section_code }}"></td>
-            <td><input type="hidden" name="event_type" value="{{ p.event_type or 'tip_created' }}">Nový TIP</td>
-            <td><label class="inline-check"><input type="checkbox" name="send_to_adviser" value="1" {% if p.send_to_adviser %}checked{% endif %}> ano</label></td>
-            <td><label class="inline-check"><input type="checkbox" name="send_to_specialist" value="1" {% if p.send_to_specialist %}checked{% endif %}> ano</label></td>
-            <td><label class="inline-check"><input type="checkbox" name="send_to_bo" value="1" {% if p.send_to_bo %}checked{% endif %}> ano</label></td>
-            <td><input name="bo_email" type="email" value="{{ p.bo_email or cfg.reply_to or 'backoffice@astorieas.cz' }}" style="min-width:220px"></td>
-            <td><label class="inline-check"><input type="checkbox" name="is_active" value="1" {% if p.is_active %}checked{% endif %}> aktivní</label></td>
-            <td><input name="note" value="{{ p.note or '' }}" placeholder="interní poznámka"></td>
-            <td><button class="btn small" type="submit">Uložit</button></td>
-          </form>
+          <td>
+            <form id="{{ form_id }}" method="post" action="/admin/email/policy/update"></form>
+            <b>{{ p.section_code }}</b><br>
+            <span class="muted">{{ p.section_name or '—' }}</span>
+            <input form="{{ form_id }}" type="hidden" name="section_code" value="{{ p.section_code }}">
+          </td>
+          <td>
+            <input form="{{ form_id }}" type="hidden" name="event_type" value="{{ p.event_type or 'tip_created' }}">Nový TIP
+          </td>
+          <td><label class="inline-check"><input form="{{ form_id }}" type="checkbox" name="send_to_adviser" value="1" {% if p.send_to_adviser %}checked{% endif %}> ano</label></td>
+          <td><label class="inline-check"><input form="{{ form_id }}" type="checkbox" name="send_to_specialist" value="1" {% if p.send_to_specialist %}checked{% endif %}> ano</label></td>
+          <td><label class="inline-check"><input form="{{ form_id }}" type="checkbox" name="send_to_bo" value="1" {% if p.send_to_bo %}checked{% endif %}> ano</label></td>
+          <td><input form="{{ form_id }}" name="bo_email" type="email" value="{{ p.bo_email or cfg.reply_to or 'backoffice@astorieas.cz' }}" style="min-width:220px"></td>
+          <td><label class="inline-check"><input form="{{ form_id }}" type="checkbox" name="is_active" value="1" {% if p.is_active %}checked{% endif %}> aktivní</label></td>
+          <td><input form="{{ form_id }}" name="note" value="{{ p.note or '' }}" placeholder="interní poznámka"></td>
+          <td><button form="{{ form_id }}" class="btn small" type="submit">Uložit</button></td>
         </tr>
       {% else %}
         <tr><td colspan="9" class="muted">Zatím nejsou vytvořená pravidla. Obnovte stránku nebo zkontrolujte sekce.</td></tr>

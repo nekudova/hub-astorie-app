@@ -7,6 +7,9 @@
 <div class="admin-tips-v141">
   <h1 class="page-title">Centrální evidence TIPů</h1>
   <p class="page-subtitle">Přehled všech TIPů, jejich stavů, specialistů, poradce, smluv a objemu obchodu.</p>
+  {% if request.query_params.get('archived') %}<div class="alert success">TIP byl archivován.</div>{% endif %}
+  {% if request.query_params.get('deleted') %}<div class="alert success">TIP byl trvale smazán administrátorem.</div>{% endif %}
+  {% if request.query_params.get('not_found') %}<div class="alert danger">TIP nebyl nalezen.</div>{% endif %}
 
   <div class="dashboard-grid">
     <div class="metric-card"><span>Celkem</span><strong>{{ stats.total or 0 }}</strong></div>
@@ -38,7 +41,17 @@
         <div class="tip-cell-v141"><small>Specialista</small><span class="line">{{ r.specialist_name or '—' }}</span><span class="muted">{{ r.specialist_email or '' }}</span></div>
         <div class="tip-cell-v141"><small>Odbornost</small><span class="line">{{ r.section_name or r.section_code }}</span><span class="muted">{{ r.subsection_name or r.subsection_code }}</span></div>
         <div class="tip-cell-v141"><small>Smlouva / obchod</small><span class="line">{{ r.policy_no or '—' }}</span><span class="tip-money-v141">{{ r.final_volume or r.potential_amount or '—' }}</span>{% if r.next_business %}<span class="muted">Další obchod: {{ r.next_business }}</span>{% endif %}</div>
-        <div class="tip-cell-v141"><small>Stav</small><span class="tip-status-v141 {% if r.status == 'Nový' %}st-new{% elif r.status == 'V řešení' %}st-progress{% elif r.status == 'Sjednáno' %}st-won{% elif r.status == 'Storno' %}st-lost{% else %}st-archive{% endif %}">{{ r.status }}</span><div class="tip-date-v141">{{ r.last_update_at or r.created_at }}</div><a class="tip-detail-btn-v141" href="/admin/tips/{{ r.id }}">Detail</a></div>
+        <div class="tip-cell-v141"><small>Stav</small><span class="tip-status-v141 {% if r.status == 'Nový' %}st-new{% elif r.status == 'V řešení' %}st-progress{% elif r.status == 'Sjednáno' %}st-won{% elif r.status == 'Storno' %}st-lost{% else %}st-archive{% endif %}">{{ r.status }}</span><div class="tip-date-v141">{{ r.last_update_at or r.created_at }}</div><a class="tip-detail-btn-v141" href="/admin/tips/{{ r.id }}">Detail</a>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            {% if r.status != 'Archiv' %}
+            <form method="post" action="/admin/tips/{{ r.id }}/archive" onsubmit="return confirm('Archivovat tento TIP? Data zůstanou zachována.');"><button class="btn small" type="submit">Archiv</button></form>
+            {% endif %}
+            <form method="post" action="/admin/tips/{{ r.id }}/delete" onsubmit="return confirm('Opravdu trvale smazat tento TIP? Tato akce odstraní TIP z evidence.');">
+              <input type="hidden" name="confirm_delete" value="SMAZAT">
+              <button class="btn small danger" type="submit">Smazat</button>
+            </form>
+          </div>
+        </div>
       </div>
       {% else %}
       <div class="tip-empty-v141">Zatím nejsou žádné TIPy.</div>

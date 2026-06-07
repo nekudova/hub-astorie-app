@@ -4433,6 +4433,73 @@ def admin_tip_bo_update_v090(
     return RedirectResponse(f"/admin/tips/{tip_id}", status_code=303)
 
 
+@router.post("/admin/tips/{tip_id}/archive")
+def admin_tip_archive_v182(
+    tip_id: str,
+    db: Session = Depends(get_db),
+):
+    """Admin-only safe archive of a TIP. Does not delete the record."""
+    ensure_tip_workflow_v090_(db)
+    user = current_bo_user_v090_()
+    old = fetch_one_safe_v084_(db, "SELECT status, client_name FROM tips WHERE id = :id", {"id": tip_id})
+    if not old:
+        return RedirectResponse("/admin/tips?not_found=1", status_code=303)
+    old_status = old.get("status") or ""
+    db.execute(text("""
+        UPDATE tips
+        SET status='Archiv', archived_at=COALESCE(archived_at, now()), last_update_at=now()
+        WHERE id=:id
+    """), {"id": tip_id})
+    db.execute(text("""
+        INSERT INTO tip_updates
+          (id, tip_id, author_name, author_email, author_role, update_type, old_status, new_status, internal_note)
+        VALUES
+          (:uid, :tip_id, :name, :email, 'BackOffice/Admin', 'Archivace Adminem', :old_status, 'Archiv', :note)
+    """), {
+        "uid": str(uuid.uuid4()),
+        "tip_id": tip_id,
+        "name": user.get("name", "Admin ASTORIE"),
+        "email": user.get("email", "admin@astorie.local"),
+        "old_status": old_status,
+        "note": "TIP byl archivován administrátorem. Data nejsou smazána.",
+    })
+    db.commit()
+    try:
+        safe_audit(db, user.get("email", "admin@astorie.local"), "ARCHIVE", "tips", tip_id, {"status": old_status}, {"status": "Archiv"}, "Admin archivoval TIP")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/tips?archive=1&archived=1", status_code=303)
+
+
+@router.post("/admin/tips/{tip_id}/delete")
+def admin_tip_delete_v182(
+    tip_id: str,
+    confirm_delete: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    """Controlled admin hard delete. Triggered only by explicit form submit."""
+    ensure_tip_workflow_v090_(db)
+    if confirm_delete != "SMAZAT":
+        return RedirectResponse(f"/admin/tips/{tip_id}?delete_confirm_error=1", status_code=303)
+    user = current_bo_user_v090_()
+    old = fetch_one_safe_v084_(db, "SELECT * FROM tips WHERE id = :id", {"id": tip_id})
+    if not old:
+        return RedirectResponse("/admin/tips?not_found=1", status_code=303)
+    old_snapshot = dict(old)
+    try:
+        db.execute(text("DELETE FROM tip_updates WHERE tip_id = :id"), {"id": tip_id})
+    except Exception:
+        try: db.rollback()
+        except Exception: pass
+    db.execute(text("DELETE FROM tips WHERE id = :id"), {"id": tip_id})
+    db.commit()
+    try:
+        safe_audit(db, user.get("email", "admin@astorie.local"), "DELETE", "tips", tip_id, old_snapshot, {}, "Admin trvale smazal TIP")
+    except Exception:
+        pass
+    return RedirectResponse("/admin/tips?deleted=1", status_code=303)
+
+
 @router.get("/hub/specialist-tips", response_class=HTMLResponse)
 def hub_specialist_tips_v090(
     request: Request,
@@ -9639,5 +9706,51 @@ def release_1_8_1_status(db: Session = Depends(get_db)):
         "smtp_configured": cfg.get("configured"),
         "smtp_host": cfg.get("host"),
         "policy_count": policy_count,
+        "default_bo_email": backoffice_tip_email_v170b_(),
+    }
+
+
+@router.get("/api/release-1-8-2/status")
+def release_1_8_2_status(db: Session = Depends(get_db)):
+    seed_error = ""
+    try:
+        ensure_email_tables(db)
+        ensure_email_policy_tables(db)
+        seed_email_policy_from_sections(db)
+        policy_count = db.execute(text("SELECT COUNT(*) FROM hub_email_policy")).scalar() or 0
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        policy_count = 0
+        seed_error = str(exc)
+    cfg = smtp_config_status()
+    tip_count = 0
+    try:
+        tip_count = db.execute(text("SELECT COUNT(*) FROM tips")).scalar() or 0
+    except Exception:
+        pass
+    return {
+        "ok": True,
+        "version": "1.8.2-mail-policy-admin-tips-functional-safe",
+        "safe": True,
+        "db_changed": "pouze aditivní/konfigurační hub_email_policy; TIPy lze ručně archivovat/smazat pouze Admin akcí",
+        "data_smazana": False,
+        "changed_modules": [
+            "email_policy_seed_guaranteed",
+            "admin_email_policy_forms",
+            "admin_tip_archive_delete_controls",
+            "release_status"
+        ],
+        "unchanged_modules": [
+            "smtp_delivery", "tip_create_data", "partners", "contacts", "links", "products",
+            "rates", "terminations", "login", "permissions"
+        ],
+        "smtp_configured": cfg.get("configured"),
+        "smtp_host": cfg.get("host"),
+        "policy_count": policy_count,
+        "tips_count": tip_count,
+        "seed_error": seed_error,
         "default_bo_email": backoffice_tip_email_v170b_(),
     }

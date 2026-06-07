@@ -27,6 +27,22 @@
 </section>
 
 <section class="card section-space">
+  <h2>Admin akce</h2>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    {% if tip.status != 'Archiv' %}
+    <form method="post" action="/admin/tips/{{ tip.id }}/archive" onsubmit="return confirm('Archivovat tento TIP? Data zůstanou zachována.');">
+      <button class="btn" type="submit">Archivovat TIP</button>
+    </form>
+    {% endif %}
+    <form method="post" action="/admin/tips/{{ tip.id }}/delete" onsubmit="return confirm('Opravdu trvale smazat tento TIP? Tato akce odstraní TIP z evidence.');">
+      <input type="hidden" name="confirm_delete" value="SMAZAT">
+      <button class="btn danger" type="submit">Smazat TIP</button>
+    </form>
+  </div>
+  <p class="muted">Archivace je vratnější provozní krok. Smazání je ruční administrátorská akce a provede se jen po potvrzení.</p>
+</section>
+
+<section class="card section-space">
   <h2>BO aktualizace</h2>
   <form method="post" action="/admin/tips/{{ tip.id }}/bo-update" class="admin-form-grid">
     <div>
