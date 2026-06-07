@@ -152,12 +152,12 @@
       <div class="tip-form-grid-v135">
         <div class="tip-field-v135"><label>Klient <span class="tip-required-v139">*</span></label><input name="client_name" placeholder="jméno / název klienta" required></div>
         <div class="tip-field-v135"><label>Kontakt na klienta <span class="tip-required-v139">*</span></label><input name="client_phone" placeholder="telefon, e-mail" required></div>
-        <div class="tip-field-v135"><label>RČ / IČO / datum nar. <span class="tip-required-v139">*</span></label><input name="client_identifier" placeholder="identifikace" required></div>
-        <div class="tip-field-v135"><label>Odhad potenciálu / objemu</label><input name="potential_amount" placeholder="volitelné – doplní případně specialista"></div>
-        <div class="tip-field-v135"><label>Smlouva č.</label><input name="policy_no" placeholder="volitelné – doplní specialista / BO"></div>
-        <div class="tip-field-v135"><label>Datum uzavření</label><input name="closed_at_input" type="date"></div>
-        <div class="tip-field-v135"><label>Výše obchodu / pojistné</label><input name="final_volume" placeholder="volitelné – doplní specialista"></div>
-        <div class="tip-field-v135"><label>Další obchod</label><select class="tip-select-v140" name="next_business"><option value="">-- doplní specialista / BO --</option><option>ANO - má zájem</option><option>NE - nemá zájem</option><option>Nevím / prověřit</option></select></div>
+        <div class="tip-field-v135"><label>RČ / IČO / datum nar. <span style="color:#607681;font-weight:800;text-transform:none;">(doporučené)</span></label><input name="client_identifier" placeholder="nepovinné – pomůže specialistovi s identifikací klienta"></div>
+        <input type="hidden" name="potential_amount" value="">
+        <input type="hidden" name="policy_no" value="">
+        <input type="hidden" name="closed_at_input" value="">
+        <input type="hidden" name="final_volume" value="">
+        <input type="hidden" name="next_business" value="">
         <div class="tip-field-v135 span-3"><label>Poznámka / popis případu</label><textarea name="adviser_note" placeholder="Volitelně doplňte situaci klienta, co řešíte a co očekáváte od specialisty."></textarea></div>
       </div>
 
