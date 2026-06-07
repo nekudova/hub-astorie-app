@@ -3,9 +3,22 @@
 <section class="page-head">
   <div>
     <h1>E-maily / SMTP</h1>
-    <p>Centrální nastavení odesílání e-mailů pro TIPy, založení uživatele, reset hesla a další systémové notifikace.</p>
+    <p>Centrální nastavení odesílání e-mailů pro TIPy, založení uživatele, reset hesla a systémové notifikace.</p>
   </div>
 </section>
+
+{% if request.query_params.get('sent') %}
+  <div class="alert success">Testovací e-mail byl odeslán. Zkontrolujte schránku příjemce.</div>
+{% endif %}
+{% if request.query_params.get('error') %}
+  <div class="alert danger"><b>Test e-mailu skončil chybou.</b><br>
+    {% if last_error and last_error.error %}
+      Poslední chyba: <code>{{ last_error.error }}</code>
+    {% else %}
+      Detail je v posledních e-mailových událostech níže.
+    {% endif %}
+  </div>
+{% endif %}
 
 <div class="grid-2">
   <section class="card">
@@ -19,9 +32,11 @@
       <div><b>Odesílatel</b><br>{{ cfg.from_email or '—' }}</div>
     </div>
     {% if cfg.missing %}
-      <div class="alert danger">Chybí v Render Environment Variables: {{ cfg.missing|join(', ') }}</div>
+      <div class="alert danger"><b>SMTP není připravené.</b> Chybí v Render Environment Variables: {{ cfg.missing|join(', ') }}</div>
+    {% else %}
+      <div class="alert success"><b>SMTP je nastavené.</b> Aplikace může odesílat systémové e-maily.</div>
     {% endif %}
-    <p class="muted">Heslo SMTP se z bezpečnostních důvodů nezobrazuje ani neukládá přes web. Nastavuje se v Renderu.</p>
+    <p class="muted">Heslo SMTP se z bezpečnostních důvodů nezobrazuje ani neukládá přes web. Nastavuje se pouze v Renderu.</p>
   </section>
 
   <section class="card">
@@ -64,11 +79,30 @@
 
 <section class="card mt">
   <h2>Proměnné pro Render</h2>
-  <pre>SMTP_HOST=smtp.vasedomena.cz
+  <pre>EMAIL_ENABLED=true
+SMTP_HOST=smtp.office365.com
 SMTP_PORT=587
 SMTP_SECURITY=starttls
-SMTP_USER=odesilatel@astorieas.cz
+SMTP_USER=nekudova@astorieas.cz
 SMTP_PASSWORD=********
-SMTP_FROM=HUB ASTORIE &lt;odesilatel@astorieas.cz&gt;</pre>
+SMTP_FROM=HUB ASTORIE &lt;backoffice@astorieas.cz&gt;
+SMTP_REPLY_TO=backoffice@astorieas.cz</pre>
+  <p class="muted">Podporované zabezpečení: <b>starttls</b>, <b>ssl</b>, <b>none</b>. Pro většinu firemních SMTP se používá port 587 + starttls.</p>
+</section>
+
+<section class="card mt">
+  <h2>Diagnostika</h2>
+  <p class="muted">Pokud test selže, otevřete diagnostický endpoint. Nezobrazuje heslo.</p>
+  <a class="btn" href="/api/email/diagnostics" target="_blank">Otevřít SMTP diagnostiku</a>
+</section>
+
+<section class="card mt">
+  <h2>Kde se e-mail použije</h2>
+  <div class="detail-grid">
+    <div><b>Nový TIP</b><br>potvrzení poradci + oznámení specialistovi</div>
+    <div><b>Založení uživatele</b><br>přístupové údaje novému uživateli</div>
+    <div><b>Reset hesla</b><br>nové dočasné heslo uživateli</div>
+    <div><b>Workflow partnerů</b><br>systémové notifikace a logování</div>
+  </div>
 </section>
 {% endblock %}

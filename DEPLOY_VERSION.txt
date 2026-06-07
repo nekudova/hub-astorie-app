@@ -1,1 +1,1 @@
-v1.5.5d-email-delivery-activation-safe
+1.6.0-mail-core-professional-safe

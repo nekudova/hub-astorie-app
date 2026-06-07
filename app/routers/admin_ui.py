@@ -16,7 +16,7 @@ from app.core.database import get_db
 from app.models.core_models import AuditLog, Partner, Section, Subsection, User
 from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduct
 from app.services.passwords import hash_password
-from app.services.mailer import send_email, smtp_config_status, ensure_email_tables, email_template
+from app.services.mailer import send_email, smtp_config_status, ensure_email_tables, email_template, send_template_email, EMAIL_VERSION, public_smtp_diagnostics
 from app.services.importer import IMPORT_HANDLERS
 from app.services.ares import fetch_ares_subject
 
@@ -28,7 +28,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.5.5a",
+        "version": "v1.5.5d",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -1515,8 +1515,8 @@ def advisor_create(
     db.commit()
 
     try:
-        subj, body = email_template("new_user", name=name, email=email.lower().strip(), password=password)
-        send_email(db, email.lower().strip(), subj, body, event_type="user_created", entity_type="user", entity_id=advisor_id or email, created_by_email="admin@astorie.local")
+        subj, body, html = email_template("new_user", name=name, email=email.lower().strip(), password=password)
+        send_email(db, email.lower().strip(), subj, body, html_body=html, event_type="user_created", entity_type="user", entity_id=advisor_id or email, created_by_email="admin@astorie.local")
     except Exception:
         try:
             db.rollback()
@@ -1610,8 +1610,8 @@ def advisor_reset_password(
     try:
         row = db.execute(text("SELECT email, name FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
         if row and row.get("email"):
-            subj, body = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
-            send_email(db, row.get("email"), subj, body, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
+            subj, body, html = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
+            send_email(db, row.get("email"), subj, body, html_body=html, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
     except Exception:
         try:
             db.rollback()
@@ -3592,34 +3592,39 @@ def hub_create_tip_v085(
     try:
         section_label = section["section_name"] if section else section_code
         subsection_label = subsection["subsection_name"] if subsection else subsection_code
-        spec_subject = "Nový TIP v HUB ASTORIE"
-        spec_body = (
-            "Dobrý den,\n\n"
-            "byl Vám předán nový TIP.\n\n"
-            f"Poradce: {user['name']} ({user['email']})\n"
-            f"Klient: {client_name}\n"
-            f"Kontakt na klienta: {client_phone}\n"
-            f"Identifikace: {client_identifier}\n"
-            f"Oblast: {section_label}\n"
-            f"Podsekce: {subsection_label}\n"
-            f"Smlouva č.: {policy_no}\n"
-            f"Odhad potenciálu / objemu: {potential_amount}\n\n"
-            f"Popis případu:\n{adviser_note}\n\n"
-            "Prosíme o převzetí a další zpracování v aplikaci HUB ASTORIE.\n\nASTORIE a.s."
+        mail_data = {
+            "adviser_name": user.get("name", ""),
+            "adviser_email": user.get("email", ""),
+            "specialist_name": specialist_name or specialist_email,
+            "client_name": client_name,
+            "client_phone": client_phone,
+            "client_identifier": client_identifier,
+            "section_label": section_label,
+            "subsection_label": subsection_label,
+            "policy_no": policy_no,
+            "potential_amount": potential_amount,
+            "adviser_note": adviser_note,
+        }
+        sent_spec, err_spec = send_template_email(
+            db,
+            specialist_email,
+            "tip_new_specialist",
+            data=mail_data,
+            event_type="tip_new_specialist",
+            entity_type="tip",
+            entity_id=tip_id,
+            created_by_email=user.get("email", ""),
         )
-        adv_subject = "Potvrzení odeslání TIPu – HUB ASTORIE"
-        adv_body = (
-            "Dobrý den,\n\n"
-            "váš TIP byl úspěšně uložen a předán vybranému specialistovi.\n\n"
-            f"Specialista: {specialist_name or specialist_email}\n"
-            f"Klient: {client_name}\n"
-            f"Oblast: {section_label}\n"
-            f"Podsekce: {subsection_label}\n"
-            f"Stav: Nový\n\n"
-            "Další průběh uvidíte v sekci Moje TIPy.\n\nASTORIE a.s."
+        sent_adv, err_adv = send_template_email(
+            db,
+            user.get("email", ""),
+            "tip_new_adviser",
+            data=mail_data,
+            event_type="tip_new_adviser",
+            entity_type="tip",
+            entity_id=tip_id,
+            created_by_email=user.get("email", ""),
         )
-        sent_spec, err_spec = send_partner_workflow_email_v110(db, specialist_email, spec_subject, spec_body)
-        sent_adv, err_adv = send_partner_workflow_email_v110(db, user.get('email',''), adv_subject, adv_body)
         if (not sent_spec) or (not sent_adv):
             db.execute(text("""
                 INSERT INTO tip_updates
@@ -7422,8 +7427,18 @@ def get_bo_email_v110(db: Session) -> str:
 
 
 def send_partner_workflow_email_v110(db: Session, to_email: str, subject: str, body: str):
-    # v1.4.8: centrální e-mailová služba s logováním.
-    return send_email(db, to_email, subject, body, event_type="partner_workflow", entity_type="partner_request")
+    # v1.6.0: centrální e-mailová služba s profesionální HTML šablonou a logováním.
+    subj, text_body, html_body = email_template("generic_notice", subject=subject, body=body)
+    return send_email(
+        db,
+        to_email,
+        subj,
+        text_body,
+        html_body=html_body,
+        event_type="partner_workflow",
+        entity_type="partner_request",
+        template_key="generic_notice",
+    )
 
 
 def create_partner_request_v110(db: Session, partner_code: str, request_type: str, title: str, description: str, request_area: str='partners', item_type: str='', item_id: str='', tab: str='', contact_name: str='', contact_phone: str='', contact_email: str='', current_value: str='', proposed_value: str=''):
@@ -8616,22 +8631,29 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
         ORDER BY created_at DESC
         LIMIT 100
     """)).mappings().all()
-    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs})
+    last_error = db.execute(text("""
+        SELECT created_at, error
+        FROM email_logs
+        WHERE status = 'error' AND COALESCE(error,'') <> ''
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)).mappings().first()
+    return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs, "last_error": last_error})
 
 
 @router.post("/admin/email/test")
 def admin_email_test(to_email: str = Form(...), db: Session = Depends(get_db)):
     ensure_email_tables(db)
-    send_email(
+    ok, err = send_template_email(
         db,
         to_email,
-        "Test e-mailu – HUB ASTORIE",
-        "Dobrý den,\n\ntoto je testovací e-mail z aplikace HUB ASTORIE. Pokud Vám přišel, SMTP napojení funguje.\n\nASTORIE a.s.",
+        "system_test",
         event_type="email_test",
         entity_type="system",
         created_by_email="admin@astorie.local",
     )
-    return RedirectResponse("/admin/email", status_code=303)
+    suffix = "sent=1" if ok else "error=1"
+    return RedirectResponse(f"/admin/email?{suffix}", status_code=303)
 
 
 @router.get("/api/release-1-4-8/status")
@@ -8651,6 +8673,37 @@ def release_1_4_8_status(db: Session = Depends(get_db)):
         "email_log_count": int(cnt or 0),
     }
 
+
+
+
+@router.get("/api/release-1-5-5d/status")
+def release_1_5_5d_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = smtp_config_status()
+    cnt = db.execute(text("SELECT COUNT(*) FROM email_logs")).scalar()
+    recent = db.execute(text("""
+        SELECT created_at, event_type, recipient_email, subject, status, error
+        FROM email_logs
+        ORDER BY created_at DESC
+        LIMIT 5
+    """)).mappings().all()
+    return {
+        "ok": True,
+        "version": "1.5.5d-email-delivery-activation-safe",
+        "safe": True,
+        "db_changed": "additive_only_email_logs_if_missing",
+        "smtp_configured": cfg.get("configured"),
+        "smtp_enabled": cfg.get("enabled"),
+        "smtp_host": cfg.get("host"),
+        "smtp_port": cfg.get("port"),
+        "smtp_security": cfg.get("security"),
+        "smtp_from": cfg.get("from_email"),
+        "missing": cfg.get("missing"),
+        "email_log_count": int(cnt or 0),
+        "recent": [dict(r) for r in recent],
+        "changed_modules": ["email_service", "admin_email_diagnostics", "user_created_email", "password_reset_email", "tip_email_logging"],
+        "untouched": ["TIP data", "partners", "rates", "terminations", "import", "production source routing", "admin CRUD"],
+    }
 
 @router.get("/api/release-1-4-9/status")
 def release_1_4_9_status(db: Session = Depends(get_db)):
@@ -8920,4 +8973,89 @@ def release_1_5_5c_status():
             "database"
         ],
         "note": "Pouze vizuální oprava checkboxů/přepínačů v Adminu. Backend, DB a produkční čtení dat beze změny."
+    }
+
+
+# -------------------------------------------------------------------
+# v1.5.5e – SMTP Diagnostics SAFE
+# Pouze lepší diagnostika e-mailů. Nemění DB data ani business moduly.
+# -------------------------------------------------------------------
+@router.get("/api/release-1-5-5e/status")
+def release_1_5_5e_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = public_smtp_diagnostics()
+    last = db.execute(text("""
+        SELECT created_at, status, error, smtp_host
+        FROM email_logs
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)).mappings().first()
+    return {
+        "ok": True,
+        "version": "1.5.5e-email-diagnostics-safe",
+        "safe": True,
+        "db_changed": False,
+        "changed_modules": ["email_diagnostics", "smtp_error_visibility"],
+        "unchanged_modules": ["tips", "partners", "rates", "terminations", "admin_crud", "production_hub", "import"],
+        "smtp": cfg,
+        "last_email_event": dict(last) if last else None,
+    }
+
+@router.get("/api/email/diagnostics")
+def api_email_diagnostics(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = public_smtp_diagnostics()
+    last_errors = db.execute(text("""
+        SELECT created_at, event_type, recipient_email, subject, status, error, smtp_host
+        FROM email_logs
+        ORDER BY created_at DESC
+        LIMIT 10
+    """)).mappings().all()
+    return {"ok": True, "smtp": cfg, "last_events": [dict(r) for r in last_errors]}
+
+
+# -------------------------------------------------------------------
+# v1.6.0 – HUB MAIL CORE PROFESSIONAL SAFE
+# Profesionální HTML šablony a centrální e-mail service.
+# Pouze aditivní rozšíření logování, bez mazání nebo přepisu dat.
+# -------------------------------------------------------------------
+@router.get("/api/release-1-6-0/status")
+def release_1_6_0_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = public_smtp_diagnostics()
+    counts = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) AS sent,
+          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
+        FROM email_logs
+    """)).mappings().first()
+    return {
+        "ok": True,
+        "version": EMAIL_VERSION,
+        "safe": True,
+        "db_changed": "additive_only_email_log_columns_if_missing",
+        "data_deleted": False,
+        "changed_modules": [
+            "email_service",
+            "email_html_templates",
+            "email_logging",
+            "new_tip_notifications",
+            "user_created_email",
+            "password_reset_template",
+            "partner_workflow_email"
+        ],
+        "unchanged_modules": [
+            "partners_data",
+            "contacts_data",
+            "links_data",
+            "products_data",
+            "rates_data",
+            "terminations",
+            "permissions_backend",
+            "imports",
+            "production_reading"
+        ],
+        "smtp": cfg,
+        "email_counts": dict(counts) if counts else {"total": 0, "sent": 0, "errors": 0},
     }
