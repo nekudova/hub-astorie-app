@@ -1,1 +1,1 @@
-1.6.0B-version-email-status-cleanup-safe
+v1.6.0C-email-template-compat-hotfix-safe

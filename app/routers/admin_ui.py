@@ -32,7 +32,19 @@ def send_template_email(db, to_email: str, template_key: str, *, data=None, even
             db, to_email, template_key, data=data, event_type=event_type,
             entity_type=entity_type, entity_id=entity_id, created_by_email=created_by_email
         )
-    subject, body, html = email_template(template_key, **(data or {}))
+    # Backward-compatible template handling:
+    # older mailer.email_template returned (subject, body);
+    # newer professional templates return (subject, body, html).
+    tpl = email_template(template_key, **(data or {}))
+    if isinstance(tpl, (list, tuple)) and len(tpl) == 3:
+        subject, body, html = tpl
+    elif isinstance(tpl, (list, tuple)) and len(tpl) == 2:
+        subject, body = tpl
+        html = None
+    else:
+        subject = f"HUB ASTORIE – {template_key}"
+        body = str(tpl or "")
+        html = None
     return send_email(
         db, to_email, subject, body, html_body=html, event_type=event_type,
         entity_type=entity_type, entity_id=entity_id, created_by_email=created_by_email,
@@ -49,7 +61,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.6.0B",
+        "version": "v1.6.0C",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
