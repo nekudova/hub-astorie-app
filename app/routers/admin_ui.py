@@ -34,7 +34,7 @@ def send_email(db, to_email: str, subject: str, text_body: str, **kwargs):
 smtp_config_status = mailer_service.smtp_config_status
 ensure_email_tables = mailer_service.ensure_email_tables
 email_template = mailer_service.email_template
-EMAIL_VERSION = "1.6.0e-email-send-compat-stabilization-safe"
+EMAIL_VERSION = "1.6.1-mail-templates-professional-safe"
 public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
@@ -70,7 +70,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.6.0D",
+        "version": "v1.6.1",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -9167,5 +9167,62 @@ def release_1_6_0e_status(db: Session = Depends(get_db)):
             "user": cfg.get("user"),
             "from_email": cfg.get("from_email"),
             "missing": cfg.get("missing"),
+        },
+    }
+
+
+# -------------------------------------------------------------------
+# v1.6.1 – MAIL TEMPLATES PROFESSIONAL SAFE
+# Stabilní povýšení e-mailových šablon bez změny SMTP, DB a produkčních dat.
+# -------------------------------------------------------------------
+@router.get("/api/release-1-6-1/status")
+def release_1_6_1_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = smtp_config_status()
+    counts = db.execute(text("""
+        SELECT
+          COUNT(*) AS total,
+          SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) AS sent,
+          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
+        FROM email_logs
+    """)).mappings().first()
+    return {
+        "ok": True,
+        "version": "1.6.1-mail-templates-professional-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": [
+            "email_html_templates",
+            "email_version_badge",
+            "email_status_endpoint"
+        ],
+        "unchanged_modules": [
+            "smtp_delivery",
+            "tips",
+            "partners",
+            "contacts",
+            "links",
+            "products",
+            "rates",
+            "terminations",
+            "login",
+            "permissions",
+            "imports",
+            "production_reading"
+        ],
+        "smtp": {
+            "configured": cfg.get("configured"),
+            "host": cfg.get("host"),
+            "port": cfg.get("port"),
+            "security": cfg.get("security"),
+            "user": cfg.get("user"),
+            "from_email": cfg.get("from_email"),
+            "missing": cfg.get("missing"),
+        },
+        "email_counts": {
+            "total": int((counts or {}).get("total") or 0),
+            "sent": int((counts or {}).get("sent") or 0),
+            "errors": int((counts or {}).get("errors") or 0),
         },
     }

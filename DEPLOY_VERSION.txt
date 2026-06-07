@@ -1,1 +1,1 @@
-1.6.0d-email-send-rollback-stabilization-safe
+1.6.1-mail-templates-professional-safe
