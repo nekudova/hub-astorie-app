@@ -1,1 +1,1 @@
-1.6.0A-mail-core-import-hotfix-safe
+1.6.0B-version-email-status-cleanup-safe

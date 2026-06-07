@@ -22,7 +22,7 @@ send_email = mailer_service.send_email
 smtp_config_status = mailer_service.smtp_config_status
 ensure_email_tables = mailer_service.ensure_email_tables
 email_template = mailer_service.email_template
-EMAIL_VERSION = getattr(mailer_service, "EMAIL_VERSION", "1.6.0a-mail-core-import-hotfix-safe")
+EMAIL_VERSION = getattr(mailer_service, "EMAIL_VERSION", "1.6.0b-version-email-status-cleanup-safe")
 public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
@@ -49,7 +49,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.5.5d",
+        "version": "v1.6.0B",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -9035,48 +9035,55 @@ def api_email_diagnostics(db: Session = Depends(get_db)):
     return {"ok": True, "smtp": cfg, "last_events": [dict(r) for r in last_errors]}
 
 
+
+
 # -------------------------------------------------------------------
-# v1.6.0 – HUB MAIL CORE PROFESSIONAL SAFE
-# Profesionální HTML šablony a centrální e-mail service.
-# Pouze aditivní rozšíření logování, bez mazání nebo přepisu dat.
+# v1.6.0B – VERSION + EMAIL STATUS CLEANUP SAFE
+# Sjednocení verze, zpřehlednění SMTP/e-mailového statusu.
+# Bez změny SMTP odesílací logiky a bez zásahu do business dat.
 # -------------------------------------------------------------------
-@router.get("/api/release-1-6-0/status")
-def release_1_6_0_status(db: Session = Depends(get_db)):
+@router.get("/api/release-1-6-0b/status")
+def release_1_6_0b_status(db: Session = Depends(get_db)):
     ensure_email_tables(db)
     cfg = public_smtp_diagnostics()
     counts = db.execute(text("""
         SELECT
           COUNT(*) AS total,
           SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) AS sent,
-          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
+          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors,
+          SUM(CASE WHEN status IN ('not_configured','disabled') THEN 1 ELSE 0 END) AS skipped
         FROM email_logs
+    """)).mappings().first()
+    last_success = db.execute(text("""
+        SELECT created_at, recipient_email, subject, smtp_host, template_key
+        FROM email_logs
+        WHERE status = 'sent'
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)).mappings().first()
+    last_error = db.execute(text("""
+        SELECT created_at, recipient_email, subject, error, smtp_host, template_key
+        FROM email_logs
+        WHERE status = 'error' AND COALESCE(error,'') <> ''
+        ORDER BY created_at DESC
+        LIMIT 1
     """)).mappings().first()
     return {
         "ok": True,
-        "version": EMAIL_VERSION,
+        "version": "1.6.0b-version-email-status-cleanup-safe",
         "safe": True,
-        "db_changed": "additive_only_email_log_columns_if_missing",
+        "db_changed": False,
         "data_deleted": False,
-        "changed_modules": [
-            "email_service",
-            "email_html_templates",
-            "email_logging",
-            "new_tip_notifications",
-            "user_created_email",
-            "password_reset_template",
-            "partner_workflow_email"
-        ],
-        "unchanged_modules": [
-            "partners_data",
-            "contacts_data",
-            "links_data",
-            "products_data",
-            "rates_data",
-            "terminations",
-            "permissions_backend",
-            "imports",
-            "production_reading"
-        ],
+        "message": "Sjednocená verze aplikace a zpřehledněný e-mailový status. SMTP odesílání, DB data a business moduly beze změny.",
         "smtp": cfg,
-        "email_counts": dict(counts) if counts else {"total": 0, "sent": 0, "errors": 0},
+        "email_counts": dict(counts) if counts else {"total": 0, "sent": 0, "errors": 0, "skipped": 0},
+        "last_success": dict(last_success) if last_success else None,
+        "last_error": dict(last_error) if last_error else None,
+        "changed_modules": ["version_badge", "api_version", "release_status", "email_status_display"],
+        "unchanged_modules": ["smtp_delivery", "tips", "partners", "contacts", "links", "products", "rates", "terminations", "imports", "login", "permissions"],
     }
+
+@router.get("/api/release-1-6-0/status")
+def release_1_6_0_status_alias(db: Session = Depends(get_db)):
+    # Backward compatible alias: current 1.6 line status.
+    return release_1_6_0b_status(db)

@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.5.5a-link-source-help-crud-safe"
+APP_VERSION = "1.6.0b-version-email-status-cleanup-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,20 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.5.5a bezpečně odděluje Odkazy ASTORIE, Kalkulačky a partnerské odkazy, přidává samostatnou Nápovědu a základní bezpečné Admin CRUD akce. Bez importů a bez mazání dat automaticky.",
+        "status": "v1.6.0B sjednocuje release/version endpointy a zpřehledňuje e-mailový status. Nezasahuje do business dat ani odesílací SMTP logiky.",
+    }
+
+
+@app.get("/api/version")
+def api_version():
+    return {
+        "ok": True,
+        "version": APP_VERSION,
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": ["version_badge", "api_version", "email_status_display"],
+        "unchanged_modules": ["tips", "partners", "contacts", "links", "products", "rates", "terminations", "smtp_delivery", "imports", "login", "permissions"],
     }
 
 
