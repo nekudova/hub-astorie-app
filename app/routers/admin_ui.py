@@ -34,7 +34,7 @@ def send_email(db, to_email: str, subject: str, text_body: str, **kwargs):
 smtp_config_status = mailer_service.smtp_config_status
 ensure_email_tables = mailer_service.ensure_email_tables
 email_template = mailer_service.email_template
-EMAIL_VERSION = "1.6.1-mail-templates-professional-safe"
+EMAIL_VERSION = "1.6.2-mail-templates-wired-professional-safe"
 public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
@@ -8686,21 +8686,14 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
 @router.post("/admin/email/test")
 def admin_email_test(to_email: str = Form(...), db: Session = Depends(get_db)):
     ensure_email_tables(db)
-    ok, err = send_email(
+    ok, err = send_template_email(
         db,
         to_email,
-        "Test e-mailu – HUB ASTORIE",
-        "Dobrý den,\n\ntoto je testovací e-mail z aplikace HUB ASTORIE. Pokud Vám přišel, SMTP napojení funguje.\n\nS pozdravem\nASTORIE a.s.",
-        html_body=(
-            "<div style='font-family:Arial,sans-serif;max-width:680px;margin:0 auto;border:1px solid #d9e7e8;border-radius:18px;overflow:hidden'>"
-            "<div style='background:#003D4C;color:white;padding:22px 26px'><div style='font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#bfe5e8'>HUB ASTORIE</div><h1 style='margin:8px 0 0;font-size:24px'>Test e-mailu</h1></div>"
-            "<div style='padding:24px 26px;color:#102A33;font-size:15px;line-height:1.6'><p>Dobrý den,</p><p>toto je testovací e-mail z aplikace <b>HUB ASTORIE</b>.</p><p>Pokud Vám přišel, SMTP napojení funguje.</p><hr style='border:none;border-top:1px solid #e6eef1;margin:22px 0'><p>S pozdravem<br><b>ASTORIE a.s.</b></p></div>"
-            "</div>"
-        ),
+        "system_test",
+        data={},
         event_type="email_test",
         entity_type="system",
         created_by_email="admin@astorie.local",
-        template_key="system_test_direct",
     )
     suffix = "sent=1" if ok else "error=1"
     return RedirectResponse(f"/admin/email?{suffix}", status_code=303)
@@ -9225,4 +9218,18 @@ def release_1_6_1_status(db: Session = Depends(get_db)):
             "sent": int((counts or {}).get("sent") or 0),
             "errors": int((counts or {}).get("errors") or 0),
         },
+    }
+
+
+@router.get("/api/release-1-6-2/status")
+def release_1_6_2_status(db: Session = Depends(get_db)):
+    return {
+        "ok": True,
+        "version": "1.6.2-mail-templates-wired-professional-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": ["email_template_system_test", "email_test_route", "mail_template_visuals", "email_version_badge"],
+        "unchanged_modules": ["partners", "contacts", "links", "products", "rates", "terminations", "permissions", "import", "production_reading", "smtp_env"],
+        "smtp": public_smtp_diagnostics(),
     }
