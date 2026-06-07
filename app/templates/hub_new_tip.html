@@ -141,7 +141,7 @@
 
     <section class="tip-form-panel-v135" id="tipFormPanelV135">
       <h2>Zadat TIP</h2>
-      <p class="hint">Po výběru oblasti, podsekce a specialisty doplňte klienta a stručný popis případu.</p>
+      <p class="hint">Po výběru oblasti, podsekce a specialisty doplňte jen údaje potřebné pro předání TIPu. Obchodní výsledek doplní specialista při zpracování.</p>
 
       <div class="tip-form-grid-v135">
         <div class="tip-field-v135"><label>Poradce</label><input value="{{ user.name }}" readonly></div>
@@ -153,11 +153,11 @@
         <div class="tip-field-v135"><label>Klient <span class="tip-required-v139">*</span></label><input name="client_name" placeholder="jméno / název klienta" required></div>
         <div class="tip-field-v135"><label>Kontakt na klienta <span class="tip-required-v139">*</span></label><input name="client_phone" placeholder="telefon, e-mail" required></div>
         <div class="tip-field-v135"><label>RČ / IČO / datum nar. <span class="tip-required-v139">*</span></label><input name="client_identifier" placeholder="identifikace" required></div>
-        <div class="tip-field-v135"><label>Odhad potenciálu / objemu <span class="tip-required-v139">*</span></label><input name="potential_amount" placeholder="např. 25 000 Kč / rok" required></div>
-        <div class="tip-field-v135"><label>Smlouva č. <span class="tip-required-v139">*</span></label><input name="policy_no" required></div>
-        <div class="tip-field-v135"><label>Datum uzavření <span class="tip-required-v139">*</span></label><input name="closed_at_input" type="date" required></div>
-        <div class="tip-field-v135"><label>Výše obchodu / pojistné <span class="tip-required-v139">*</span></label><input name="final_volume" placeholder="např. 9 000 Kč" required></div>
-        <div class="tip-field-v135"><label>Další obchod <span class="tip-required-v139">*</span></label><select class="tip-select-v140" name="next_business" required><option value="">-- vyberte --</option><option>ANO - má zájem</option><option>NE - nemá zájem</option><option>Nevím / prověřit</option></select></div>
+        <div class="tip-field-v135"><label>Odhad potenciálu / objemu</label><input name="potential_amount" placeholder="volitelné – doplní případně specialista"></div>
+        <div class="tip-field-v135"><label>Smlouva č.</label><input name="policy_no" placeholder="volitelné – doplní specialista / BO"></div>
+        <div class="tip-field-v135"><label>Datum uzavření</label><input name="closed_at_input" type="date"></div>
+        <div class="tip-field-v135"><label>Výše obchodu / pojistné</label><input name="final_volume" placeholder="volitelné – doplní specialista"></div>
+        <div class="tip-field-v135"><label>Další obchod</label><select class="tip-select-v140" name="next_business"><option value="">-- doplní specialista / BO --</option><option>ANO - má zájem</option><option>NE - nemá zájem</option><option>Nevím / prověřit</option></select></div>
         <div class="tip-field-v135 span-3"><label>Poznámka / popis případu</label><textarea name="adviser_note" placeholder="Volitelně doplňte situaci klienta, co řešíte a co očekáváte od specialisty."></textarea></div>
       </div>
 

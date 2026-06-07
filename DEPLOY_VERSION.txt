@@ -1,1 +1,1 @@
-1.7.0-tip-workflow-mail-automation-safe
+1.7.0a-tip-create-required-fields-hotfix-safe

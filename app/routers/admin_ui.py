@@ -3594,11 +3594,10 @@ def hub_create_tip_v085(
     if not client_name.strip(): missing_fields.append("klient")
     if not client_phone.strip(): missing_fields.append("kontakt na klienta")
     if not client_identifier.strip(): missing_fields.append("RČ / IČO / datum nar.")
-    if not potential_amount.strip(): missing_fields.append("odhad potenciálu / objemu")
-    if not policy_no.strip(): missing_fields.append("smlouva č.")
-    if not final_volume.strip(): missing_fields.append("výše obchodu / pojistné")
-    if not closed_at_input.strip(): missing_fields.append("datum uzavření")
-    if not next_business.strip(): missing_fields.append("další obchod")
+    # Údaje níže doplňuje až specialista / BO při zpracování TIPu.
+    # Poradce při založení TIPu zadává jen identifikaci klienta, kontakt, oblast, podsekci a specialistu.
+    # Nesmí blokovat založení TIPu.
+    # potential_amount, policy_no, final_volume, closed_at_input, next_business zůstávají volitelné.
     if missing_fields:
         return JSONResponse({"ok": False, "error": "Chybí povinné údaje: " + ", ".join(missing_fields)}, status_code=400)
 
@@ -3679,6 +3678,9 @@ def hub_create_tip_v085(
         "potential_amount": amount,
         "adviser_note": adviser_note,
         "policy_no": policy_no,
+        "final_volume": final_amount,
+        "closed_at": closed_value,
+        "next_business": next_business,
     })
     db.execute(text("""
         INSERT INTO tip_updates
@@ -9385,4 +9387,31 @@ def release_1_7_0_status(db: Session = Depends(get_db)):
             "production_data_reading"
         ],
         "counts": {"tips": tip_count, "email_logs": mail_count}
+    }
+
+
+@router.get("/api/release-1-7-0a/status")
+def api_release_1_7_0a_status():
+    return {
+        "ok": True,
+        "version": "1.7.0a-tip-create-required-fields-hotfix-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": [
+            "hub_new_tip_required_fields",
+            "tip_create_server_params",
+            "tip_workflow_mail_fallback"
+        ],
+        "unchanged_modules": [
+            "smtp_delivery",
+            "email_core",
+            "partners",
+            "contacts",
+            "links",
+            "products",
+            "rates",
+            "permissions",
+            "production_reading"
+        ]
     }
