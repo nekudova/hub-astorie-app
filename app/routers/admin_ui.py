@@ -22,28 +22,25 @@ send_email = mailer_service.send_email
 smtp_config_status = mailer_service.smtp_config_status
 ensure_email_tables = mailer_service.ensure_email_tables
 email_template = mailer_service.email_template
-EMAIL_VERSION = getattr(mailer_service, "EMAIL_VERSION", "1.6.0b-version-email-status-cleanup-safe")
+EMAIL_VERSION = getattr(mailer_service, "EMAIL_VERSION", "1.6.0d-email-send-rollback-stabilization-safe")
 public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
-    """Compatibility wrapper. Keeps admin_ui import-safe even if Render has a stale mailer module during deployment."""
-    if hasattr(mailer_service, "send_template_email"):
-        return mailer_service.send_template_email(
-            db, to_email, template_key, data=data, event_type=event_type,
-            entity_type=entity_type, entity_id=entity_id, created_by_email=created_by_email
-        )
-    # Backward-compatible template handling:
-    # older mailer.email_template returned (subject, body);
-    # newer professional templates return (subject, body, html).
-    tpl = email_template(template_key, **(data or {}))
-    if isinstance(tpl, (list, tuple)) and len(tpl) == 3:
-        subject, body, html = tpl
-    elif isinstance(tpl, (list, tuple)) and len(tpl) == 2:
-        subject, body = tpl
-        html = None
-    else:
+    """Robust compatibility wrapper. Never lets template tuple mismatch crash the request."""
+    try:
+        tpl = email_template(template_key, **(data or {}))
+        if isinstance(tpl, (list, tuple)) and len(tpl) >= 3:
+            subject, body, html = tpl[0], tpl[1], tpl[2]
+        elif isinstance(tpl, (list, tuple)) and len(tpl) == 2:
+            subject, body = tpl
+            html = None
+        else:
+            subject = f"HUB ASTORIE – {template_key}"
+            body = str(tpl or "")
+            html = None
+    except Exception as exc:
         subject = f"HUB ASTORIE – {template_key}"
-        body = str(tpl or "")
+        body = f"Dobrý den,\n\ne-mail byl vytvořen systémem HUB ASTORIE.\n\nPoznámka šablony: {exc}\n\nASTORIE a.s."
         html = None
     return send_email(
         db, to_email, subject, body, html_body=html, event_type=event_type,
@@ -61,7 +58,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.6.0C",
+        "version": "v1.6.0D",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -8677,13 +8674,21 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
 @router.post("/admin/email/test")
 def admin_email_test(to_email: str = Form(...), db: Session = Depends(get_db)):
     ensure_email_tables(db)
-    ok, err = send_template_email(
+    ok, err = send_email(
         db,
         to_email,
-        "system_test",
+        "Test e-mailu – HUB ASTORIE",
+        "Dobrý den,\n\ntoto je testovací e-mail z aplikace HUB ASTORIE. Pokud Vám přišel, SMTP napojení funguje.\n\nS pozdravem\nASTORIE a.s.",
+        html_body=(
+            "<div style='font-family:Arial,sans-serif;max-width:680px;margin:0 auto;border:1px solid #d9e7e8;border-radius:18px;overflow:hidden'>"
+            "<div style='background:#003D4C;color:white;padding:22px 26px'><div style='font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#bfe5e8'>HUB ASTORIE</div><h1 style='margin:8px 0 0;font-size:24px'>Test e-mailu</h1></div>"
+            "<div style='padding:24px 26px;color:#102A33;font-size:15px;line-height:1.6'><p>Dobrý den,</p><p>toto je testovací e-mail z aplikace <b>HUB ASTORIE</b>.</p><p>Pokud Vám přišel, SMTP napojení funguje.</p><hr style='border:none;border-top:1px solid #e6eef1;margin:22px 0'><p>S pozdravem<br><b>ASTORIE a.s.</b></p></div>"
+            "</div>"
+        ),
         event_type="email_test",
         entity_type="system",
         created_by_email="admin@astorie.local",
+        template_key="system_test_direct",
     )
     suffix = "sent=1" if ok else "error=1"
     return RedirectResponse(f"/admin/email?{suffix}", status_code=303)
@@ -9082,7 +9087,7 @@ def release_1_6_0b_status(db: Session = Depends(get_db)):
     """)).mappings().first()
     return {
         "ok": True,
-        "version": "1.6.0b-version-email-status-cleanup-safe",
+        "version": "1.6.0d-email-send-rollback-stabilization-safe",
         "safe": True,
         "db_changed": False,
         "data_deleted": False,
@@ -9099,3 +9104,27 @@ def release_1_6_0b_status(db: Session = Depends(get_db)):
 def release_1_6_0_status_alias(db: Session = Depends(get_db)):
     # Backward compatible alias: current 1.6 line status.
     return release_1_6_0b_status(db)
+
+
+@router.get("/api/release-1-6-0d/status")
+def release_1_6_0d_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = smtp_config_status()
+    return {
+        "ok": True,
+        "version": "1.6.0d-email-send-rollback-stabilization-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": ["email_test_route", "email_template_compatibility", "version_badge"],
+        "unchanged_modules": ["tips", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions", "imports"],
+        "smtp": {
+            "configured": cfg.get("configured"),
+            "host": cfg.get("host"),
+            "port": cfg.get("port"),
+            "security": cfg.get("security"),
+            "user": cfg.get("user"),
+            "from_email": cfg.get("from_email"),
+            "missing": cfg.get("missing"),
+        }
+    }
