@@ -9608,3 +9608,36 @@ def release_1_8_0_status(db: Session = Depends(get_db)):
         "policy_count": policy_count,
         "default_bo_email": backoffice_tip_email_v170b_(),
     }
+
+
+@router.get("/api/release-1-8-1/status")
+def release_1_8_1_status(db: Session = Depends(get_db)):
+    try:
+        ensure_email_tables(db)
+        ensure_email_policy_tables(db)
+        seed_email_policy_from_sections(db)
+        policies = get_email_policies_for_admin(db)
+        policy_count = len(policies or [])
+    except Exception:
+        policy_count = 0
+    cfg = smtp_config_status()
+    return {
+        "ok": True,
+        "version": "1.8.1-mail-policy-sections-functional-safe",
+        "safe": True,
+        "db_changed": "pouze aditivní doplnění chybějících pravidel do hub_email_policy",
+        "data_smazana": False,
+        "changed_modules": [
+            "email_policy_seed",
+            "admin_email_policy_rows",
+            "tip_created_mail_routing"
+        ],
+        "unchanged_modules": [
+            "smtp_delivery", "tips_data", "partners", "contacts", "links", "products",
+            "rates", "terminations", "login", "permissions"
+        ],
+        "smtp_configured": cfg.get("configured"),
+        "smtp_host": cfg.get("host"),
+        "policy_count": policy_count,
+        "default_bo_email": backoffice_tip_email_v170b_(),
+    }
