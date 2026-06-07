@@ -9,7 +9,7 @@ from app.routers.api_admin import router as api_admin_router
 from app.routers.admin_ui import router as admin_ui_router
 from app.services.bootstrap import seed_initial_data
 
-APP_VERSION = "1.6.0b-version-email-status-cleanup-safe"
+APP_VERSION = "1.6.3-astorie-corporate-mail-visual-safe"
 
 app = FastAPI(
     title="HUB ASTORIE APP",
@@ -42,7 +42,7 @@ def version():
         "ok": True,
         "version": APP_VERSION,
         "admin_route_expected": "/admin",
-        "status": "v1.6.0B sjednocuje release/version endpointy a zpřehledňuje e-mailový status. Nezasahuje do business dat ani odesílací SMTP logiky.",
+        "status": "v1.6.3 povyšuje pouze HTML vizuál e-mailových šablon. SMTP, DB a business data zůstávají beze změny.",
     }
 
 
@@ -54,7 +54,7 @@ def api_version():
         "safe": True,
         "db_changed": False,
         "data_deleted": False,
-        "changed_modules": ["version_badge", "api_version", "email_status_display"],
+        "changed_modules": ["email_visual_templates", "version_badge", "api_version"],
         "unchanged_modules": ["tips", "partners", "contacts", "links", "products", "rates", "terminations", "smtp_delivery", "imports", "login", "permissions"],
     }
 

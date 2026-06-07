@@ -1,1 +1,1 @@
-1.6.1-mail-templates-professional-safe
+1.7.0-tip-workflow-mail-automation-safe

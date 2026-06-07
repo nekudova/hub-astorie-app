@@ -34,7 +34,7 @@ def send_email(db, to_email: str, subject: str, text_body: str, **kwargs):
 smtp_config_status = mailer_service.smtp_config_status
 ensure_email_tables = mailer_service.ensure_email_tables
 email_template = mailer_service.email_template
-EMAIL_VERSION = "1.6.2-mail-templates-wired-professional-safe"
+EMAIL_VERSION = "1.7.0-tip-workflow-mail-automation-safe"
 public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
@@ -59,6 +59,71 @@ def send_template_email(db, to_email: str, template_key: str, *, data=None, even
         entity_type=entity_type, entity_id=entity_id, created_by_email=created_by_email,
         template_key=template_key
     )
+
+
+TIP_WORKFLOW_MAIL_VERSION = "1.7.0-tip-workflow-mail-automation-safe"
+
+def build_tip_mail_data_v170_(tip: dict, extra: dict | None = None) -> dict:
+    """Bezpečný builder dat pro TIP e-maily. Nemění DB, pouze skládá obsah šablony."""
+    data = {
+        "tip_id": (tip or {}).get("id", ""),
+        "adviser_name": (tip or {}).get("adviser_name", ""),
+        "adviser_email": (tip or {}).get("adviser_email", ""),
+        "specialist_name": (tip or {}).get("specialist_name", ""),
+        "specialist_email": (tip or {}).get("specialist_email", ""),
+        "client_name": (tip or {}).get("client_name", ""),
+        "client_phone": (tip or {}).get("client_phone", ""),
+        "client_identifier": (tip or {}).get("client_identifier", ""),
+        "section_label": (tip or {}).get("section_name", "") or (tip or {}).get("section_code", ""),
+        "subsection_label": (tip or {}).get("subsection_name", "") or (tip or {}).get("subsection_code", ""),
+        "policy_no": (tip or {}).get("policy_no", ""),
+        "potential_amount": (tip or {}).get("potential_amount", ""),
+        "final_volume": (tip or {}).get("final_volume", ""),
+        "status": (tip or {}).get("status", ""),
+        "adviser_note": (tip or {}).get("adviser_note", ""),
+        "message_to_adviser": (tip or {}).get("adviser_last_message", ""),
+        "final_report": (tip or {}).get("final_report", ""),
+        "next_business": (tip or {}).get("next_business", ""),
+    }
+    if extra:
+        data.update(extra)
+    return data
+
+def send_tip_workflow_email_v170_(db: Session, tip_id: str, to_email: str, template_key: str, event_type: str, *, actor_email: str = "", extra: dict | None = None) -> tuple[bool, str]:
+    """Jednotná bezpečná notifikace TIP workflow. Selhání e-mailu nikdy nesmí zastavit uložení TIPu."""
+    try:
+        if not (to_email or "").strip():
+            return False, "Chybí e-mail příjemce."
+        tip = fetch_one_safe_v084_(db, "SELECT * FROM tips WHERE id = :id", {"id": tip_id})
+        if not tip:
+            return False, "TIP nebyl nalezen."
+        data = build_tip_mail_data_v170_(dict(tip), extra)
+        return send_template_email(
+            db,
+            to_email,
+            template_key,
+            data=data,
+            event_type=event_type,
+            entity_type="tip",
+            entity_id=tip_id,
+            created_by_email=actor_email or "system@astorie.local",
+        )
+    except Exception as exc:
+        try:
+            db.execute(text("""
+                INSERT INTO tip_updates
+                  (id, tip_id, author_name, author_email, author_role, update_type, old_status, new_status, internal_note)
+                VALUES
+                  (:id, :tip_id, 'Systém', 'system@astorie.local', 'Systém', 'E-mail chyba', '', '', :note)
+            """), {"id": str(uuid.uuid4()), "tip_id": tip_id, "note": str(exc)})
+            db.commit()
+        except Exception:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+        return False, str(exc)
+
 from app.services.importer import IMPORT_HANDLERS
 from app.services.ares import fetch_ares_subject
 
@@ -70,7 +135,7 @@ def render(request: Request, template_name: str, context: dict):
     base_context = {
         "request": request,
         "app_name": "HUB",
-        "version": "v1.6.1",
+        "version": "v1.7.0",
         "admin_name": "Admin ASTORIE",
         "admin_email": "nekudova@astorieas.cz",
     }
@@ -4282,6 +4347,18 @@ def admin_tip_bo_update_v090(
         "internal_note": bo_note,
     })
     db.commit()
+
+    # v1.7.0: bezpečné e-mailové notifikace ke změně TIPu z BackOffice.
+    # Notifikace nesmí nikdy zablokovat uloženou změnu.
+    try:
+        extra = {"old_status": old_status, "new_status": new_status, "bo_note": bo_note, "message_to_adviser": message_to_adviser}
+        if old and (old.get("adviser_email") or "").strip():
+            send_tip_workflow_email_v170_(db, tip_id, old.get("adviser_email"), "tip_status_adviser", "tip_status_adviser", actor_email=user.get("email", ""), extra=extra)
+        if old and (old.get("specialist_email") or "").strip():
+            send_tip_workflow_email_v170_(db, tip_id, old.get("specialist_email"), "tip_status_specialist", "tip_status_specialist", actor_email=user.get("email", ""), extra=extra)
+    except Exception:
+        pass
+
     return RedirectResponse(f"/admin/tips/{tip_id}", status_code=303)
 
 
@@ -4467,6 +4544,28 @@ def hub_specialist_tip_update_v090(
     })
 
     db.commit()
+
+    # v1.7.0: bezpečné e-mailové notifikace při práci specialisty s TIPem.
+    # Selhání e-mailu nesmí zrušit uložený stav ani zpracování TIPu.
+    try:
+        extra = {
+            "old_status": old_status,
+            "new_status": new_status,
+            "message_to_adviser": message_to_adviser,
+            "internal_note": internal_note,
+            "final_report": final_report,
+        }
+        if old and (old.get("adviser_email") or "").strip():
+            send_tip_workflow_email_v170_(db, tip_id, old.get("adviser_email"), "tip_status_adviser", "tip_status_adviser", actor_email=user.get("email", ""), extra=extra)
+        try:
+            bo_email = get_bo_email_v110(db)
+        except Exception:
+            bo_email = "backoffice@astorieas.cz"
+        if bo_email:
+            send_tip_workflow_email_v170_(db, tip_id, bo_email, "tip_status_bo", "tip_status_bo", actor_email=user.get("email", ""), extra=extra)
+    except Exception:
+        pass
+
     return RedirectResponse(f"/hub/specialist-tips/{tip_id}", status_code=303)
 
 
@@ -9225,11 +9324,65 @@ def release_1_6_1_status(db: Session = Depends(get_db)):
 def release_1_6_2_status(db: Session = Depends(get_db)):
     return {
         "ok": True,
-        "version": "1.6.2-mail-templates-wired-professional-safe",
+        "version": "1.6.3-astorie-corporate-mail-visual-safe",
         "safe": True,
         "db_changed": False,
         "data_deleted": False,
         "changed_modules": ["email_template_system_test", "email_test_route", "mail_template_visuals", "email_version_badge"],
         "unchanged_modules": ["partners", "contacts", "links", "products", "rates", "terminations", "permissions", "import", "production_reading", "smtp_env"],
         "smtp": public_smtp_diagnostics(),
+    }
+
+
+@router.get("/api/release-1-6-3/status")
+def release_1_6_3_status(db: Session = Depends(get_db)):
+    return {
+        "ok": True,
+        "version": "1.6.3-astorie-corporate-mail-visual-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "changed_modules": ["email_html_visual_layer", "system_test_template", "email_version_badge"],
+        "unchanged_modules": ["smtp_delivery", "smtp_env", "partners", "contacts", "links", "products", "rates", "terminations", "permissions", "imports", "production_reading", "tips_backend"],
+        "smtp": public_smtp_diagnostics(),
+        "note": "Pouze vizuální povýšení HTML šablon. Odesílací SMTP logika a databáze nejsou měněny.",
+    }
+
+
+@router.get("/api/release-1-7-0/status")
+def release_1_7_0_status(db: Session = Depends(get_db)):
+    """Release check: TIP workflow mail automation. Aditivní a bezpečné."""
+    try:
+        ensure_tip_workflow_v090_(db)
+        ensure_email_tables(db)
+        tip_count = db.execute(text("SELECT COUNT(*) FROM tips")).scalar()
+        mail_count = db.execute(text("SELECT COUNT(*) FROM email_logs")).scalar()
+    except Exception as exc:
+        return {"ok": False, "version": TIP_WORKFLOW_MAIL_VERSION, "error": str(exc)}
+    return {
+        "ok": True,
+        "version": TIP_WORKFLOW_MAIL_VERSION,
+        "safe": True,
+        "db_changed": "pouze aditivní kontrola existujících tabulek/sloupců TIP workflow, pokud chybí",
+        "data_smazana": False,
+        "changed_modules": [
+            "tip_new_email_notifications",
+            "tip_status_email_notifications",
+            "tip_specialist_update_notifications",
+            "tip_bo_update_notifications",
+            "email_audit_logging"
+        ],
+        "unchanged_modules": [
+            "smtp_delivery_core",
+            "partners",
+            "contacts",
+            "links",
+            "products",
+            "rates",
+            "terminations",
+            "permissions",
+            "imports",
+            "production_data_reading"
+        ],
+        "counts": {"tips": tip_count, "email_logs": mail_count}
     }
