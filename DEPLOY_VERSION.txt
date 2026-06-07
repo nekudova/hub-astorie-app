@@ -1,1 +1,1 @@
-1.9.1-smtp-policy-db-create-hotfix-safe
+v1.9.2-admin-ui-syntax-smtp-policy-hotfix-safe

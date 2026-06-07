@@ -9160,7 +9160,7 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
     policies = []
     try:
         seed_email_policy_fallback_v191(db)
-    policies = get_email_policies_for_admin(db)
+        policies = get_email_policies_for_admin(db)
     except Exception:
         policies = []
     return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs, "last_error": last_error, "policies": policies, "email_version": EMAIL_VERSION})
@@ -9878,7 +9878,7 @@ def release_1_8_0_status(db: Session = Depends(get_db)):
         ensure_email_policy_tables_v191(db)
         seed_email_policy_fallback_v191(db)
         seed_email_policy_fallback_v191(db)
-    policies = get_email_policies_for_admin(db)
+        policies = get_email_policies_for_admin(db)
         policy_count = len(policies or [])
     except Exception:
         policy_count = 0
@@ -9921,7 +9921,7 @@ def release_1_8_1_status(db: Session = Depends(get_db)):
         ensure_email_policy_tables_v191(db)
         seed_email_policy_fallback_v191(db)
         seed_email_policy_fallback_v191(db)
-    policies = get_email_policies_for_admin(db)
+        policies = get_email_policies_for_admin(db)
         policy_count = len(policies or [])
     except Exception:
         policy_count = 0
@@ -10078,6 +10078,37 @@ def release_1_9_1_status(db: Session = Depends(get_db)):
         "db_changed": "pouze aditivně vytvoří/naplní public.hub_email_policy; žádná obchodní data se nemažou",
         "data_smazana": False,
         "changed_modules": ["smtp_policy_database_create", "smtp_policy_seed_fallback", "release_status"],
+        "unchanged_modules": ["smtp_delivery", "tips_data", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions"],
+        "smtp_configured": cfg.get("configured"),
+        "smtp_host": cfg.get("host"),
+        "policy_count": policy_count,
+        "seed_error": seed_error,
+        "default_bo_email": backoffice_tip_email_v170b_(),
+    }
+
+
+@router.get("/api/release-1-9-2/status")
+def release_1_9_2_status(db: Session = Depends(get_db)):
+    seed_error = ""
+    policy_count = 0
+    try:
+        ensure_email_tables(db)
+        seed_email_policy_fallback_v191(db)
+        policy_count = db.execute(text("SELECT COUNT(*) FROM public.hub_email_policy")).scalar() or 0
+    except Exception as exc:
+        seed_error = str(exc)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+    cfg = smtp_config_status()
+    return {
+        "ok": True,
+        "version": "1.9.2-admin-ui-syntax-smtp-policy-hotfix-safe",
+        "safe": True,
+        "db_changed": "pouze aditivní vytvoření/naplnění public.hub_email_policy, pokud chybí",
+        "data_smazana": False,
+        "changed_modules": ["admin_ui_syntax_hotfix", "smtp_policy_database_create", "smtp_policy_seed_fallback"],
         "unchanged_modules": ["smtp_delivery", "tips_data", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions"],
         "smtp_configured": cfg.get("configured"),
         "smtp_host": cfg.get("host"),
