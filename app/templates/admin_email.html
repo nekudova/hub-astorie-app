@@ -7,6 +7,14 @@
   </div>
 </section>
 
+
+{% if request.query_params.get('policy_saved') %}
+  <div class="alert success">E-mailová politika byla uložena.</div>
+{% endif %}
+{% if request.query_params.get('policy_error') %}
+  <div class="alert danger">E-mailovou politiku se nepodařilo uložit. Zkontrolujte zadané hodnoty.</div>
+{% endif %}
+
 {% if request.query_params.get('sent') %}
   <div class="alert success">Testovací e-mail byl odeslán. Zkontrolujte schránku příjemce.</div>
 {% endif %}
@@ -49,6 +57,49 @@
   </section>
 </div>
 
+
+<section class="card mt">
+  <h2>Profesionální mailový modul – pravidla podle sekcí</h2>
+  <p class="muted">Zde určíte, komu se má posílat e-mail po založení nového TIPu. Kopii BackOffice lze zapnout/vypnout pro každou sekci samostatně. Změna nemění data TIPů ani SMTP.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Sekce</th>
+          <th>Událost</th>
+          <th>Poradce</th>
+          <th>Specialista</th>
+          <th>Kopie BO</th>
+          <th>BO e-mail</th>
+          <th>Aktivní</th>
+          <th>Poznámka</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in policies %}
+        <tr>
+          <form method="post" action="/admin/email/policy/update">
+            <td><b>{{ p.section_code }}</b><br><span class="muted">{{ p.section_name or '—' }}</span><input type="hidden" name="section_code" value="{{ p.section_code }}"></td>
+            <td><input type="hidden" name="event_type" value="{{ p.event_type or 'tip_created' }}">Nový TIP</td>
+            <td><label class="inline-check"><input type="checkbox" name="send_to_adviser" value="1" {% if p.send_to_adviser %}checked{% endif %}> ano</label></td>
+            <td><label class="inline-check"><input type="checkbox" name="send_to_specialist" value="1" {% if p.send_to_specialist %}checked{% endif %}> ano</label></td>
+            <td><label class="inline-check"><input type="checkbox" name="send_to_bo" value="1" {% if p.send_to_bo %}checked{% endif %}> ano</label></td>
+            <td><input name="bo_email" type="email" value="{{ p.bo_email or cfg.reply_to or 'backoffice@astorieas.cz' }}" style="min-width:220px"></td>
+            <td><label class="inline-check"><input type="checkbox" name="is_active" value="1" {% if p.is_active %}checked{% endif %}> aktivní</label></td>
+            <td><input name="note" value="{{ p.note or '' }}" placeholder="interní poznámka"></td>
+            <td><button class="btn small" type="submit">Uložit</button></td>
+          </form>
+        </tr>
+      {% else %}
+        <tr><td colspan="9" class="muted">Zatím nejsou vytvořená pravidla. Obnovte stránku nebo zkontrolujte sekce.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="alert info"><b>Výchozí pravidlo:</b> pokud sekce nemá vlastní nastavení, systém pošle nový TIP poradci, specialistovi i BackOffice. Selhání e-mailu nikdy nesmí zrušit uložení TIPu.</div>
+</section>
+
 <section class="card mt">
   <h2>Poslední e-mailové události</h2>
   <div class="table-wrap">
@@ -80,13 +131,14 @@
 <section class="card mt">
   <h2>Proměnné pro Render</h2>
   <pre>EMAIL_ENABLED=true
-SMTP_HOST=smtp.office365.com
+SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_SECURITY=starttls
-SMTP_USER=nekudova@astorieas.cz
+SMTP_USER=adc15f001@smtp-brevo.com
 SMTP_PASSWORD=********
 SMTP_FROM=HUB ASTORIE &lt;backoffice@astorieas.cz&gt;
-SMTP_REPLY_TO=backoffice@astorieas.cz</pre>
+SMTP_REPLY_TO=backoffice@astorieas.cz
+BACKOFFICE_EMAIL=backoffice@astorieas.cz</pre>
   <p class="muted">Podporované zabezpečení: <b>starttls</b>, <b>ssl</b>, <b>none</b>. Pro většinu firemních SMTP se používá port 587 + starttls.</p>
 </section>
 

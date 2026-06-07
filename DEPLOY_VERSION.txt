@@ -1,1 +1,1 @@
-1.7.1-tip-workflow-direct-mail-safe
+1.8.0-hub-mail-engine-professional-safe
