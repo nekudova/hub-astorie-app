@@ -43,6 +43,84 @@ get_email_policy = getattr(mailer_service, "get_email_policy", lambda db, event_
 get_email_policies_for_admin = getattr(mailer_service, "get_email_policies_for_admin", lambda db: [])
 update_email_policy = getattr(mailer_service, "update_email_policy", None)
 
+
+
+# -------------------------------------------------------------------
+# v1.9.1 robustní databázová pojistka pro hub_email_policy
+# Vytvoří pouze konfigurační tabulku pro pravidla e-mailů.
+# Nezasahuje do TIPů ani obchodních dat.
+# -------------------------------------------------------------------
+def ensure_email_policy_tables_v191(db: Session) -> None:
+    ddl = """
+    CREATE TABLE IF NOT EXISTS public.hub_email_policy (
+        id VARCHAR(80) PRIMARY KEY,
+        event_type VARCHAR(120) NOT NULL DEFAULT 'tip_created',
+        section_code VARCHAR(120) NOT NULL DEFAULT '',
+        section_name TEXT NOT NULL DEFAULT '',
+        send_to_adviser BOOLEAN NOT NULL DEFAULT TRUE,
+        send_to_specialist BOOLEAN NOT NULL DEFAULT TRUE,
+        send_to_bo BOOLEAN NOT NULL DEFAULT TRUE,
+        bo_email VARCHAR(255) NOT NULL DEFAULT 'backoffice@astorieas.cz',
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        note TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+    """
+    db.execute(text(ddl))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS section_name TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS send_to_adviser BOOLEAN NOT NULL DEFAULT TRUE"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS send_to_specialist BOOLEAN NOT NULL DEFAULT TRUE"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS send_to_bo BOOLEAN NOT NULL DEFAULT TRUE"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS bo_email VARCHAR(255) NOT NULL DEFAULT 'backoffice@astorieas.cz'"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT ''"))
+    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()"))
+    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_hub_email_policy_event_section ON public.hub_email_policy(event_type, section_code)"))
+    db.commit()
+
+
+def seed_email_policy_fallback_v191(db: Session) -> None:
+    ensure_email_policy_tables_v191(db)
+    fallback_sections = [
+        ('AUTO', 'Auto'), ('FLO', 'Flotily'), ('MAJ', 'Majetek'), ('ZIV', 'Život'),
+        ('POD', 'Podnikatel'), ('DPS', 'DPS / penze'), ('INV', 'Investice'),
+        ('UVR', 'Úvěry / hypotéky'), ('OST', 'Ostatní')
+    ]
+    # Pokud existuje tabulka sections, přibereme i skutečné sekce, ale fallback zůstává.
+    try:
+        if db.execute(text("SELECT to_regclass('public.sections')")).scalar():
+            rows = db.execute(text("""
+                SELECT COALESCE(NULLIF(code,''), NULLIF(section_code,''), id::text) AS code,
+                       COALESCE(NULLIF(name,''), NULLIF(section_name,''), NULLIF(title,''), code, section_code, id::text) AS name
+                FROM public.sections
+            """)).mappings().all()
+            for r in rows:
+                code = str(r.get('code') or '').strip().upper()
+                if code:
+                    fallback_sections.append((code, str(r.get('name') or code).strip() or code))
+    except Exception:
+        db.rollback()
+        ensure_email_policy_tables_v191(db)
+    seen = set()
+    for code, name in fallback_sections:
+        code = (code or '').strip().upper()
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        db.execute(text("""
+            INSERT INTO public.hub_email_policy
+              (id, event_type, section_code, section_name, send_to_adviser, send_to_specialist, send_to_bo, bo_email, is_active, note)
+            VALUES
+              (:id, 'tip_created', :code, :name, TRUE, TRUE, TRUE, :bo, TRUE, 'Výchozí pravidlo pro nový TIP – lze upravit v administraci')
+            ON CONFLICT (event_type, section_code) DO UPDATE SET
+              section_name = EXCLUDED.section_name,
+              bo_email = CASE WHEN COALESCE(public.hub_email_policy.bo_email,'') = '' THEN EXCLUDED.bo_email ELSE public.hub_email_policy.bo_email END,
+              updated_at = NOW()
+        """), {"id": str(uuid.uuid4()), "code": code, "name": name, "bo": backoffice_tip_email_v170b_()})
+    db.commit()
+
+
 def generate_temp_password_v190(length: int = 8) -> str:
     """Readable temporary password/PIN for admin reset."""
     import secrets
@@ -9061,8 +9139,8 @@ def release_147_status():
 def admin_email_page(request: Request, db: Session = Depends(get_db)):
     ensure_email_tables(db)
     try:
-        ensure_email_policy_tables(db)
-        seed_email_policy_from_sections(db)
+        ensure_email_policy_tables_v191(db)
+        seed_email_policy_fallback_v191(db)
     except Exception:
         pass
     cfg = smtp_config_status()
@@ -9081,7 +9159,8 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
     """)).mappings().first()
     policies = []
     try:
-        policies = get_email_policies_for_admin(db)
+        seed_email_policy_fallback_v191(db)
+    policies = get_email_policies_for_admin(db)
     except Exception:
         policies = []
     return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs, "last_error": last_error, "policies": policies, "email_version": EMAIL_VERSION})
@@ -9796,9 +9875,10 @@ def api_release_1_7_0b_status(db: Session = Depends(get_db)):
 def release_1_8_0_status(db: Session = Depends(get_db)):
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables(db)
-        seed_email_policy_from_sections(db)
-        policies = get_email_policies_for_admin(db)
+        ensure_email_policy_tables_v191(db)
+        seed_email_policy_fallback_v191(db)
+        seed_email_policy_fallback_v191(db)
+    policies = get_email_policies_for_admin(db)
         policy_count = len(policies or [])
     except Exception:
         policy_count = 0
@@ -9838,9 +9918,10 @@ def release_1_8_0_status(db: Session = Depends(get_db)):
 def release_1_8_1_status(db: Session = Depends(get_db)):
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables(db)
-        seed_email_policy_from_sections(db)
-        policies = get_email_policies_for_admin(db)
+        ensure_email_policy_tables_v191(db)
+        seed_email_policy_fallback_v191(db)
+        seed_email_policy_fallback_v191(db)
+    policies = get_email_policies_for_admin(db)
         policy_count = len(policies or [])
     except Exception:
         policy_count = 0
@@ -9872,8 +9953,8 @@ def release_1_8_2_status(db: Session = Depends(get_db)):
     seed_error = ""
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables(db)
-        seed_email_policy_from_sections(db)
+        ensure_email_policy_tables_v191(db)
+        seed_email_policy_fallback_v191(db)
         policy_count = db.execute(text("SELECT COUNT(*) FROM hub_email_policy")).scalar() or 0
     except Exception as exc:
         try:
@@ -9921,8 +10002,8 @@ def release_1_9_0_status(db: Session = Depends(get_db)):
     seed_error = ""
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables(db)
-        seed_email_policy_from_sections(db)
+        ensure_email_policy_tables_v191(db)
+        seed_email_policy_fallback_v191(db)
         policy_count = db.execute(text("SELECT COUNT(*) FROM public.hub_email_policy")).scalar() or 0
     except Exception as exc:
         seed_error = str(exc)
@@ -9972,6 +10053,35 @@ def release_1_9_0_status(db: Session = Depends(get_db)):
         "policy_count": policy_count,
         "specialists_count": specialists_count,
         "users_count": users_count,
+        "seed_error": seed_error,
+        "default_bo_email": backoffice_tip_email_v170b_(),
+    }
+
+
+@router.get("/api/release-1-9-1/status")
+def release_1_9_1_status(db: Session = Depends(get_db)):
+    seed_error = ""
+    policy_count = 0
+    try:
+        ensure_email_tables(db)
+        seed_email_policy_fallback_v191(db)
+        policy_count = db.execute(text("SELECT COUNT(*) FROM public.hub_email_policy")).scalar() or 0
+    except Exception as exc:
+        seed_error = str(exc)
+        try: db.rollback()
+        except Exception: pass
+    cfg = smtp_config_status()
+    return {
+        "ok": True,
+        "version": "1.9.1-smtp-policy-db-create-hotfix-safe",
+        "safe": True,
+        "db_changed": "pouze aditivně vytvoří/naplní public.hub_email_policy; žádná obchodní data se nemažou",
+        "data_smazana": False,
+        "changed_modules": ["smtp_policy_database_create", "smtp_policy_seed_fallback", "release_status"],
+        "unchanged_modules": ["smtp_delivery", "tips_data", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions"],
+        "smtp_configured": cfg.get("configured"),
+        "smtp_host": cfg.get("host"),
+        "policy_count": policy_count,
         "seed_error": seed_error,
         "default_bo_email": backoffice_tip_email_v170b_(),
     }
