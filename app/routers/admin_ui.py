@@ -18,11 +18,23 @@ from app.models.contact_models import PartnerContact, PartnerLink, PartnerProduc
 from app.services.passwords import hash_password
 from app.services import mailer as mailer_service
 
-send_email = mailer_service.send_email
+def send_email(db, to_email: str, subject: str, text_body: str, **kwargs):
+    """Compatibility guard for mixed deployed files.
+    Some older mailer.py builds do not accept template_key. Never let that break e-mail sending.
+    """
+    try:
+        return mailer_service.send_email(db, to_email, subject, text_body, **kwargs)
+    except TypeError as exc:
+        if "template_key" in str(exc):
+            safe_kwargs = dict(kwargs)
+            safe_kwargs.pop("template_key", None)
+            return mailer_service.send_email(db, to_email, subject, text_body, **safe_kwargs)
+        raise
+
 smtp_config_status = mailer_service.smtp_config_status
 ensure_email_tables = mailer_service.ensure_email_tables
 email_template = mailer_service.email_template
-EMAIL_VERSION = getattr(mailer_service, "EMAIL_VERSION", "1.6.0d-email-send-rollback-stabilization-safe")
+EMAIL_VERSION = "1.6.0e-email-send-compat-stabilization-safe"
 public_smtp_diagnostics = getattr(mailer_service, "public_smtp_diagnostics", lambda: {})
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
@@ -9127,4 +9139,33 @@ def release_1_6_0d_status(db: Session = Depends(get_db)):
             "from_email": cfg.get("from_email"),
             "missing": cfg.get("missing"),
         }
+    }
+
+# -------------------------------------------------------------------
+# v1.6.0E – EMAIL SEND COMPAT STABILIZATION SAFE
+# Fixuje kompatibilitu volání send_email(template_key=...) proti staršímu mailer.py.
+# Bez změny DB, SMTP proměnných a business modulů.
+# -------------------------------------------------------------------
+@router.get("/api/release-1-6-0e/status")
+def release_1_6_0e_status(db: Session = Depends(get_db)):
+    ensure_email_tables(db)
+    cfg = smtp_config_status()
+    return {
+        "ok": True,
+        "version": "1.6.0e-email-send-compat-stabilization-safe",
+        "safe": True,
+        "db_changed": False,
+        "data_deleted": False,
+        "fixed_error": "TypeError: send_email() got an unexpected keyword argument 'template_key'",
+        "changed_modules": ["admin_email_test_route", "send_email_compat_wrapper", "email_template_compatibility"],
+        "unchanged_modules": ["smtp_settings", "tips", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions", "imports"],
+        "smtp": {
+            "configured": cfg.get("configured"),
+            "host": cfg.get("host"),
+            "port": cfg.get("port"),
+            "security": cfg.get("security"),
+            "user": cfg.get("user"),
+            "from_email": cfg.get("from_email"),
+            "missing": cfg.get("missing"),
+        },
     }
