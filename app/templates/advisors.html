@@ -11,6 +11,13 @@
   </div>
 </div>
 
+{% if request.query_params.get('reset_sent') %}
+  <div class="alert success">Nové heslo bylo nastaveno a odesláno uživateli e-mailem.</div>
+{% endif %}
+{% if request.query_params.get('reset_done') %}
+  <div class="alert info">Heslo bylo nastaveno. E-mail se neodeslal nebo nebyl požadován.</div>
+{% endif %}
+
 <section id="advisor-form-panel" class="card collapsible-panel" style="display:none;">
   <div class="panel-head">
     <div>
@@ -111,9 +118,13 @@
                 <form method="post" action="/admin/advisors/{{ u.id }}/toggle">
                   <button class="btn soft micro" type="submit">{% if u.is_active %}Vypnout{% else %}Zapnout{% endif %}</button>
                 </form>
-                <form method="post" action="/admin/advisors/{{ u.id }}/reset-password">
-                  <input type="hidden" name="password" value="1234">
-                  <button class="btn soft micro" type="submit">Reset PIN</button>
+                <form method="post" action="/admin/advisors/{{ u.id }}/reset-password" class="reset-form-v190">
+                  <input class="table-input micro-pass" name="password" placeholder="nové heslo / prázdné = generovat">
+                  <input type="hidden" name="send_mail" value="1">
+                  <button class="btn soft micro" type="submit">Reset + poslat</button>
+                </form>
+                <form method="post" action="/admin/advisors/{{ u.id }}/resend-access">
+                  <button class="btn soft micro" type="submit">Znovu poslat přístup</button>
                 </form>
               </div>
             </td>
@@ -145,5 +156,6 @@ function toggleAdvisorForm(){
 .role-checks-v150 label{display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #dbe8ec;border-radius:999px;padding:7px 10px;font-weight:900;color:#003D4C;margin:0}
 .role-checks-v150.compact{padding:6px;max-width:360px}.role-checks-v150.compact label{font-size:12px;padding:5px 8px}.role-summary-v150{font-size:12px;color:#637386;margin-top:6px;font-weight:800}
 .admin-users-scroll-v150{max-height:72vh;overflow:auto}.admin-users-table-v150 th{position:sticky;top:0;z-index:2}.admin-users-table-v150 td{vertical-align:top}.advisor-form-v150{align-items:start}
+.reset-form-v190{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.micro-pass{max-width:185px;font-size:12px}
 </style>
 {% endblock %}
