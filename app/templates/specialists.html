@@ -7,23 +7,9 @@
   </div>
   <div class="toolbar-actions">
     <a class="btn soft" href="/api/hub/taxonomy-status" target="_blank">Kontrola TIP routingu</a>
-    <form method="post" action="/admin/specialists/import-legacy-v190" style="display:inline;" onsubmit="return confirm('Naimportovat / aktualizovat specialisty z původní aplikace? Existující shodné záznamy se pouze aktualizují.');">
-      <button class="btn soft" type="submit">Import specialistů z původní aplikace</button>
-    </form>
     <button class="btn orange" type="button" onclick="toggleSpecialistForm()">+ Nový specialista</button>
   </div>
 </div>
-
-{% if request.query_params.get('imported') %}
-  <div class="alert success">
-    Import specialistů dokončen. Vloženo: {{ request.query_params.get('inserted') or '0' }},
-    aktualizováno: {{ request.query_params.get('updated') or '0' }},
-    přeskočeno: {{ request.query_params.get('skipped') or '0' }}.
-  </div>
-{% endif %}
-{% if request.query_params.get('import_error') %}
-  <div class="alert danger">Import specialistů se nepodařil. Zkontrolujte log Renderu.</div>
-{% endif %}
 
 <section id="specialist-form-panel" class="card collapsible-panel" style="display:none;">
   <div class="panel-head">

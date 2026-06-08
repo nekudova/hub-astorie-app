@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
   <h1 class="page-title">Správa poradců</h1>
-  <p class="page-subtitle">Náhrada listu Poradci. V první fázi základní evidence, role a aktivace.</p>
+  <p class="page-subtitle">Správa poradců, role, aktivace a bezpečný reset přístupu.</p>
+
+  {% if request.query_params.get('reset_sent') %}<div class="alert success">Nové heslo bylo nastaveno a e-mail byl odeslán.</div>{% endif %}
+  {% if request.query_params.get('reset_done') %}<div class="alert info">Nové heslo bylo nastaveno. E-mail nebyl odeslán nebo není dostupný.</div>{% endif %}
+  {% if request.query_params.get('user_error') %}<div class="alert danger">Akci se nepodařilo provést.</div>{% endif %}
 
   <section class="card">
     <form method="post" action="/admin/users" class="form-row">
@@ -18,7 +22,7 @@
   <section class="card table-card section-space">
     <div class="table-head">Uživatelé</div>
     <table>
-      <thead><tr><th>ID</th><th>Jméno</th><th>E-mail</th><th>Role</th><th>Stav</th><th>Akce</th></tr></thead>
+      <thead><tr><th>ID</th><th>Jméno</th><th>E-mail</th><th>Role</th><th>Stav</th><th>Akce</th><th>Přístup</th></tr></thead>
       <tbody>
       {% for u in users %}
         <tr>
@@ -32,9 +36,19 @@
               <button class="btn soft" type="submit">{% if u.is_active %}Deaktivovat{% else %}Aktivovat{% endif %}</button>
             </form>
           </td>
+          <td>
+            <form method="post" action="/admin/users/{{ u.id }}/reset-password" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <input name="password" placeholder="nové heslo / prázdné = auto" style="min-width:180px;">
+              <input type="hidden" name="send_mail" value="1">
+              <button class="btn small" type="submit">Reset + poslat</button>
+            </form>
+            <form method="post" action="/admin/users/{{ u.id }}/resend-access" style="margin-top:6px;">
+              <button class="btn small soft" type="submit">Znovu poslat přístup</button>
+            </form>
+          </td>
         </tr>
       {% else %}
-        <tr><td colspan="6">Zatím nejsou vloženi žádní poradci.</td></tr>
+        <tr><td colspan="7">Zatím nejsou vloženi žádní poradci.</td></tr>
       {% endfor %}
       </tbody>
     </table>

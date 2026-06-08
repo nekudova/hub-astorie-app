@@ -2,7 +2,6 @@ import json
 import re
 from io import BytesIO
 from datetime import datetime
-from pathlib import Path
 import io
 import csv
 from decimal import Decimal
@@ -44,125 +43,147 @@ get_email_policies_for_admin = getattr(mailer_service, "get_email_policies_for_a
 update_email_policy = getattr(mailer_service, "update_email_policy", None)
 
 
+# -------------------------------------------------------------------
+# v1.9.3 – direct DB guards for admin e-mail policy and user access actions
+# These helpers are additive only. They never delete business data.
+# -------------------------------------------------------------------
+def _admin_bo_email_default_v193() -> str:
+    import os
+    return (os.getenv("TIP_BACKOFFICE_EMAIL") or os.getenv("BACKOFFICE_EMAIL") or os.getenv("SMTP_REPLY_TO") or "backoffice@astorieas.cz").strip()
 
-# -------------------------------------------------------------------
-# v1.9.1 robustní databázová pojistka pro hub_email_policy
-# Vytvoří pouze konfigurační tabulku pro pravidla e-mailů.
-# Nezasahuje do TIPů ani obchodních dat.
-# -------------------------------------------------------------------
-def ensure_email_policy_tables_v191(db: Session) -> None:
-    ddl = """
-    CREATE TABLE IF NOT EXISTS public.hub_email_policy (
-        id VARCHAR(80) PRIMARY KEY,
-        event_type VARCHAR(120) NOT NULL DEFAULT 'tip_created',
-        section_code VARCHAR(120) NOT NULL DEFAULT '',
-        section_name TEXT NOT NULL DEFAULT '',
-        send_to_adviser BOOLEAN NOT NULL DEFAULT TRUE,
-        send_to_specialist BOOLEAN NOT NULL DEFAULT TRUE,
-        send_to_bo BOOLEAN NOT NULL DEFAULT TRUE,
-        bo_email VARCHAR(255) NOT NULL DEFAULT 'backoffice@astorieas.cz',
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        note TEXT NOT NULL DEFAULT '',
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-    )
-    """
-    db.execute(text(ddl))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS section_name TEXT NOT NULL DEFAULT ''"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS send_to_adviser BOOLEAN NOT NULL DEFAULT TRUE"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS send_to_specialist BOOLEAN NOT NULL DEFAULT TRUE"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS send_to_bo BOOLEAN NOT NULL DEFAULT TRUE"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS bo_email VARCHAR(255) NOT NULL DEFAULT 'backoffice@astorieas.cz'"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT ''"))
-    db.execute(text("ALTER TABLE public.hub_email_policy ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()"))
-    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_hub_email_policy_event_section ON public.hub_email_policy(event_type, section_code)"))
+
+def ensure_email_policy_direct_v193(db: Session) -> None:
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS hub_email_policy (
+            id VARCHAR(80) PRIMARY KEY,
+            event_type VARCHAR(120) NOT NULL DEFAULT 'tip_created',
+            section_code VARCHAR(120) NOT NULL DEFAULT '',
+            section_name TEXT NOT NULL DEFAULT '',
+            send_to_adviser BOOLEAN NOT NULL DEFAULT TRUE,
+            send_to_specialist BOOLEAN NOT NULL DEFAULT TRUE,
+            send_to_bo BOOLEAN NOT NULL DEFAULT TRUE,
+            bo_email VARCHAR(255) NOT NULL DEFAULT '',
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+    """))
+    for stmt in [
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS section_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS send_to_adviser BOOLEAN NOT NULL DEFAULT TRUE",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS send_to_specialist BOOLEAN NOT NULL DEFAULT TRUE",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS send_to_bo BOOLEAN NOT NULL DEFAULT TRUE",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS bo_email VARCHAR(255) NOT NULL DEFAULT ''",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE hub_email_policy ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()",
+    ]:
+        db.execute(text(stmt))
+    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_hub_email_policy_event_section ON hub_email_policy(event_type, section_code)"))
     db.commit()
 
 
-def seed_email_policy_fallback_v191(db: Session) -> None:
-    ensure_email_policy_tables_v191(db)
-    fallback_sections = [
-        ('AUTO', 'Auto'), ('FLO', 'Flotily'), ('MAJ', 'Majetek'), ('ZIV', 'Život'),
-        ('POD', 'Podnikatel'), ('DPS', 'DPS / penze'), ('INV', 'Investice'),
-        ('UVR', 'Úvěry / hypotéky'), ('OST', 'Ostatní')
+def seed_email_policy_direct_v193(db: Session) -> None:
+    ensure_email_policy_direct_v193(db)
+    fallback = [
+        ("AUTO", "Auto"), ("AUTA", "Auto"), ("FLO", "Flotily"), ("FLOTILY", "Flotily"),
+        ("MAJ", "Majetek"), ("ZIV", "Život"), ("POD", "Podnikatel"), ("DPS", "DPS / penze"),
+        ("PENZE", "Penze"), ("INV", "Investice"), ("HYP", "Hypotéky"), ("OST", "Ostatní"),
     ]
-    # Pokud existuje tabulka sections, přibereme i skutečné sekce, ale fallback zůstává.
+    collected = {code: name for code, name in fallback}
     try:
-        if db.execute(text("SELECT to_regclass('public.sections')")).scalar():
-            rows = db.execute(text("""
-                SELECT COALESCE(NULLIF(code,''), NULLIF(section_code,''), id::text) AS code,
-                       COALESCE(NULLIF(name,''), NULLIF(section_name,''), NULLIF(title,''), code, section_code, id::text) AS name
-                FROM public.sections
-            """)).mappings().all()
-            for r in rows:
-                code = str(r.get('code') or '').strip().upper()
-                if code:
-                    fallback_sections.append((code, str(r.get('name') or code).strip() or code))
+        for r in db.execute(text("SELECT section_code, name FROM sections WHERE COALESCE(is_active, TRUE)=TRUE")).mappings().all():
+            code = str(r.get("section_code") or "").strip().upper()
+            if code:
+                collected[code] = str(r.get("name") or code)
     except Exception:
         db.rollback()
-        ensure_email_policy_tables_v191(db)
-    seen = set()
-    for code, name in fallback_sections:
-        code = (code or '').strip().upper()
-        if not code or code in seen:
-            continue
-        seen.add(code)
+    try:
+        for r in db.execute(text("SELECT DISTINCT section_code FROM tips WHERE COALESCE(section_code,'') <> ''")).mappings().all():
+            code = str(r.get("section_code") or "").strip().upper()
+            if code:
+                collected.setdefault(code, code)
+    except Exception:
+        db.rollback()
+    for code, name in sorted(collected.items()):
         db.execute(text("""
-            INSERT INTO public.hub_email_policy
+            INSERT INTO hub_email_policy
               (id, event_type, section_code, section_name, send_to_adviser, send_to_specialist, send_to_bo, bo_email, is_active, note)
             VALUES
-              (:id, 'tip_created', :code, :name, TRUE, TRUE, TRUE, :bo, TRUE, 'Výchozí pravidlo pro nový TIP – lze upravit v administraci')
+              (:id, 'tip_created', :code, :name, TRUE, TRUE, TRUE, :bo, TRUE, 'Výchozí politika pro nový TIP – spravováno v administraci')
             ON CONFLICT (event_type, section_code) DO UPDATE SET
-              section_name = EXCLUDED.section_name,
-              bo_email = CASE WHEN COALESCE(public.hub_email_policy.bo_email,'') = '' THEN EXCLUDED.bo_email ELSE public.hub_email_policy.bo_email END,
+              section_name = COALESCE(NULLIF(EXCLUDED.section_name,''), hub_email_policy.section_name),
+              bo_email = CASE WHEN COALESCE(hub_email_policy.bo_email,'')='' THEN EXCLUDED.bo_email ELSE hub_email_policy.bo_email END,
               updated_at = NOW()
-        """), {"id": str(uuid.uuid4()), "code": code, "name": name, "bo": backoffice_tip_email_v170b_()})
+        """), {"id": str(uuid.uuid4()), "code": code, "name": name or code, "bo": _admin_bo_email_default_v193()})
     db.commit()
 
 
-def generate_temp_password_v190(length: int = 8) -> str:
-    """Readable temporary password/PIN for admin reset."""
-    import secrets
-    alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
-    return "".join(secrets.choice(alphabet) for _ in range(max(6, length)))
+def get_email_policies_direct_v193(db: Session):
+    seed_email_policy_direct_v193(db)
+    return [dict(r) for r in db.execute(text("""
+        SELECT id, event_type, section_code, section_name,
+               send_to_adviser, send_to_specialist, send_to_bo,
+               COALESCE(NULLIF(bo_email,''), :bo) AS bo_email,
+               is_active, note, updated_at
+        FROM hub_email_policy
+        ORDER BY event_type, section_code
+    """), {"bo": _admin_bo_email_default_v193()}).mappings().all()]
 
 
-def email_user_credentials_v190(db: Session, *, to_email: str, name: str, password: str, event_type: str = "user_credentials", entity_id: str = "") -> tuple[bool, str]:
-    """Send credentials via already configured SMTP. Failure is logged, never fatal."""
-    subject = "Přístup do HUB ASTORIE"
-    text_body = (
-        f"Dobrý den,\n\n"
-        f"zasíláme Vám přístupové údaje do interní aplikace HUB ASTORIE.\n\n"
-        f"Přihlašovací e-mail: {to_email}\n"
-        f"Dočasné heslo / PIN: {password}\n\n"
-        f"Po přihlášení doporučujeme heslo změnit.\n\n"
-        f"S pozdravem\nASTORIE a.s."
+def update_email_policy_direct_v193(db: Session, *, event_type: str, section_code: str, send_to_adviser: bool, send_to_specialist: bool, send_to_bo: bool, bo_email: str, is_active: bool, note: str) -> None:
+    seed_email_policy_direct_v193(db)
+    event = (event_type or 'tip_created').strip() or 'tip_created'
+    code = (section_code or '').strip().upper()
+    if not code:
+        raise ValueError('Chybí kód sekce.')
+    row = db.execute(text("SELECT id FROM hub_email_policy WHERE event_type=:event AND section_code=:code"), {"event": event, "code": code}).mappings().first()
+    if row:
+        db.execute(text("""
+            UPDATE hub_email_policy
+            SET send_to_adviser=:send_to_adviser,
+                send_to_specialist=:send_to_specialist,
+                send_to_bo=:send_to_bo,
+                bo_email=:bo_email,
+                is_active=:is_active,
+                note=:note,
+                updated_at=NOW()
+            WHERE id=:id
+        """), {
+            "id": row["id"], "send_to_adviser": send_to_adviser, "send_to_specialist": send_to_specialist,
+            "send_to_bo": send_to_bo, "bo_email": (bo_email or _admin_bo_email_default_v193()).strip(),
+            "is_active": is_active, "note": note or "",
+        })
+    else:
+        db.execute(text("""
+            INSERT INTO hub_email_policy
+              (id, event_type, section_code, section_name, send_to_adviser, send_to_specialist, send_to_bo, bo_email, is_active, note)
+            VALUES (:id, :event, :code, :code, :send_to_adviser, :send_to_specialist, :send_to_bo, :bo_email, :is_active, :note)
+        """), {
+            "id": str(uuid.uuid4()), "event": event, "code": code, "send_to_adviser": send_to_adviser,
+            "send_to_specialist": send_to_specialist, "send_to_bo": send_to_bo,
+            "bo_email": (bo_email or _admin_bo_email_default_v193()).strip(), "is_active": is_active, "note": note or "",
+        })
+    db.commit()
+
+
+def generate_temp_password_v193() -> str:
+    return 'Ast-' + uuid.uuid4().hex[:8].upper()
+
+
+def send_user_access_email_v193(db: Session, user: User, password: str, template_key: str = 'password_reset') -> tuple[bool, str]:
+    data = {"name": user.name, "email": user.email, "password": password}
+    return send_template_email(
+        db,
+        user.email,
+        template_key,
+        data=data,
+        event_type='user_access',
+        entity_type='user',
+        entity_id=str(user.id),
+        created_by_email='admin@astorie.local',
     )
-    html_body = f"""
-    <div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;background:#f3f8f9;padding:24px;">
-      <div style="background:#003D4C;color:#fff;border-radius:18px 18px 0 0;padding:26px 30px;">
-        <div style="letter-spacing:2px;font-size:12px;font-weight:700;">HUB ASTORIE</div>
-        <h1 style="margin:10px 0 0;font-size:26px;">Přístupové údaje</h1>
-      </div>
-      <div style="background:#fff;border:1px solid #d9e8ec;border-top:0;border-radius:0 0 18px 18px;padding:30px;">
-        <p>Dobrý den{name and ', ' + name or ''},</p>
-        <p>zasíláme Vám přístupové údaje do interní aplikace <b>HUB ASTORIE</b>.</p>
-        <div style="background:#eef6f7;border-left:5px solid #FC4C02;border-radius:12px;padding:18px;margin:22px 0;">
-          <p style="margin:0 0 8px;"><b>Přihlašovací e-mail:</b> {to_email}</p>
-          <p style="margin:0;"><b>Dočasné heslo / PIN:</b> <span style="font-size:20px;color:#003D4C;font-weight:800;">{password}</span></p>
-        </div>
-        <p style="color:#52616b;">Po přihlášení doporučujeme heslo změnit. Tento e-mail byl odeslán automaticky z administrace HUB ASTORIE.</p>
-        <p style="margin-top:24px;">S pozdravem<br><b>ASTORIE a.s.</b></p>
-      </div>
-    </div>
-    """
-    return send_email(
-        db, to_email, subject, text_body, html_body=html_body,
-        event_type=event_type, entity_type="user", entity_id=entity_id,
-        created_by_email="admin@astorie.local", template_key="user_credentials_v190"
-    )
-
 
 def send_template_email(db, to_email: str, template_key: str, *, data=None, event_type: str = "system", entity_type: str = "", entity_id: str = "", created_by_email: str = ""):
     """Robust compatibility wrapper. Never lets template tuple mismatch crash the request."""
@@ -188,7 +209,7 @@ def send_template_email(db, to_email: str, template_key: str, *, data=None, even
     )
 
 
-TIP_WORKFLOW_MAIL_VERSION = "1.7.0b-tip-create-mail-recipients-hotfix-safe"
+TIP_WORKFLOW_MAIL_VERSION = "1.9.3-admin-mail-policy-users-functional-safe"
 
 def build_tip_mail_data_v170_(tip: dict, extra: dict | None = None) -> dict:
     """Bezpečný builder dat pro TIP e-maily. Nemění DB, pouze skládá obsah šablony."""
@@ -667,6 +688,39 @@ def toggle_user(user_id: str, db: Session = Depends(get_db)):
         db.commit()
         audit(db, "TOGGLE_ACTIVE", "users", {"id": user_id, "is_active": user.is_active})
     return RedirectResponse(url="/admin/users", status_code=303)
+
+
+@router.post("/admin/users/{user_id}/reset-password")
+def user_reset_password(
+    user_id: str,
+    password: str = Form(""),
+    send_mail: str = Form("1"),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return RedirectResponse(url="/admin/users?user_error=1", status_code=303)
+    new_password = (password or "").strip() or generate_temp_password_v193()
+    user.password_hash = hash_password(new_password)
+    user.must_change_password = True
+    db.commit()
+    mail_ok, mail_err = False, ""
+    if send_mail == "1" and user.email:
+        try:
+            mail_ok, mail_err = send_user_access_email_v193(db, user, new_password, "password_reset")
+        except Exception as exc:
+            mail_err = str(exc)
+            try: db.rollback()
+            except Exception: pass
+    audit(db, "RESET_PASSWORD", "users", {"id": user_id, "email": user.email, "mail_ok": mail_ok, "mail_error": mail_err})
+    suffix = "reset_sent=1" if mail_ok else "reset_done=1"
+    return RedirectResponse(url=f"/admin/users?{suffix}", status_code=303)
+
+
+@router.post("/admin/users/{user_id}/resend-access")
+def user_resend_access(user_id: str, db: Session = Depends(get_db)):
+    # Bezpečně: nikdy neposíláme staré heslo. Vždy vygenerujeme nové dočasné heslo.
+    return user_reset_password(user_id=user_id, password="", send_mail="1", db=db)
 
 
 @router.post("/admin/sections")
@@ -1923,17 +1977,14 @@ def advisor_toggle(user_id: str, db: Session = Depends(get_db)):
 @router.post("/admin/advisors/{user_id}/reset-password")
 def advisor_reset_password(
     user_id: str,
-    password: str = Form(""),
-    send_mail: str = Form("1"),
+    password: str = Form("1234"),
     db: Session = Depends(get_db),
 ):
-    new_password = (password or "").strip() or generate_temp_password_v190(8)
     try:
-        password_hash = hash_password(new_password)
+        password_hash = hash_password(password)
     except Exception:
-        password_hash = new_password
+        password_hash = password
 
-    old = db.execute(text("SELECT id, advisor_id, email, name FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
     db.execute(text("""
       UPDATE users
       SET password_hash = :password_hash,
@@ -1942,36 +1993,19 @@ def advisor_reset_password(
     """), {"id": str(user_id), "password_hash": password_hash})
     db.commit()
 
-    mail_ok = False
-    mail_err = ""
-    if send_mail and old and old.get("email"):
+    try:
+        row = db.execute(text("SELECT email, name FROM users WHERE id::text = :id"), {"id": str(user_id)}).mappings().first()
+        if row and row.get("email"):
+            subj, body, html = email_template("password_reset", name=row.get("name", ""), email=row.get("email", ""), password=password)
+            send_email(db, row.get("email"), subj, body, html_body=html, event_type="password_reset", entity_type="user", entity_id=str(user_id), created_by_email="admin@astorie.local")
+    except Exception:
         try:
-            mail_ok, mail_err = email_user_credentials_v190(
-                db,
-                to_email=old.get("email"),
-                name=old.get("name") or "",
-                password=new_password,
-                event_type="password_reset",
-                entity_id=str(user_id),
-            )
-        except Exception as exc:
-            mail_err = str(exc)
-            try: db.rollback()
-            except Exception: pass
+            db.rollback()
+        except Exception:
+            pass
 
-    safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), dict(old or {}), {
-        "password_reset": True, "mail_sent": mail_ok, "mail_error": mail_err
-    }, "Reset hesla poradce / uživatele")
-    suffix = "reset_sent=1" if mail_ok else "reset_done=1"
-    return RedirectResponse(f"/admin/advisors?{suffix}", status_code=303)
-
-
-@router.post("/admin/advisors/{user_id}/resend-access")
-def advisor_resend_access(user_id: str, db: Session = Depends(get_db)):
-    # Z bezpečnostních důvodů neposíláme staré heslo. Vygenerujeme nové a odešleme ho.
-    return advisor_reset_password(user_id=user_id, password="", send_mail="1", db=db)
-
-
+    safe_audit(db, "admin@astorie.local", "UPDATE", "advisor", str(user_id), {}, {"password_reset": True}, "Reset hesla poradce")
+    return RedirectResponse("/admin/advisors", status_code=303)
 
 
 
@@ -2247,99 +2281,6 @@ def specialist_toggle(item_id: int, db: Session = Depends(get_db)):
         except Exception:
             pass
     return RedirectResponse("/admin/specialists", status_code=303)
-
-
-@router.post("/admin/specialists/import-legacy-v190")
-def specialists_import_legacy_v190(db: Session = Depends(get_db)):
-    """Import specialist routing from packaged legacy XLSX seed.
-    Additive/update only: existing matching rows are updated, missing rows inserted.
-    Matching key = advisor_id + email + section_code + subsection_code.
-    """
-    ensure_specialists_table_(db)
-    seed_path = Path(__file__).resolve().parents[1] / "data" / "specialists_seed_v190.json"
-    try:
-        raw_items = json.loads(seed_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        return RedirectResponse(f"/admin/specialists?import_error=1", status_code=303)
-
-    inserted = 0
-    updated = 0
-    skipped = 0
-    for item in raw_items:
-        advisor_id = str(item.get("advisor_id") or "").strip()
-        name = str(item.get("specialist_name") or "").strip()
-        email = str(item.get("email") or "").strip().lower()
-        section_code = str(item.get("section_code") or "").strip().upper()
-        subsection_code = str(item.get("subsection_code") or "").strip().upper()
-        if not name or not section_code:
-            skipped += 1
-            continue
-
-        existing = db.execute(text("""
-            SELECT id FROM specialists
-            WHERE COALESCE(advisor_id,'') = :advisor_id
-              AND lower(COALESCE(email,'')) = :email
-              AND upper(COALESCE(section_code,'')) = :section_code
-              AND upper(COALESCE(subsection_code,'')) = :subsection_code
-            LIMIT 1
-        """), {
-            "advisor_id": advisor_id,
-            "email": email,
-            "section_code": section_code,
-            "subsection_code": subsection_code,
-        }).mappings().first()
-
-        params = {
-            "advisor_id": advisor_id,
-            "specialist_name": name,
-            "email": email,
-            "phone": str(item.get("phone") or "").strip(),
-            "section_code": section_code,
-            "subsection_code": subsection_code,
-            "role_description": str(item.get("role_description") or "").strip(),
-            "region": str(item.get("region") or "").strip(),
-            "if_share": str(item.get("if_share") or "").strip(),
-            "ps_share": str(item.get("ps_share") or "").strip(),
-            "available": bool(item.get("available", True)),
-            "is_active": bool(item.get("is_active", True)),
-            "note": str(item.get("note") or "").strip(),
-        }
-
-        if existing:
-            params["id"] = existing["id"]
-            db.execute(text("""
-                UPDATE specialists SET
-                  specialist_name=:specialist_name,
-                  phone=:phone,
-                  role_description=:role_description,
-                  region=:region,
-                  if_share=:if_share,
-                  ps_share=:ps_share,
-                  available=:available,
-                  is_active=:is_active,
-                  note=:note
-                WHERE id=:id
-            """), params)
-            updated += 1
-        else:
-            db.execute(text("""
-                INSERT INTO specialists
-                  (advisor_id, specialist_name, email, phone, section_code, subsection_code, role_description, region,
-                   if_share, ps_share, available, unavailable_reason, is_active, note)
-                VALUES
-                  (:advisor_id, :specialist_name, :email, :phone, :section_code, :subsection_code, :role_description, :region,
-                   :if_share, :ps_share, :available, '', :is_active, :note)
-            """), params)
-            inserted += 1
-
-    db.commit()
-    try:
-        safe_audit(db, "admin@astorie.local", "IMPORT", "specialists", "legacy_v190", {}, {
-            "inserted": inserted, "updated": updated, "skipped": skipped
-        }, "Import specialistů z původní aplikace")
-    except Exception:
-        pass
-    return RedirectResponse(f"/admin/specialists?imported=1&inserted={inserted}&updated={updated}&skipped={skipped}", status_code=303)
 
 
 @router.get("/api/specialists/search")
@@ -9139,8 +9080,8 @@ def release_147_status():
 def admin_email_page(request: Request, db: Session = Depends(get_db)):
     ensure_email_tables(db)
     try:
-        ensure_email_policy_tables_v191(db)
-        seed_email_policy_fallback_v191(db)
+        ensure_email_policy_tables(db)
+        seed_email_policy_from_sections(db)
     except Exception:
         pass
     cfg = smtp_config_status()
@@ -9159,9 +9100,12 @@ def admin_email_page(request: Request, db: Session = Depends(get_db)):
     """)).mappings().first()
     policies = []
     try:
-        seed_email_policy_fallback_v191(db)
-        policies = get_email_policies_for_admin(db)
+        policies = get_email_policies_direct_v193(db)
     except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
         policies = []
     return render(request, "admin_email.html", {"active": "email", "cfg": cfg, "logs": logs, "last_error": last_error, "policies": policies, "email_version": EMAIL_VERSION})
 
@@ -9195,9 +9139,7 @@ def admin_email_policy_update(
     db: Session = Depends(get_db),
 ):
     try:
-        if update_email_policy is None:
-            return RedirectResponse("/admin/email?policy_error=1", status_code=303)
-        update_email_policy(
+        update_email_policy_direct_v193(
             db,
             event_type=event_type,
             section_code=section_code,
@@ -9875,9 +9817,8 @@ def api_release_1_7_0b_status(db: Session = Depends(get_db)):
 def release_1_8_0_status(db: Session = Depends(get_db)):
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables_v191(db)
-        seed_email_policy_fallback_v191(db)
-        seed_email_policy_fallback_v191(db)
+        ensure_email_policy_tables(db)
+        seed_email_policy_from_sections(db)
         policies = get_email_policies_for_admin(db)
         policy_count = len(policies or [])
     except Exception:
@@ -9918,9 +9859,8 @@ def release_1_8_0_status(db: Session = Depends(get_db)):
 def release_1_8_1_status(db: Session = Depends(get_db)):
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables_v191(db)
-        seed_email_policy_fallback_v191(db)
-        seed_email_policy_fallback_v191(db)
+        ensure_email_policy_tables(db)
+        seed_email_policy_from_sections(db)
         policies = get_email_policies_for_admin(db)
         policy_count = len(policies or [])
     except Exception:
@@ -9953,8 +9893,8 @@ def release_1_8_2_status(db: Session = Depends(get_db)):
     seed_error = ""
     try:
         ensure_email_tables(db)
-        ensure_email_policy_tables_v191(db)
-        seed_email_policy_fallback_v191(db)
+        ensure_email_policy_tables(db)
+        seed_email_policy_from_sections(db)
         policy_count = db.execute(text("SELECT COUNT(*) FROM hub_email_policy")).scalar() or 0
     except Exception as exc:
         try:
@@ -9994,125 +9934,32 @@ def release_1_8_2_status(db: Session = Depends(get_db)):
     }
 
 
-@router.get("/api/release-1-9-0/status")
-def release_1_9_0_status(db: Session = Depends(get_db)):
+@router.get("/api/release-1-9-3/status")
+def release_1_9_3_status(db: Session = Depends(get_db)):
+    cfg = smtp_config_status()
     policy_count = 0
-    specialists_count = 0
     users_count = 0
-    seed_error = ""
     try:
-        ensure_email_tables(db)
-        ensure_email_policy_tables_v191(db)
-        seed_email_policy_fallback_v191(db)
-        policy_count = db.execute(text("SELECT COUNT(*) FROM public.hub_email_policy")).scalar() or 0
-    except Exception as exc:
-        seed_error = str(exc)
-        try: db.rollback()
-        except Exception: pass
-    try:
-        ensure_specialists_table_(db)
-        specialists_count = db.execute(text("SELECT COUNT(*) FROM specialists")).scalar() or 0
+        seed_email_policy_direct_v193(db)
+        policy_count = db.execute(text("SELECT COUNT(*) FROM hub_email_policy")).scalar() or 0
     except Exception:
         try: db.rollback()
         except Exception: pass
     try:
-        users_count = db.execute(text("SELECT COUNT(*) FROM users")).scalar() or 0
+        users_count = db.query(User).count()
     except Exception:
-        try: db.rollback()
-        except Exception: pass
-    cfg = smtp_config_status()
+        users_count = 0
     return {
         "ok": True,
-        "version": "1.9.0-user-management-smtp-policy-database-safe",
+        "version": "1.9.3-admin-mail-policy-users-functional-safe",
         "safe": True,
-        "db_changed": "pouze aditivní/konfigurační: public.hub_email_policy; žádná obchodní data se nemažou",
+        "db_changed": "pouze aditivní/konfigurační hub_email_policy; reset hesla mění jen vybraného uživatele na pokyn Admina",
         "data_smazana": False,
-        "changed_modules": [
-            "smtp_policy_database",
-            "admin_email_policy_editor",
-            "admin_user_password_reset",
-            "admin_user_resend_access",
-            "specialists_legacy_import",
-            "specialist_search_fix"
-        ],
-        "unchanged_modules": [
-            "smtp_delivery",
-            "tip_create_data",
-            "tips_data",
-            "partners",
-            "contacts",
-            "links",
-            "products",
-            "rates",
-            "terminations",
-            "login",
-            "permissions"
-        ],
+        "changed_modules": ["admin_email_policy_direct_sql", "admin_users_password_reset", "admin_users_resend_access", "version_badge"],
+        "unchanged_modules": ["smtp_delivery", "tip_create_data", "tips_data", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions"],
         "smtp_configured": cfg.get("configured"),
         "smtp_host": cfg.get("host"),
-        "policy_count": policy_count,
-        "specialists_count": specialists_count,
-        "users_count": users_count,
-        "seed_error": seed_error,
-        "default_bo_email": backoffice_tip_email_v170b_(),
-    }
-
-
-@router.get("/api/release-1-9-1/status")
-def release_1_9_1_status(db: Session = Depends(get_db)):
-    seed_error = ""
-    policy_count = 0
-    try:
-        ensure_email_tables(db)
-        seed_email_policy_fallback_v191(db)
-        policy_count = db.execute(text("SELECT COUNT(*) FROM public.hub_email_policy")).scalar() or 0
-    except Exception as exc:
-        seed_error = str(exc)
-        try: db.rollback()
-        except Exception: pass
-    cfg = smtp_config_status()
-    return {
-        "ok": True,
-        "version": "1.9.1-smtp-policy-db-create-hotfix-safe",
-        "safe": True,
-        "db_changed": "pouze aditivně vytvoří/naplní public.hub_email_policy; žádná obchodní data se nemažou",
-        "data_smazana": False,
-        "changed_modules": ["smtp_policy_database_create", "smtp_policy_seed_fallback", "release_status"],
-        "unchanged_modules": ["smtp_delivery", "tips_data", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions"],
-        "smtp_configured": cfg.get("configured"),
-        "smtp_host": cfg.get("host"),
-        "policy_count": policy_count,
-        "seed_error": seed_error,
-        "default_bo_email": backoffice_tip_email_v170b_(),
-    }
-
-
-@router.get("/api/release-1-9-2/status")
-def release_1_9_2_status(db: Session = Depends(get_db)):
-    seed_error = ""
-    policy_count = 0
-    try:
-        ensure_email_tables(db)
-        seed_email_policy_fallback_v191(db)
-        policy_count = db.execute(text("SELECT COUNT(*) FROM public.hub_email_policy")).scalar() or 0
-    except Exception as exc:
-        seed_error = str(exc)
-        try:
-            db.rollback()
-        except Exception:
-            pass
-    cfg = smtp_config_status()
-    return {
-        "ok": True,
-        "version": "1.9.2-admin-ui-syntax-smtp-policy-hotfix-safe",
-        "safe": True,
-        "db_changed": "pouze aditivní vytvoření/naplnění public.hub_email_policy, pokud chybí",
-        "data_smazana": False,
-        "changed_modules": ["admin_ui_syntax_hotfix", "smtp_policy_database_create", "smtp_policy_seed_fallback"],
-        "unchanged_modules": ["smtp_delivery", "tips_data", "partners", "contacts", "links", "products", "rates", "terminations", "login", "permissions"],
-        "smtp_configured": cfg.get("configured"),
-        "smtp_host": cfg.get("host"),
-        "policy_count": policy_count,
-        "seed_error": seed_error,
-        "default_bo_email": backoffice_tip_email_v170b_(),
+        "policy_count": int(policy_count or 0),
+        "users_count": int(users_count or 0),
+        "default_bo_email": _admin_bo_email_default_v193(),
     }
